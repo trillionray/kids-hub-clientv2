@@ -1,0 +1,33 @@
+// Default Style
+@import 'assets/scss/style';
+
+
+.auth-wrapper {
+  align-items: flex-start !important;  /* push content to the top */
+  padding-top: 50px;                   /* optional spacing from top */
+}
+
+.auth-content {
+  max-width: 600px;                    /* adjust width if needed */
+}
+
+.pc-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.pcoded-content {
+  flex: 1;
+  overflow: auto;
+  padding-top: 70px; /* Adjust this to match your NavBar height */
+}
+
+/* Ensure navbar stays on top */
+.navbar, .NavBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}

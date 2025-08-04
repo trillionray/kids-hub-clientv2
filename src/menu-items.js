@@ -1,0 +1,169 @@
+// Menu configuration for default layout
+const menuItems = {
+  items: [
+    {
+      id: 'accounts',
+      title: 'Accounts',
+      subtitle: '(c) Trillion Ray',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'register',
+          title: 'Employee Registration',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'person_add_alt_1',
+          url: '/register',
+          target: true
+        },
+        {
+          id: 'all-users',
+          title: 'Show All Users',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'group',
+          url: '/all-users'
+        }
+      ]
+    },
+    {
+      id: 'students',
+      title: 'Students',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'add-student',
+          title: 'Add Student',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'person_add',
+          url: '/students/add'
+        },
+        {
+          id: 'show-students',
+          title: 'Show Students',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/students'
+        }
+      ]
+    },
+    {
+      id: 'enrollments',
+      title: 'Enrollments',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'enroll-student',
+          title: 'Enroll',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'how_to_reg',
+          url: '/enroll'
+        },
+        {
+          id: 'show-enrollments',
+          title: 'Show Enrollments',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/enrollments'
+        }
+      ]
+    },
+    {
+      id: 'academic-year',
+      title: 'Academic Year',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'add-academic-year',
+          title: 'Add Academic Year',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'add_circle',
+          url: '/academic-year/add'
+        },
+        {
+          id: 'list-academic-year',
+          title: 'Show Academic Years',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/academic-year'
+        }
+      ]
+    },
+    {
+      id: 'miscellaneous',
+      title: 'Miscellaneous',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'add-misc',
+          title: 'Add Miscellaneous',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'add_circle',
+          url: '/miscellaneous/add'
+        },
+        {
+          id: 'list-misc',
+          title: 'Miscellaneous',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/miscellaneous'
+        },
+        {
+          id: 'add-misc-package',
+          title: 'Add Miscellaneous Package',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'add_circle',
+          url: '/miscellaneous-package/add'
+        },
+        {
+          id: 'list-misc-package',
+          title: 'Miscellaneous Packages',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/miscellaneous-package'
+        }
+      ]
+    },
+    {
+      id: 'programs',
+      title: 'Programs',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'add-program',
+          title: 'Add Program',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'add_circle',
+          url: '/programs/add'
+        },
+        {
+          id: 'show-programs',
+          title: 'Programs',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/programs/'
+        }
+      ]
+    }
+  ]
+};
+
+export default menuItems;
