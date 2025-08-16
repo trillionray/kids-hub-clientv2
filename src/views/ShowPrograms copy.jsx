@@ -3,8 +3,6 @@ import { Table, Button, Modal, Form, InputGroup } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
-import DataTable from "react-data-table-component";
-import { format } from "date-fns";
 
 export default function ShowPrograms() {
   const { user } = useContext(UserContext);
@@ -13,7 +11,6 @@ export default function ShowPrograms() {
 
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterText, setFilterText] = useState("");
 
   // Edit Modal State
   const [showModal, setShowModal] = useState(false);
@@ -97,93 +94,73 @@ export default function ShowPrograms() {
 
   if (loading) return <h4>Loading Programs...</h4>;
 
-  // DataTable Columns
-  const columns = [
-    { 
-      name: "No.", 
-      selector: (row, index) => index + 1 + " )", 
-      width: "60px", center: true, 
-    },
-    { 
-      name: "Name", 
-      selector: row => row.name, 
-      sortable: true 
-    },
-    { 
-      name: "Category", 
-      selector: row => row.category, 
-      sortable: true 
-    },
-    { 
-      name: "Rate", 
-      selector: row => `₱${row.rate}`, 
-      sortable: true },
-    {
-      name: "Effective Date",
-      selector: (row) => row.effective_date,
-      cell: (row) => format(new Date(row.effective_date), "MMMM dd, yyyy"),
-      sortable: true
-    },
-    { 
-      name: "Description", 
-      selector: row => row.description 
-    },
-    {
-      name: "Actions",
-      cell: (row) => (
-        <>
-          <Button
-            size="sm"
-            variant="warning"
-            className="me-2"
-            onClick={() => openEditModal(row)}
-          >
-            <FeatherIcon icon="edit" size="14" />
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => handleDelete(row._id)}
-          >
-            <FeatherIcon icon="trash-2" size="14" />
-          </Button>
-        </>
-      )
-    }
-  ];
-
-  // Filtered data
-  const filteredPrograms = programs.filter((item) =>
-    item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
-  );
-
-
   return (
     <div className="px-5 py-4">
       <h3 className="mb-4">Programs</h3>
-
-      {/* Search Bar */}
-      <InputGroup className="mb-3">
-        <InputGroup.Text>
-          <FeatherIcon icon="search" />
-        </InputGroup.Text>
-        <Form.Control
-          placeholder="Search by name..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-        />
-      </InputGroup>
-
-      {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredPrograms}
-        pagination
-        highlightOnHover
-        striped
-        noDataComponent="No Programs found"
-        responsive
-      />
+      <Table striped bordered hover responsive>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Rate</th>
+            <th>Effective Date</th>
+            <th>Active</th>
+            <th>Created By</th>
+            <th>Updated By</th>
+            <th>Last Modified</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {programs.length > 0 ? (
+            programs.map((prog) => (
+              <tr key={prog._id}>
+                <td>{prog.name}</td>
+                <td>{prog.category}</td>
+                <td style={{ whiteSpace: "normal" }}>{prog.description}</td>
+                <td>₱{prog.rate}</td>
+                <td>{new Date(prog.effective_date).toLocaleDateString()}</td>
+                <td>{prog.isActive ? "Yes" : "No"}</td>
+                <td style={{ maxWidth: "150px", wordBreak: "break-word" }}>
+                  {prog.created_by}
+                </td>
+                <td style={{ maxWidth: "150px", wordBreak: "break-word" }}>
+                  {prog.updated_by}
+                </td>
+                <td>
+                  {prog.last_modified_date
+                    ? new Date(prog.last_modified_date).toLocaleString()
+                    : "N/A"}
+                </td>
+                <td>
+                  <Button
+                    size="sm"
+                    variant="warning"
+                    className="me-2"
+                    onClick={() => openEditModal(prog)}
+                  >
+                    <FeatherIcon icon="edit" size="14" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleDelete(prog._id)}
+                  >
+                    <FeatherIcon icon="trash-2" size="14" />
+                  </Button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="10" className="text-center">
+                No Programs found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
 
       {/* Edit Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>

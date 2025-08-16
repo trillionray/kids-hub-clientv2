@@ -63,7 +63,7 @@ export default function AddMiscellaneousPackage() {
       return;
     }
 
-    fetch(`${API_URL}/miscellaneous-package`, {
+    fetch(`${API_URL}/miscellaneous-package/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -83,9 +83,7 @@ export default function AddMiscellaneous() {
 
                   {/* Price */}
                   <InputGroup className="mb-3">
-                    <InputGroup.Text>
-                      <FeatherIcon icon="dollar-sign" />
-                    </InputGroup.Text>
+                    <InputGroup.Text style={{ fontSize: "1.2rem" }}>₱</InputGroup.Text>
                     <Form.Control
                       type="number"
                       step="0.01"
