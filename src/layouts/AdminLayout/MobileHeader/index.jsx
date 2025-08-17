@@ -29,7 +29,8 @@ export default function MobileHeader() {
   return (
     <div className="pc-mob-header pc-header">
       <div className="pcm-logo">
-        <img src={logo} alt="" className="logo logo-lg" />
+        {/*<img src={logo} alt="" className="logo logo-lg" />*/}
+         <img src="../../logo.png" alt="" className="w-25 rounded-circle" />
       </div>
       <div className="pcm-toolbar">
         <Link to="#" className="pc-head-link" id="mobile-collapse" onClick={navToggleHandler}>

@@ -61,7 +61,8 @@ export default function NavContent({ navigation, activeNav }) {
   const mHeader = (
     <div className="m-header">
       <Link to="/dashboard/home" className="b-brand">
-        <img src={logo} alt="" className="logo logo-lg" />
+        <img src="../../logo.png" alt="" className="w-25 rounded-circle" />
+        {/*<img src={logo} alt="" className="logo logo-lg" />*/}
       </Link>
     </div>
   );

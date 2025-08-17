@@ -4,7 +4,7 @@ const menuItems = {
     {
       id: 'accounts',
       title: 'Accounts',
-      subtitle: '(c) Trillion Ray',
+      // subtitle: '(c) Trillion Ray',
       type: 'group',
       icon: 'icon-pages',
       children: [
