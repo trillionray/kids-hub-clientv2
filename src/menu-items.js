@@ -34,14 +34,6 @@ const menuItems = {
       icon: 'icon-pages',
       children: [
         {
-          id: 'add-student',
-          title: 'Add Student',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'person_add',
-          url: '/students/add'
-        },
-        {
           id: 'show-students',
           title: 'Show Students',
           type: 'item',
@@ -63,7 +55,7 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'how_to_reg',
-          url: '/enroll'
+          url: '/students/add'
         },
         {
           id: 'show-enrollments',

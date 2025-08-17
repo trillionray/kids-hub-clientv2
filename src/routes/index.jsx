@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 
 // Layouts
@@ -15,25 +15,17 @@ const MaterialIcon = lazy(() => import('../views/ui-elements/icons/Material'));
 const Sample = lazy(() => import('../views/sample'));
 const Login = lazy(() => import('../views/auth/login'));
 const Register = lazy(() => import('../views/auth/register'));
-
-
 const Logout = lazy(() => import('../views/Logout.jsx'));
-
 import Profile from '../views/Profile';
-
 const ShowAllUsers = lazy(() => import('../views/ShowAllUsers.jsx'));
-
 const AddAcademicYear = lazy(() => import('../views/AddAcademicYear.jsx'));
 const ShowAcademicYear = lazy(() => import('../views/ShowAcademicYears.jsx'));
-
 const AddMiscellaneous = lazy(() => import('../views/AddMiscellaneous.jsx'));
 const ShowMiscellaneous = lazy(() => import('../views/ShowMiscellaneous.jsx'));
 const AddMiscellaneousPackage = lazy(() => import('../views/AddMiscellaneousPackage.jsx'));
 const ShowMiscellaneousPackages = lazy(() => import('../views/ShowMiscellaneousPackages.jsx'));
-
 const AddProgram = lazy(() => import('../views/AddProgram.jsx'));
 const ShowPrograms = lazy(() => import('../views/ShowPrograms.jsx'));
-
 const AddStudent = lazy(() => import('../views/AddStudent.jsx'));
 const ShowStudents = lazy(() => import('../views/ShowStudents.jsx'));
 const Enroll = lazy(() => import('../views/Enroll.jsx'));
@@ -60,38 +52,26 @@ const router = createBrowserRouter(
       errorElement: <ErrorPage />,
       children: [
         {
-          element: <Dashboard />,
+          // element: <Dashboard />,
           children: [
-            // Default after login
-            { index: true, element: <Navigate to="/dashboard/home" replace /> },
-
-            // Pages
+            // Pages (no default redirect)
             { path: 'dashboard/home', element: <h1>Welcome to Dashboard</h1> },
             { path: 'register', element: <Register /> },
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
             { path: 'logout', element: <Logout /> },
-            
             { path: 'students/add', element: <AddStudent /> },
             { path: 'students', element: <ShowStudents /> },
-
             { path: 'enroll', element: <Enroll /> },
             { path: 'enrollments', element: <Enrollments /> },
-
-
             { path: 'academic-year/add', element: <AddAcademicYear /> },
             { path: 'academic-year', element: <ShowAcademicYear /> },
-
-
             { path: 'miscellaneous/add', element: <AddMiscellaneous /> },
             { path: 'miscellaneous', element: <ShowMiscellaneous /> },
-
             { path: 'miscellaneous-package/add', element: <AddMiscellaneousPackage /> },
             { path: 'miscellaneous-package', element: <ShowMiscellaneousPackages /> },
-
             { path: 'programs/add', element: <AddProgram /> },
             { path: 'programs', element: <ShowPrograms /> },
-
             { path: 'typography', element: <Typography /> },
             { path: 'color', element: <Color /> },
             { path: 'icons/Feather', element: <FeatherIcon /> },

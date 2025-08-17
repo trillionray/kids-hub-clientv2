@@ -11,19 +11,16 @@ export default function Enroll() {
   const [students, setStudents] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
-  const [miscGroups, setMiscGroups] = useState([]);
-
   const [programRate, setProgramRate] = useState(0);
-  const [miscRate, setMiscRate] = useState(0);
 
+  // student_id comes from localStorage
   const [formData, setFormData] = useState({
     branch: "",
-    student_id: "",
+    student_id: localStorage.getItem("selectedStudentId") || "",
     program_id: "",
     num_of_sessions: "",
     duration: "",
     academic_year_id: "",
-    miscellaneous_group_id: "",
     status: "pending",
     total: 0
   });
@@ -32,25 +29,14 @@ export default function Enroll() {
     fetchStudents();
     fetchPrograms();
     fetchAcademicYears();
-    fetchMiscGroups();
   }, []);
 
-  // Auto-calculate rates and total whenever program or misc group changes
   useEffect(() => {
     const program = programs.find((p) => p._id === formData.program_id);
-    const misc = miscGroups.find((m) => m._id === formData.miscellaneous_group_id);
-
     const programRateVal = program ? program.rate : 0;
-    const miscRateVal = misc ? misc.package_price : 0;
-
     setProgramRate(programRateVal);
-    setMiscRate(miscRateVal);
-
-    setFormData((prev) => ({
-      ...prev,
-      total: programRateVal + miscRateVal
-    }));
-  }, [formData.program_id, formData.miscellaneous_group_id, programs, miscGroups]);
+    setFormData((prev) => ({ ...prev, total: programRateVal }));
+  }, [formData.program_id, programs]);
 
   const fetchStudents = () => {
     fetch(`${API_URL}/students`, {
@@ -75,23 +61,8 @@ export default function Enroll() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then((res) => res.json())
-      .then(data => {
-      	console.log("Acad years")
-      	console.log(data)
-      	setAcademicYears(data)
-      }
-      	
-      	)
+      .then(setAcademicYears)
       .catch(() => notyf.error("Failed to fetch academic years"));
-  };
-
-  const fetchMiscGroups = () => {
-    fetch(`${API_URL}/miscellaneous-package`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then((res) => res.json())
-      .then(setMiscGroups)
-      .catch(() => notyf.error("Failed to fetch misc groups"));
   };
 
   const handleChange = (e) => {
@@ -112,7 +83,6 @@ export default function Enroll() {
     })
       .then((res) => res.json())
       .then((data) => {
-      	console.log(data);
         if (data.success) {
           notyf.success(data.message);
           setFormData({
@@ -122,12 +92,11 @@ export default function Enroll() {
             num_of_sessions: "",
             duration: "",
             academic_year_id: "",
-            miscellaneous_group_id: "",
             status: "pending",
             total: 0
           });
           setProgramRate(0);
-          setMiscRate(0);
+          localStorage.removeItem("selected_student_id");
         } else {
           notyf.error(data.message || "Enrollment failed");
         }
@@ -156,19 +125,19 @@ export default function Enroll() {
 
           <Form.Group className="mb-3">
             <Form.Label>Student</Form.Label>
-            <Form.Select
-              name="student_id"
-              value={formData.student_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Student</option>
-              {students.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.firstName} {s.middleName} {s.lastName}
-                </option>
-              ))}
-            </Form.Select>
+            {formData.student_id ? (
+              <Form.Control
+                type="text"
+                value={
+                  students.find((s) => s._id === formData.student_id)
+                    ? `${students.find((s) => s._id === formData.student_id).firstName} ${students.find((s) => s._id === formData.student_id).middleName} ${students.find((s) => s._id === formData.student_id).lastName}`
+                    : ""
+                }
+                disabled
+              />
+            ) : (
+              <p className="text-danger">No student selected. Please select a student first.</p>
+            )}
           </Form.Group>
 
           <Form.Group className="mb-3">
@@ -193,7 +162,7 @@ export default function Enroll() {
             <Form.Control
               type="number"
               name="num_of_sessions"
-              placeholder="Optional - for short programs usually"
+              placeholder="Optional"
               value={formData.num_of_sessions}
               onChange={handleChange}
             />
@@ -207,7 +176,6 @@ export default function Enroll() {
               placeholder="Optional"
               value={formData.duration}
               onChange={handleChange}
-              
             />
           </Form.Group>
 
@@ -228,45 +196,23 @@ export default function Enroll() {
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Miscellaneous Group</Form.Label>
+            <Form.Label>Status</Form.Label>
             <Form.Select
-              name="miscellaneous_group_id"
-              value={formData.miscellaneous_group_id}
+              name="status"
+              value={formData.status}
               onChange={handleChange}
-              required
             >
-              <option value="">Select Miscellaneous Group</option>
-              {miscGroups.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {m.package_name} (₱{m.package_price})
-                </option>
-              ))}
+              <option value="pending">Pending</option>
+              <option value="enrolled - not fully paid">Enrolled - Not Fully Paid</option>
+              <option value="enrolled - fully paid">Enrolled - Fully Paid</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </Form.Select>
           </Form.Group>
 
-         <Form.Group className="mb-3">
-           <Form.Label>Status</Form.Label>
-           <Form.Select
-             name="status"
-             value={formData.status}
-             onChange={handleChange}
-           >
-             <option value="pending">Pending</option>
-             <option value="enrolled - not fully paid">Enrolled - Not Fully Paid</option>
-             <option value="enrolled - fully paid">Enrolled - Fully Paid</option>
-             <option value="completed">Completed</option>
-             <option value="cancelled">Cancelled</option>
-           </Form.Select>
-         </Form.Group>
-
-
-          {/* Breakdown */}
           <div className="mb-3 p-2 border rounded bg-light">
             <p className="mb-1">
               <strong>Program Rate:</strong> ₱{programRate}
-            </p>
-            <p className="mb-1">
-              <strong>Miscellaneous Package Price:</strong> ₱{miscRate}
             </p>
             <hr className="my-2" />
             <p className="mb-0">
