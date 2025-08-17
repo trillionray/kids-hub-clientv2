@@ -105,14 +105,7 @@ const menuItems = {
       type: 'group',
       icon: 'icon-pages',
       children: [
-        {
-          id: 'add-misc',
-          title: 'Add Miscellaneous',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'add_circle',
-          url: '/miscellaneous/add'
-        },
+        
         {
           id: 'list-misc',
           title: 'Miscellaneous',
@@ -121,14 +114,7 @@ const menuItems = {
           iconname: 'list_alt',
           url: '/miscellaneous'
         },
-        {
-          id: 'add-misc-package',
-          title: 'Add Miscellaneous Package',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'add_circle',
-          url: '/miscellaneous-package/add'
-        },
+        
         {
           id: 'list-misc-package',
           title: 'Miscellaneous Packages',
@@ -145,14 +131,6 @@ const menuItems = {
       type: 'group',
       icon: 'icon-pages',
       children: [
-        {
-          id: 'add-program',
-          title: 'Add Program',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'add_circle',
-          url: '/programs/add'
-        },
         {
           id: 'show-programs',
           title: 'Programs',

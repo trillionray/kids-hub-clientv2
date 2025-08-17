@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext } from "react";
-import { Table, Button, Modal, Form, InputGroup } from "react-bootstrap";
+import { Button, Modal, Form, InputGroup } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
 import DataTable from "react-data-table-component";
-import { format } from "date-fns";
+import { Link } from "react-router-dom"; // ⬅️ add this import
+
 
 export default function ShowPrograms() {
   const { user } = useContext(UserContext);
@@ -72,7 +73,6 @@ export default function ShowPrograms() {
         category: currentProgram.category,
         description: currentProgram.description,
         rate: currentProgram.rate,
-        effective_date: currentProgram.effective_date,
         isActive: currentProgram.isActive,
         updated_by: user.id,
       }),
@@ -99,34 +99,30 @@ export default function ShowPrograms() {
 
   // DataTable Columns
   const columns = [
-    { 
-      name: "No.", 
-      selector: (row, index) => index + 1 + " )", 
-      width: "60px", center: true, 
-    },
-    { 
-      name: "Name", 
-      selector: row => row.name, 
-      sortable: true 
-    },
-    { 
-      name: "Category", 
-      selector: row => row.category, 
-      sortable: true 
-    },
-    { 
-      name: "Rate", 
-      selector: row => `₱${row.rate}`, 
-      sortable: true },
     {
-      name: "Effective Date",
-      selector: (row) => row.effective_date,
-      cell: (row) => format(new Date(row.effective_date), "MMMM dd, yyyy"),
-      sortable: true
+      name: "No.",
+      selector: (row, index) => index + 1 + " )",
+      width: "60px",
+      center: true,
     },
-    { 
-      name: "Description", 
-      selector: row => row.description 
+    {
+      name: "Name",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Category",
+      selector: (row) => row.category,
+      sortable: true,
+    },
+    {
+      name: "Rate",
+      selector: (row) => `₱${row.rate}`,
+      sortable: true,
+    },
+    {
+      name: "Description",
+      selector: (row) => row.description,
     },
     {
       name: "Actions",
@@ -140,16 +136,16 @@ export default function ShowPrograms() {
           >
             <FeatherIcon icon="edit" size="14" />
           </Button>
-          <Button
+          {/*<Button
             size="sm"
             variant="danger"
             onClick={() => handleDelete(row._id)}
           >
             <FeatherIcon icon="trash-2" size="14" />
-          </Button>
+          </Button>*/}
         </>
-      )
-    }
+      ),
+    },
   ];
 
   // Filtered data
@@ -157,10 +153,21 @@ export default function ShowPrograms() {
     item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
   );
 
-
   return (
     <div className="px-5 py-4">
-      <h3 className="mb-4">Programs</h3>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        
+        <h3 className="mb-0">Programs</h3>
+        
+        <Link to="/programs/add">
+
+          <Button variant="primary" className="rounded-circle p-2 me-3">
+            <FeatherIcon icon="plus" size="16" className="" />
+          </Button>
+
+        </Link>
+
+      </div>
 
       {/* Search Bar */}
       <InputGroup className="mb-3">
@@ -200,7 +207,10 @@ export default function ShowPrograms() {
                 type="text"
                 value={currentProgram?.name || ""}
                 onChange={(e) =>
-                  setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))
+                  setCurrentProgram((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
                 }
                 required
               />
@@ -211,7 +221,10 @@ export default function ShowPrograms() {
               <Form.Select
                 value={currentProgram?.category || "short"}
                 onChange={(e) =>
-                  setCurrentProgram((prev) => ({ ...prev, category: e.target.value }))
+                  setCurrentProgram((prev) => ({
+                    ...prev,
+                    category: e.target.value,
+                  }))
                 }
               >
                 <option value="short">Short</option>
@@ -244,29 +257,6 @@ export default function ShowPrograms() {
                   setCurrentProgram((prev) => ({
                     ...prev,
                     rate: e.target.value,
-                  }))
-                }
-                required
-              />
-            </InputGroup>
-
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FeatherIcon icon="calendar" />
-              </InputGroup.Text>
-              <Form.Control
-                type="date"
-                value={
-                  currentProgram?.effective_date
-                    ? new Date(currentProgram.effective_date)
-                        .toISOString()
-                        .split("T")[0]
-                    : ""
-                }
-                onChange={(e) =>
-                  setCurrentProgram((prev) => ({
-                    ...prev,
-                    effective_date: e.target.value,
                   }))
                 }
                 required

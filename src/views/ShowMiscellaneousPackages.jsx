@@ -4,7 +4,7 @@ import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
 import DataTable from "react-data-table-component";
-import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 export default function ShowMiscellaneousPackages() {
   const { user } = useContext(UserContext);
@@ -25,7 +25,7 @@ export default function ShowMiscellaneousPackages() {
   useEffect(() => {
     if (!miscs.length) return;
     const total = selectedMiscs.reduce((sum, id) => {
-      const misc = miscs.find(m => String(m._id) === String(id));
+      const misc = miscs.find((m) => String(m._id) === String(id));
       return sum + (misc ? parseFloat(misc.price) || 0 : 0);
     }, 0);
     setPackagePrice(total);
@@ -43,15 +43,45 @@ export default function ShowMiscellaneousPackages() {
     );
   }
 
+  // 🔹 Helper to fetch misc names by IDs
+  async function fetchMiscNames(ids) {
+    if (!ids || ids.length === 0) return [];
 
+    const res = await fetch(`${API_URL}/miscellaneous/getSpecificMiscs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({ ids })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      return data.names;
+    }
+    return [];
+  }
+
+  // Fetch all packages + resolve misc names
   function fetchPackages() {
     setLoading(true);
     fetch(`${API_URL}/miscellaneous-package/read`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then((res) => res.json())
-      .then((data) => {
-        setPackages(data);
+      .then(async (data) => {
+        if (Array.isArray(data)) {
+          const packagesWithNames = await Promise.all(
+            data.map(async (pkg) => {
+              const miscNames = await fetchMiscNames(pkg.miscs);
+              return { ...pkg, miscNames };
+            })
+          );
+          setPackages(packagesWithNames);
+        } else {
+          notyf.error("Failed to fetch Packages data");
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -82,36 +112,35 @@ export default function ShowMiscellaneousPackages() {
 
   // Handle update submit
   function handleUpdateSubmit(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  fetch(`${API_URL}/miscellaneous-package/update/${currentPackage._id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    },
-    body: JSON.stringify({
-      package_name: currentPackage.package_name,
-      package_description: currentPackage.package_description,
-      package_price: packagePrice, 
-      miscs: selectedMiscs,       
-      is_active: currentPackage.is_active,
-      last_updated_by: user.username
+    fetch(`${API_URL}/miscellaneous-package/update/${currentPackage._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({
+        package_name: currentPackage.package_name,
+        package_description: currentPackage.package_description,
+        package_price: packagePrice,
+        miscs: selectedMiscs,
+        is_active: currentPackage.is_active,
+        last_updated_by: user.username
+      })
     })
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        notyf.success(data.message);
-        setShowModal(false);
-        fetchPackages();
-      } else {
-        notyf.error(data.message || "Update failed");
-      }
-    })
-    .catch(() => notyf.error("Server error. Please try again."));
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          notyf.success(data.message);
+          setShowModal(false);
+          fetchPackages();
+        } else {
+          notyf.error(data.message || "Update failed");
+        }
+      })
+      .catch(() => notyf.error("Server error. Please try again."));
   }
-
 
   // Open modal
   function openEditModal(pkg) {
@@ -124,10 +153,7 @@ export default function ShowMiscellaneousPackages() {
       .then((data) => {
         if (Array.isArray(data)) {
           setMiscs(data);
-
-          // Directly set IDs since pkg.miscs is already array of IDs
           setSelectedMiscs(pkg.miscs);
-
           setShowModal(true);
         } else {
           notyf.error(data.message || "Error fetching miscellaneous items");
@@ -136,15 +162,14 @@ export default function ShowMiscellaneousPackages() {
       .catch(() => notyf.error("Server error"));
   }
 
-
   if (loading) return <h4>Loading Packages...</h4>;
-  
+
   const columns = [
     {
-      name:"No.",
+      name: "No.",
       selector: (row, index) => index + 1 + " )",
       width: "60px",
-      center: true,
+      center: true
     },
     {
       name: "Package Name",
@@ -153,8 +178,16 @@ export default function ShowMiscellaneousPackages() {
     },
     {
       name: "Misc Items",
-      selector: (row) =>
-        row.miscs && row.miscs.length > 0 ? row.miscs.join(", ") : "No items",
+      cell: (row) =>
+        row.miscNames && row.miscNames.length > 0 ? (
+          <ul className="mb-0 ps-3">
+            {row.miscNames.map((name, index) => (
+              <li key={index}>{name}</li>
+            ))}
+          </ul>
+        ) : (
+          "No items"
+        ),
       wrap: true
     },
     {
@@ -179,13 +212,6 @@ export default function ShowMiscellaneousPackages() {
           >
             <FeatherIcon icon="edit" size="14" />
           </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => handleDelete(row._id)}
-          >
-            <FeatherIcon icon="trash-2" size="14" />
-          </Button>
         </>
       )
     }
@@ -199,7 +225,15 @@ export default function ShowMiscellaneousPackages() {
 
   return (
     <div className="p-3">
-      <h3 className="mb-4">Miscellaneous Packages</h3>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="p-0">Miscellaneous Packages</h3>
+
+        <Link to="/miscellaneous-package/add">
+          <Button variant="primary" className="p-2 rounded-circle me-5">
+            <FeatherIcon icon="plus" size="1" className="" />
+          </Button>
+        </Link>
+      </div>
 
       {/* Search bar */}
       <input
@@ -218,6 +252,25 @@ export default function ShowMiscellaneousPackages() {
         highlightOnHover
         striped
         responsive
+        conditionalRowStyles={[
+          {
+            when: row => row.is_active === false,
+            style: {
+              backgroundColor: "#f0f0f0",
+              color: "#6c757d",
+              textDecoration: "line-through",
+              fontStyle: "italic"
+            }
+          }
+        ]}
+        customStyles={{
+          rows: {
+            style: {
+              paddingTop: "12px",
+              paddingBottom: "12px",
+            },
+          },
+        }}
       />
 
       {/* Edit Modal */}
@@ -235,7 +288,10 @@ export default function ShowMiscellaneousPackages() {
                 type="text"
                 value={currentPackage?.package_name || ""}
                 onChange={(e) =>
-                  setCurrentPackage((prev) => ({ ...prev, package_name: e.target.value }))
+                  setCurrentPackage((prev) => ({
+                    ...prev,
+                    package_name: e.target.value
+                  }))
                 }
                 required
               />
@@ -258,7 +314,7 @@ export default function ShowMiscellaneousPackages() {
                 required
               />
             </InputGroup>
-            
+
             {/* Checkbox list for miscs */}
             <Form.Group className="mb-3">
               <Form.Label>Select Miscellaneous Items</Form.Label>
@@ -283,11 +339,8 @@ export default function ShowMiscellaneousPackages() {
             </Form.Group>
 
             <Form.Group className="mt-3">
-              <Form.Label>
-                Total Price: ₱{packagePrice.toFixed(2)}
-              </Form.Label>
+              <Form.Label>Total Price: ₱{packagePrice.toFixed(2)}</Form.Label>
             </Form.Group>
-
 
             <Form.Group>
               <Form.Check
@@ -314,7 +367,5 @@ export default function ShowMiscellaneousPackages() {
         </Form>
       </Modal>
     </div>
-
   );
-  
 }

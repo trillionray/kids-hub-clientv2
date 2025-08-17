@@ -2,10 +2,12 @@ import { useEffect, useState, useContext } from "react";
 import { Card, Row, Col, Button, Form, Spinner } from "react-bootstrap";
 import { Notyf } from "notyf";
 import UserContext from "../context/UserContext";
-
+import { useNavigate } from "react-router-dom"; // ✅ import navigate
 export default function AddMiscellaneousPackage() {
+
   const { user } = useContext(UserContext);
   const notyf = new Notyf();
+  const navigate = useNavigate(); // ✅ initialize navigate
 
   const [packageName, setPackageName] = useState("");
   const [packageDescription, setPackageDescription] = useState("");
@@ -88,6 +90,7 @@ export default function AddMiscellaneousPackage() {
           setPackageDescription("");
           setSelectedMiscs([]);
           setPackagePrice(0);
+          navigate("/miscellaneous-package"); // ✅ redirect after success
         } else {
           notyf.error(data.message || "Failed to add package");
         }
@@ -124,7 +127,6 @@ export default function AddMiscellaneousPackage() {
                         rows={3}
                         value={packageDescription}
                         onChange={(e) => setPackageDescription(e.target.value)}
-                        required
                       />
                     </Form.Group>
 

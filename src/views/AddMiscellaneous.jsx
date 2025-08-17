@@ -3,14 +3,15 @@ import { Card, Row, Col, Button, Form, InputGroup } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
 
 export default function AddMiscellaneous() {
   const { user } = useContext(UserContext);
   const notyf = new Notyf();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [effectiveDate, setEffectiveDate] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL;
@@ -18,12 +19,12 @@ export default function AddMiscellaneous() {
   // Validate fields
   const [isActiveForm, setIsActiveForm] = useState(false);
   useEffect(() => {
-    if (name && price && effectiveDate) {
+    if (name && price) {
       setIsActiveForm(true);
     } else {
       setIsActiveForm(false);
     }
-  }, [name, price, effectiveDate]);
+  }, [name, price]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -37,8 +38,7 @@ export default function AddMiscellaneous() {
       body: JSON.stringify({
         name,
         price,
-        effective_date: effectiveDate,
-        is_active: isActive,
+        is_active: true,
         created_by: user.id,
         last_updated_by: user.id
       })
@@ -47,10 +47,7 @@ export default function AddMiscellaneous() {
       .then((data) => {
         if (data.success) {
           notyf.success(data.message);
-          setName("");
-          setPrice("");
-          setEffectiveDate("");
-          setIsActive(true);
+          navigate("/miscellaneous"); // ✅ redirect after success
         } else {
           notyf.error(data.message || "Something went wrong");
         }
@@ -60,7 +57,7 @@ export default function AddMiscellaneous() {
 
   return (
     <div className="auth-wrapper pt-4">
-      <div className="auth-content ">
+      <div className="auth-content">
         <Card className="borderless">
           <Row className="align-items-center">
             <Col>
@@ -94,43 +91,23 @@ export default function AddMiscellaneous() {
                     />
                   </InputGroup>
 
-                  {/* Effective Date */}
+                  {/* Buttons */}
+                  <div className="d-flex align-items-center gap-2">
+                    <Button
+                      type="submit"
+                      className="btn btn-primary rounded-pill px-4"
+                      disabled={!isActiveForm}
+                    >
+                      <FeatherIcon icon="plus-circle" size="16" className="me-1" /> Add
+                    </Button>
 
-               
-                  <label className="text-start">Effective Date</label>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text>
-                      <FeatherIcon icon="calendar" />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="date"
-                      value={effectiveDate}
-                      onChange={(e) => setEffectiveDate(e.target.value)}
-                      required
-                    />
-                  </InputGroup>
-
-
-                  {/* Active Status */}
-                  <Form.Group className="mb-3 text-left">
-                    <Form.Check
-                      type="checkbox"
-                      label="Is Active?"
-                      checked={isActive}
-                      onChange={() => setIsActive(!isActive)}
-                    />
-                  </Form.Group>
-
-                  <div className="text-center mb-0 pb-0">
-                  	<Button
-                  	  type="submit"
-                  	  className="btn btn-block btn-primary"
-                  	  disabled={!isActiveForm}
-                  	>
-                  	  Add Miscellaneous
-                  	</Button>
+                    <Button
+                      className="btn btn-danger ms-auto rounded-pill px-4"
+                      onClick={() => navigate("/miscellaneous")} // ✅ Cancel goes back
+                    >
+                      <FeatherIcon icon="x-circle" size="16" className="me-1" /> Cancel
+                    </Button>
                   </div>
-                  
                 </Form>
               </Card.Body>
             </Col>

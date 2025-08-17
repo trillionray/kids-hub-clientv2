@@ -4,7 +4,7 @@ import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
 import DataTable from "react-data-table-component";
-import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 export default function ShowMiscellaneous() {
   const { user } = useContext(UserContext);
@@ -72,7 +72,6 @@ export default function ShowMiscellaneous() {
       body: JSON.stringify({
         name: currentMisc.name,
         price: currentMisc.price,
-        effective_date: currentMisc.effective_date,
         is_active: currentMisc.is_active,
         created_by: currentMisc.created_by,
         last_updated_by: user.username
@@ -103,8 +102,8 @@ export default function ShowMiscellaneous() {
     {
       name: "No.",
       selector: (row, index) => index + 1 + " )",
-      width: "60px", 
-      center: true,  
+      width: "60px",
+      center: true,
     },
     {
       name: "Name",
@@ -117,19 +116,13 @@ export default function ShowMiscellaneous() {
       sortable: true
     },
     {
-      name: "Effective Date",
-      selector: (row) => row.effective_date,
-      cell: (row) => format(new Date(row.effective_date), "MMMM dd, yyyy"),
-      sortable: true,
-    },
-    {
       name: "Actions",
       cell: (row) => (
         <>
           <Button
             size="sm"
             variant="warning"
-            className="me-2"
+            className="me-2 rounded-pill"
             onClick={() => openEditModal(row)}
           >
             <FeatherIcon icon="edit" size="14" />
@@ -137,6 +130,7 @@ export default function ShowMiscellaneous() {
           <Button
             size="sm"
             variant="danger"
+            className="rounded-pill"
             onClick={() => handleDelete(row._id)}
           >
             <FeatherIcon icon="trash-2" size="14" />
@@ -154,7 +148,15 @@ export default function ShowMiscellaneous() {
 
   return (
     <div className="p-3">
-      <h3 className="mb-4">Miscellaneous List</h3>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3>Miscellaneous List</h3>
+        
+        <Link to="/miscellaneous/add">
+          <Button variant="primary" className="p-2 rounded-pill me-5">
+            <FeatherIcon icon="plus" size="14" />
+          </Button>
+        </Link>
+      </div>
 
       {/* Search Bar */}
       <input
@@ -175,6 +177,25 @@ export default function ShowMiscellaneous() {
         striped
         responsive
         noDataComponent="No Miscellaneous found"
+        conditionalRowStyles={[
+          {
+            when: row => row.is_active === false,
+            style: {
+              backgroundColor: "#f0f0f0",
+              color: "#6c757d",
+              textDecoration: "line-through",
+              fontStyle: "italic"
+            }
+          }
+        ]}
+        customStyles={{
+          rows: {
+            style: {
+              paddingTop: "12px",
+              paddingBottom: "12px",
+            },
+          },
+        }}
       />
 
       {/* Edit Modal */}
@@ -199,38 +220,13 @@ export default function ShowMiscellaneous() {
             </InputGroup>
 
             <InputGroup className="mb-3">
-              <InputGroup.Text>
-                ₱
-              </InputGroup.Text>
+              <InputGroup.Text>₱</InputGroup.Text>
               <Form.Control
                 type="number"
                 step="0.01"
                 value={currentMisc?.price || ""}
                 onChange={(e) =>
                   setCurrentMisc((prev) => ({ ...prev, price: e.target.value }))
-                }
-                required
-              />
-            </InputGroup>
-
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FeatherIcon icon="calendar" />
-              </InputGroup.Text>
-              <Form.Control
-                type="date"
-                value={
-                  currentMisc?.effective_date
-                    ? new Date(currentMisc.effective_date)
-                        .toISOString()
-                        .split("T")[0]
-                    : ""
-                }
-                onChange={(e) =>
-                  setCurrentMisc((prev) => ({
-                    ...prev,
-                    effective_date: e.target.value
-                  }))
                 }
                 required
               />
@@ -251,10 +247,10 @@ export default function ShowMiscellaneous() {
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
+            <Button variant="secondary" className="rounded-pill" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
+            <Button type="submit" variant="primary" className="rounded-pill">
               Save Changes
             </Button>
           </Modal.Footer>
