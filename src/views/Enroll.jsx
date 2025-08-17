@@ -2,21 +2,27 @@ import { useState, useEffect, useContext } from "react";
 import { Form, Button, InputGroup, Card } from "react-bootstrap";
 import { Notyf } from "notyf";
 import UserContext from "../context/UserContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Enroll() {
   const { user } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get studentData from AddStudent page
+  const studentData = location.state?.studentData || null;
 
   const [students, setStudents] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [programRate, setProgramRate] = useState(0);
 
-  // student_id comes from localStorage
+  // formData for enrollment
   const [formData, setFormData] = useState({
     branch: "",
-    student_id: localStorage.getItem("selectedStudentId") || "",
+    student_id: studentData?._id || "", // If old student selected
     program_id: "",
     num_of_sessions: "",
     duration: "",
@@ -70,38 +76,69 @@ export default function Enroll() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    fetch(`${API_URL}/enrollments/enroll`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify(formData)
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          notyf.success(data.message);
-          setFormData({
-            branch: "",
-            student_id: "",
-            program_id: "",
-            num_of_sessions: "",
-            duration: "",
-            academic_year_id: "",
-            status: "pending",
-            total: 0
-          });
-          setProgramRate(0);
-          localStorage.removeItem("selected_student_id");
-        } else {
-          notyf.error(data.message || "Enrollment failed");
+    let studentId = formData.student_id;
+
+    // If AddStudent provided a new student (not yet registered), register first
+    if (studentData && !studentData._id) {
+      try {
+        const res = await fetch(`${API_URL}/students/`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify(studentData)
+        });
+        const data = await res.json();
+        console.log(data)
+        if (!data.student) {
+          notyf.error(data.message || "Failed to register student");
+          return;
         }
-      })
-      .catch(() => notyf.error("Server error. Please try again."));
+        studentId = data.student._id; // Use the newly created student ID
+        notyf.success("Student registered successfully!");
+      } catch (err) {
+        notyf.error("Server error during student registration");
+        return;
+      }
+    }
+
+    // Now enroll the student
+    try {
+      const enrollmentData = { ...formData, student_id: studentId };
+      const res = await fetch(`${API_URL}/enrollments/enroll`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify(enrollmentData)
+      });
+      const data = await res.json();
+      console.log(data);
+      if (data.success) {
+        notyf.success(data.message);
+        setFormData({
+          branch: "",
+          student_id: "",
+          program_id: "",
+          num_of_sessions: "",
+          duration: "",
+          academic_year_id: "",
+          status: "pending",
+          total: 0
+        });
+        setProgramRate(0);
+        navigate("/enrollments"); // redirect to enrollment list
+      } else {
+        notyf.error(data.message || "Enrollment failed");
+      }
+    } catch (err) {
+      notyf.error("Server error. Please try again.");
+    }
   };
 
   return (
@@ -125,14 +162,10 @@ export default function Enroll() {
 
           <Form.Group className="mb-3">
             <Form.Label>Student</Form.Label>
-            {formData.student_id ? (
+            {studentData ? (
               <Form.Control
                 type="text"
-                value={
-                  students.find((s) => s._id === formData.student_id)
-                    ? `${students.find((s) => s._id === formData.student_id).firstName} ${students.find((s) => s._id === formData.student_id).middleName} ${students.find((s) => s._id === formData.student_id).lastName}`
-                    : ""
-                }
+                value={`${studentData.firstName} ${studentData.middleName} ${studentData.lastName}`}
                 disabled
               />
             ) : (

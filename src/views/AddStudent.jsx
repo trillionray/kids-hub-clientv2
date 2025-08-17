@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { Form, Button, Card, Container, Row, Col } from "react-bootstrap";
 import { Notyf } from "notyf";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 export default function AddStudent() {
-  const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -20,6 +21,7 @@ export default function AddStudent() {
     contact: { firstName: "", middleName: "", lastName: "", suffix: "", relationship: "" }
   });
 
+  const [showContact, setShowContact] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [oldStudents, setOldStudents] = useState([]);
   const [isOldStudentSelected, setIsOldStudentSelected] = useState(false);
@@ -27,7 +29,7 @@ export default function AddStudent() {
   // Fetch old students for search
   useEffect(() => {
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
-      fetch(`${API_URL}/students/search-student`, {
+      fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -43,10 +45,8 @@ export default function AddStudent() {
     }
   }, [searchQuery, formData.studentType]);
 
-  // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name.startsWith("address.")) {
       const field = name.split(".")[1];
       setFormData(prev => ({ ...prev, address: { ...prev.address, [field]: value } }));
@@ -57,46 +57,34 @@ export default function AddStudent() {
       setFormData(prev => ({ ...prev, studentType: value }));
       if (value === "new") {
         setFormData({
-          firstName: "",
-          middleName: "",
-          lastName: "",
-          suffix: "",
-          gender: "Male",
-          birthdate: "",
-          studentType: "new",
+          firstName: "", middleName: "", lastName: "", suffix: "",
+          gender: "Male", birthdate: "", studentType: "new",
           address: { street: "", barangay: "", city: "", province: "" },
           contact: { firstName: "", middleName: "", lastName: "", suffix: "", relationship: "" }
         });
         setSearchQuery("");
         setOldStudents([]);
         setIsOldStudentSelected(false);
+        setShowContact(false);
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Handle selection of old student
   const handleSelectOldStudent = (student) => {
     setFormData(prev => ({ ...prev, ...student, studentType: "old" }));
     setOldStudents([]);
     setSearchQuery("");
-    localStorage.setItem("selectedStudentId", student._id); // Save old student ID
+    localStorage.setItem("selectedStudentId", student._id);
     setIsOldStudentSelected(true);
+    setShowContact(true);
   };
 
-  // Handle form submission with Swal
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (formData.studentType === "old") {
-      window.location.href = "/enroll";
-      return;
-    }
-
-    // Show confirmation modal
-    const { isConfirmed } = await Swal.fire({
-      title: "Confirm New Student",
+    Swal.fire({
+      title: "Confirm Student",
       html: `
         <p><strong>First Name:</strong> ${formData.firstName}</p>
         <p><strong>Middle Name:</strong> ${formData.middleName}</p>
@@ -110,40 +98,11 @@ export default function AddStudent() {
       showCancelButton: true,
       confirmButtonText: "Continue",
       cancelButtonText: "Cancel"
-    });
-
-    if (!isConfirmed) return;
-
-    // Add new student
-    try {
-      const res = await fetch(`${API_URL}/students/`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}` 
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (data.student) {
-        notyf.success("Student added successfully!");
-        localStorage.setItem("selectedStudentId", data.student._id); // Save new student ID
-        setFormData({
-          firstName: "", middleName: "", lastName: "", suffix: "",
-          gender: "Male", birthdate: "", studentType: "new",
-          address: { street: "", barangay: "", city: "", province: "" },
-          contact: { firstName: "", middleName: "", lastName: "", suffix: "", relationship: "" }
-        });
-        setIsOldStudentSelected(false);
-        window.location.href = "/enroll";
-      } else {
-        notyf.error(data.message || "Failed to add student");
+    }).then(result => {
+      if (result.isConfirmed) {
+        navigate("/enroll", { state: { studentData: formData } });
       }
-    } catch (error) {
-      notyf.error("Server error. Please try again.");
-    }
+    });
   };
 
   const disabled = isOldStudentSelected;
@@ -153,160 +112,194 @@ export default function AddStudent() {
       <Card className="p-4 shadow-sm">
         <h3 className="mb-3">Student Information</h3>
         <Form onSubmit={handleSubmit}>
-
-          {/* Student Type */}
-          <Form.Group className="mb-3">
-            <Form.Label>Student Type</Form.Label>
-            <div>
-              <Form.Check inline type="radio" label="New Student" name="studentType" value="new"
-                checked={formData.studentType === "new"} onChange={handleChange} />
-              <Form.Check inline type="radio" label="Old Student" name="studentType" value="old"
-                checked={formData.studentType === "old"} onChange={handleChange} />
-            </div>
-          </Form.Group>
-
-          {/* Old Student Search */}
-          {formData.studentType === "old" && !isOldStudentSelected && (
-            <Form.Group className="mb-3">
-              <Form.Label>Search Old Student</Form.Label>
-              <Form.Control type="text" placeholder="Type first, middle, or last name..." 
-                value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-              {oldStudents.length > 0 && (
-                <div className="border p-2 mt-1" style={{ maxHeight: "150px", overflowY: "auto" }}>
-                  {oldStudents.map(s => (
-                    <div key={s._id} style={{ padding: "4px", cursor: "pointer" }}
-                      onClick={() => handleSelectOldStudent(s)}>
-                      {s.firstName} {s.middleName} {s.lastName}
-                    </div>
-                  ))}
+          {/* Step 1: Student Info */}
+          {!showContact && (
+            <>
+              {/* Student Type */}
+              <Form.Group className="mb-3">
+                <Form.Label>Student Type</Form.Label>
+                <div>
+                  <Form.Check inline type="radio" label="New Student" name="studentType" value="new"
+                    checked={formData.studentType === "new"} onChange={handleChange} />
+                  <Form.Check inline type="radio" label="Old Student" name="studentType" value="old"
+                    checked={formData.studentType === "old"} onChange={handleChange} />
                 </div>
+              </Form.Group>
+
+              {/* Old Student Search */}
+              {formData.studentType === "old" && !isOldStudentSelected && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Search Old Student</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Type first, middle, or last name..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
+                  {oldStudents.length > 0 && (
+                    <div className="border p-2 mt-1" style={{ maxHeight: "150px", overflowY: "auto" }}>
+                      {oldStudents.map(s => (
+                        <div key={s._id} style={{ padding: "4px", cursor: "pointer" }}
+                          onClick={() => handleSelectOldStudent(s)}>
+                          {s.firstName} {s.middleName} {s.lastName}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Form.Group>
               )}
-            </Form.Group>
+
+              {/* Student Basic Info */}
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control type="text" name="firstName" value={formData.firstName} onChange={handleChange} required disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Middle Name (Optional)</Form.Label>
+                    <Form.Control type="text" name="middleName" value={formData.middleName} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control type="text" name="lastName" value={formData.lastName} onChange={handleChange} required disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Suffix (Optional)</Form.Label>
+                    <Form.Control type="text" name="suffix" value={formData.suffix} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              {/* Gender & Birthdate */}
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Gender</Form.Label>
+                    <Form.Select name="gender" value={formData.gender} onChange={handleChange} disabled={disabled}>
+                      <option>Male</option>
+                      <option>Female</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Birthdate</Form.Label>
+                    <Form.Control type="date" name="birthdate" value={formData.birthdate} onChange={handleChange} required disabled={disabled} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              {/* Address */}
+              <h5 className="mt-3">Address</h5>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Street</Form.Label>
+                    <Form.Control type="text" name="address.street" value={formData.address.street} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Barangay</Form.Label>
+                    <Form.Control type="text" name="address.barangay" value={formData.address.barangay} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>City</Form.Label>
+                    <Form.Control type="text" name="address.city" value={formData.address.city} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Province</Form.Label>
+                    <Form.Control type="text" name="address.province" value={formData.address.province} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <div className="d-flex justify-content-end mt-3">
+                <Button variant="secondary" onClick={() => setShowContact(true)}>
+                  Continue <FeatherIcon icon="chevron-right" />
+                </Button>
+              </div>
+            </>
           )}
 
-          {/* Student Basic Info */}
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>First Name</Form.Label>
-                <Form.Control type="text" name="firstName" value={formData.firstName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Middle Name</Form.Label>
-                <Form.Control type="text" name="middleName" value={formData.middleName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
+          {/* Step 2: Contact Info */}
+          {showContact && (
+            <>
+              <h5 className="mt-3">Contact Person</h5>
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control type="text" name="contact.firstName" value={formData.contact.firstName} onChange={handleChange} required disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>Middle Name (Optional)</Form.Label>
+                    <Form.Control type="text" name="contact.middleName" value={formData.contact.middleName} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control type="text" name="contact.lastName" value={formData.contact.lastName} onChange={handleChange} required disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>Suffix (Optional)</Form.Label>
+                    <Form.Control type="text" name="contact.suffix" value={formData.contact.suffix} onChange={handleChange} disabled={disabled} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>Relationship</Form.Label>
+                    <Form.Select
+                      name="contact.relationship"
+                      value={formData.contact.relationship}
+                      onChange={handleChange}
+                      disabled={disabled}
+                      required
+                    >
+                      <option value="">-- Select Relationship --</option>
+                      <option value="Father">Father</option>
+                      <option value="Mother">Mother</option>
+                      <option value="Guardian">Guardian</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Relative">Relative</option>
+                      <option value="Other">Other</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control type="text" name="lastName" value={formData.lastName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Suffix</Form.Label>
-                <Form.Control type="text" name="suffix" value={formData.suffix} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
+              <div className="d-flex justify-content-end gap-2 mt-3">
+                <Button variant="secondary" onClick={() => setShowContact(false)}>
+                  <FeatherIcon icon="chevron-left" /> Back
+                </Button>
+                <Button type="submit" variant="primary">
+                  Next <FeatherIcon icon="chevron-right" />
+                </Button>
+              </div>
 
-          {/* Gender & Birthdate */}
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Gender</Form.Label>
-                <Form.Select name="gender" value={formData.gender} onChange={handleChange} disabled={disabled}>
-                  <option>Male</option>
-                  <option>Female</option>
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Birthdate</Form.Label>
-                <Form.Control type="date" name="birthdate" value={formData.birthdate} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Address */}
-          <h5 className="mt-3">Address</h5>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Street</Form.Label>
-                <Form.Control type="text" name="address.street" value={formData.address.street} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Barangay</Form.Label>
-                <Form.Control type="text" name="address.barangay" value={formData.address.barangay} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>City</Form.Label>
-                <Form.Control type="text" name="address.city" value={formData.address.city} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Province</Form.Label>
-                <Form.Control type="text" name="address.province" value={formData.address.province} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Contact Person */}
-          <h5 className="mt-3">Contact Person</h5>
-          <Row>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>First Name</Form.Label>
-                <Form.Control type="text" name="contact.firstName" value={formData.contact.firstName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Middle Name</Form.Label>
-                <Form.Control type="text" name="contact.middleName" value={formData.contact.middleName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control type="text" name="contact.lastName" value={formData.contact.lastName} onChange={handleChange} required disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Suffix</Form.Label>
-                <Form.Control type="text" name="contact.suffix" value={formData.contact.suffix} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Relationship</Form.Label>
-                <Form.Control type="text" name="contact.relationship" value={formData.contact.relationship} onChange={handleChange} disabled={disabled} />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <div className="d-flex justify-content-end mt-3">
-            <Button type="submit" variant="primary">
-              Next <FeatherIcon icon="chevron-right" />
-            </Button>
-          </div>
+            </>
+          )}
         </Form>
       </Card>
     </Container>
