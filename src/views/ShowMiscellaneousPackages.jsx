@@ -57,8 +57,9 @@ export default function ShowMiscellaneousPackages() {
     });
 
     const data = await res.json();
+    console.log(data)
     if (data.success) {
-      return data.names;
+      return data.miscs.map((m) => m.name);
     }
     return [];
   }

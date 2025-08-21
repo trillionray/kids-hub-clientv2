@@ -1,261 +1,135 @@
-import { useState, useEffect, useContext } from "react";
-import { Button, Modal, Form, InputGroup } from "react-bootstrap";
-import { Notyf } from "notyf";
-import FeatherIcon from "feather-icons-react";
-import UserContext from "../context/UserContext";
+import { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-import { Link } from "react-router-dom";
+import { Notyf } from "notyf";
+import { Spinner } from "react-bootstrap";
 
-export default function ShowMiscellaneous() {
-  const { user } = useContext(UserContext);
-  const notyf = new Notyf();
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  const [miscList, setMiscList] = useState([]);
+export default function ShowAllUsers() {
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [filterText, setFilterText] = useState("");
+  const API_URL = import.meta.env.VITE_API_URL;
+  const notyf = new Notyf();
 
-  // Edit modal state
-  const [showModal, setShowModal] = useState(false);
-  const [currentMisc, setCurrentMisc] = useState(null);
-
+  // Fetch all users
   useEffect(() => {
-    fetchMiscellaneous();
+    fetch(`${API_URL}/users`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else {
+          notyf.error(data.message || "Error fetching users");
+        }
+      })
+      .catch(() => notyf.error("Server error"))
+      .finally(() => setLoading(false));
   }, []);
 
-  function fetchMiscellaneous() {
-    setLoading(true);
-    fetch(`${API_URL}/miscellaneous`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setMiscList(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        notyf.error("Failed to fetch Miscellaneous data");
-        setLoading(false);
-      });
-  }
-
-  // Handle delete
-  function handleDelete(id) {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-
-    fetch(`${API_URL}/miscellaneous/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          notyf.success(data.message);
-          fetchMiscellaneous();
-        } else {
-          notyf.error(data.message || "Delete failed");
-        }
-      })
-      .catch(() => notyf.error("Server error. Please try again."));
-  }
-
-  // Handle update submit
-  function handleUpdateSubmit(e) {
-    e.preventDefault();
-
-    fetch(`${API_URL}/miscellaneous/${currentMisc._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({
-        name: currentMisc.name,
-        price: currentMisc.price,
-        is_active: currentMisc.is_active,
-        created_by: currentMisc.created_by,
-        last_updated_by: user.username
-      })
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          notyf.success(data.message);
-          setShowModal(false);
-          fetchMiscellaneous();
-        } else {
-          notyf.error(data.message || "Update failed");
-        }
-      })
-      .catch(() => notyf.error("Server error. Please try again."));
-  }
-
-  // Open modal
-  function openEditModal(misc) {
-    setCurrentMisc({ ...misc });
-    setShowModal(true);
-  }
-
-  if (loading) return <h4>Loading Miscellaneous...</h4>;
-
+  // Table columns
   const columns = [
     {
-      name: "No.",
-      selector: (row, index) => index + 1 + " )",
-      width: "60px",
-      center: true,
+      name: "ID",
+      selector: (row) => row._id,
+      sortable: true,
+      wrap: true,
     },
     {
-      name: "Name",
-      selector: (row) => row.name,
-      sortable: true
+      name: "First Name",
+      selector: (row) => row.firstName,
+      sortable: true,
     },
     {
-      name: "Price",
-      selector: (row) => `₱${row.price}`,
-      sortable: true
+      name: "Last Name",
+      selector: (row) => row.lastName,
+      sortable: true,
+    },
+    {
+      name: "Username",
+      selector: (row) => row.username,
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+      wrap: true,
+    },
+    {
+      name: "Role",
+      selector: (row) => row.role,
+      sortable: true,
+    },
+    {
+      name: "Created",
+      selector: (row) =>
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A",
+      sortable: true,
+    },
+    {
+      name: "Updated",
+      selector: (row) =>
+        row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : "N/A",
+      sortable: true,
     },
     {
       name: "Actions",
       cell: (row) => (
-        <>
-          <Button
-            size="sm"
-            variant="warning"
-            className="me-2 rounded-pill"
-            onClick={() => openEditModal(row)}
-          >
-            <FeatherIcon icon="edit" size="14" />
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            className="rounded-pill"
-            onClick={() => handleDelete(row._id)}
-          >
-            <FeatherIcon icon="trash-2" size="14" />
-          </Button>
-        </>
-      )
-    }
+        <div>
+          <button className="btn btn-warning btn-sm me-2" disabled>
+            Update
+          </button>
+          <button className="btn btn-danger btn-sm" disabled>
+            Delete
+          </button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
   ];
 
-  // Filter the data based on search
-  const filteredData = miscList.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    String(item.price).includes(search)
+  // Filtering
+  const filteredUsers = users.filter(
+    (user) =>
+      user.firstName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.username?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.email?.toLowerCase().includes(filterText.toLowerCase())
   );
 
   return (
-    <div className="p-3">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Miscellaneous List</h3>
-        
-        <Link to="/miscellaneous/add">
-          <Button variant="primary" className="p-2 rounded-pill me-5">
-            <FeatherIcon icon="plus" size="14" />
-          </Button>
-        </Link>
-      </div>
+    <div className="container mt-4">
+      <h3 className="px-2">All Users</h3>
 
-      {/* Search Bar */}
-      <input
-        type="text"
-        placeholder="Search..."
-        className="form-control mb-3"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredData}
-        progressPending={loading}
-        pagination
-        highlightOnHover
-        striped
-        responsive
-        noDataComponent="No Miscellaneous found"
-        conditionalRowStyles={[
-          {
-            when: row => row.is_active === false,
-            style: {
-              backgroundColor: "#f0f0f0",
-              color: "#6c757d",
-              textDecoration: "line-through",
-              fontStyle: "italic"
-            }
-          }
-        ]}
-        customStyles={{
-          rows: {
-            style: {
-              paddingTop: "12px",
-              paddingBottom: "12px",
-            },
-          },
-        }}
-      />
-
-      {/* Edit Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Miscellaneous</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleUpdateSubmit}>
-          <Modal.Body>
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FeatherIcon icon="tag" />
-              </InputGroup.Text>
-              <Form.Control
-                type="text"
-                value={currentMisc?.name || ""}
-                onChange={(e) =>
-                  setCurrentMisc((prev) => ({ ...prev, name: e.target.value }))
-                }
-                required
-              />
-            </InputGroup>
-
-            <InputGroup className="mb-3">
-              <InputGroup.Text>₱</InputGroup.Text>
-              <Form.Control
-                type="number"
-                step="0.01"
-                value={currentMisc?.price || ""}
-                onChange={(e) =>
-                  setCurrentMisc((prev) => ({ ...prev, price: e.target.value }))
-                }
-                required
-              />
-            </InputGroup>
-
-            <Form.Group>
-              <Form.Check
-                type="checkbox"
-                label="Is Active"
-                checked={currentMisc?.is_active || false}
-                onChange={(e) =>
-                  setCurrentMisc((prev) => ({
-                    ...prev,
-                    is_active: e.target.checked
-                  }))
-                }
-              />
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" className="rounded-pill" onClick={() => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" className="rounded-pill">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+      {loading ? (
+        <Spinner animation="border" />
+      ) : (
+        <>
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search users..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+            />
+          </div>
+          <DataTable
+            columns={columns}
+            data={filteredUsers}
+            pagination
+            highlightOnHover
+            striped
+            dense
+            noDataComponent="No users found"
+          />
+        </>
+      )}
     </div>
   );
 }

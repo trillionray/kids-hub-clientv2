@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Table, Button, Modal } from "react-bootstrap";
+import DataTable from "react-data-table-component";
+import { Button, Modal } from "react-bootstrap";
 import { Notyf } from "notyf";
 
 export default function Enrollments() {
@@ -10,6 +11,7 @@ export default function Enrollments() {
   const [loading, setLoading] = useState(true);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [filterText, setFilterText] = useState("");
 
   useEffect(() => {
     fetchEnrollments();
@@ -18,11 +20,15 @@ export default function Enrollments() {
   const fetchEnrollments = () => {
     setLoading(true);
     fetch(`${API_URL}/enrollments`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        setEnrollments(data);
+        if (Array.isArray(data)) {
+          setEnrollments(data);
+        } else {
+          notyf.error("Invalid response from server");
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -36,51 +42,82 @@ export default function Enrollments() {
     setShowModal(true);
   };
 
-  if (loading) return <h4>Loading Enrollments...</h4>;
+  // Columns for DataTable
+  const columns = [
+    {
+      name: "Student ID",
+      selector: (row) => row.student_id,
+      sortable: true,
+    },
+    {
+      name: "Program ID",
+      selector: (row) => row.program_id,
+      sortable: true,
+    },
+    {
+      name: "Branch",
+      selector: (row) => row.branch,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+    {
+      name: "Total (₱)",
+      selector: (row) => row.total,
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <Button size="sm" variant="info" onClick={() => openDetails(row)}>
+          Show Details
+        </Button>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
+  // Filtering
+  const filteredData = enrollments.filter(
+    (enroll) =>
+      enroll.student_id?.toLowerCase().includes(filterText.toLowerCase()) ||
+      enroll.program_id?.toLowerCase().includes(filterText.toLowerCase()) ||
+      enroll.branch?.toLowerCase().includes(filterText.toLowerCase()) ||
+      enroll.status?.toLowerCase().includes(filterText.toLowerCase())
+  );
 
   return (
     <div className="p-4 px-5">
-      <h3 className="mb-4">Enrollments</h3>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Student ID</th>
-            <th>Program ID</th>
-            <th>Branch</th>
-            <th>Status</th>
-            <th>Total (₱)</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {enrollments.length > 0 ? (
-            enrollments.map((enroll) => (
-              <tr key={enroll._id}>
-                <td>{enroll.student_id}</td>
-                <td>{enroll.program_id}</td>
-                <td>{enroll.branch}</td>
-                <td>{enroll.status}</td>
-                <td>{enroll.total}</td>
-                <td>
-                  <Button
-                    size="sm"
-                    variant="info"
-                    onClick={() => openDetails(enroll)}
-                  >
-                    Show Details
-                  </Button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6" className="text-center">
-                No enrollments found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </Table>
+      <h3 className="mb-3">Enrollments</h3>
+
+      {/* Search box */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search enrollments..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+        />
+      </div>
+
+      {/* DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        progressPending={loading}
+        pagination
+        highlightOnHover
+        striped
+        dense
+        responsive
+        noDataComponent="No enrollments found"
+      />
 
       {/* Details Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Table, Button, Modal, Form } from "react-bootstrap";
+import DataTable from "react-data-table-component";
+import { Button, Modal, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 
@@ -9,18 +10,13 @@ export default function ShowStudents() {
 
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredStudents, setFilteredStudents] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [filterText, setFilterText] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchStudents();
   }, []);
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, students]);
 
   const fetchStudents = () => {
     setLoading(true);
@@ -31,9 +27,11 @@ export default function ShowStudents() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
-        setStudents(data.students);
-        setFilteredStudents(data.students);
+        if (data?.students) {
+          setStudents(data.students);
+        } else {
+          notyf.error("Failed to load students");
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -42,75 +40,85 @@ export default function ShowStudents() {
       });
   };
 
-  const handleSearch = () => {
-    const term = searchTerm.toLowerCase();
-    const filtered = students.filter(
-      (student) =>
-        student._id.toLowerCase().includes(term) ||
-        student.firstName.toLowerCase().includes(term) ||
-        student.middleName.toLowerCase().includes(term) ||
-        student.lastName.toLowerCase().includes(term)
-    );
-    setFilteredStudents(filtered);
-  };
-
   const handleShowDetails = (student) => {
     setSelectedStudent(student);
     setShowModal(true);
   };
 
-  if (loading) return <h4>Loading students...</h4>;
+  // Columns for DataTable
+  const columns = [
+    {
+      name: "ID",
+      selector: (row) => row._id,
+      sortable: true,
+      wrap: true,
+    },
+    {
+      name: "First Name",
+      selector: (row) => row.firstName,
+      sortable: true,
+    },
+    {
+      name: "Middle Name",
+      selector: (row) => row.middleName,
+      sortable: true,
+    },
+    {
+      name: "Last Name",
+      selector: (row) => row.lastName,
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <Button
+          size="sm"
+          variant="info"
+          onClick={() => handleShowDetails(row)}
+        >
+          <FeatherIcon icon="eye" size="14" /> Details
+        </Button>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
+  // Filtering
+  const filteredStudents = students.filter(
+    (student) =>
+      student._id?.toLowerCase().includes(filterText.toLowerCase()) ||
+      student.firstName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      student.middleName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      student.lastName?.toLowerCase().includes(filterText.toLowerCase())
+  );
 
   return (
     <div className="p-5 px-5">
       <h3 className="mb-4">Students</h3>
 
+      {/* Search box */}
       <Form.Control
         type="text"
         placeholder="Search by ID, First, Middle, or Last Name"
         className="mb-3"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={filterText}
+        onChange={(e) => setFilterText(e.target.value)}
       />
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>First Name</th>
-            <th>Middle Name</th>
-            <th>Last Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredStudents.length > 0 ? (
-            filteredStudents.map((student) => (
-              <tr key={student._id}>
-                <td>{student._id}</td>
-                <td>{student.firstName}</td>
-                <td>{student.middleName}</td>
-                <td>{student.lastName}</td>
-                <td>
-                  <Button
-                    size="sm"
-                    variant="info"
-                    onClick={() => handleShowDetails(student)}
-                  >
-                    <FeatherIcon icon="eye" size="14" /> Details
-                  </Button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className="text-center">
-                No students found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </Table>
+      {/* DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredStudents}
+        progressPending={loading}
+        pagination
+        highlightOnHover
+        striped
+        dense
+        responsive
+        noDataComponent="No students found"
+      />
 
       {/* Modal for Student Details */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>

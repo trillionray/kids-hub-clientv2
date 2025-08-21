@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spinner } from "react-bootstrap";
+import DataTable from "react-data-table-component";
 import { Notyf } from "notyf";
+import { Spinner } from "react-bootstrap";
 
 export default function ShowAllUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterText, setFilterText] = useState("");
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
 
@@ -12,12 +14,11 @@ export default function ShowAllUsers() {
   useEffect(() => {
     fetch(`${API_URL}/users`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      }
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         if (Array.isArray(data)) {
           setUsers(data);
         } else {
@@ -28,74 +29,110 @@ export default function ShowAllUsers() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Table columns
+  const columns = [
+    {
+      name: "ID",
+      selector: (row) => row._id,
+      sortable: true,
+      wrap: true,
+    },
+    {
+      name: "First Name",
+      selector: (row) => row.firstName,
+      sortable: true,
+    },
+    {
+      name: "Last Name",
+      selector: (row) => row.lastName,
+      sortable: true,
+    },
+    {
+      name: "Username",
+      selector: (row) => row.username,
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+      wrap: true,
+    },
+    {
+      name: "Role",
+      selector: (row) => row.role,
+      sortable: true,
+    },
+    {
+      name: "Created",
+      selector: (row) =>
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A",
+      sortable: true,
+    },
+    {
+      name: "Updated",
+      selector: (row) =>
+        row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : "N/A",
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div>
+          <button className="btn btn-warning btn-sm me-2" disabled>
+            Update
+          </button>
+          <button className="btn btn-danger btn-sm" disabled>
+            Delete
+          </button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
+  // Filtering
+  const filteredUsers = users.filter(
+    (user) =>
+      user.firstName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.username?.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.email?.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
-    <div className="container mt-4">
-      <h3 className="px-5">All Users</h3>
+    <div className="container mt-4 px-5">
+      <h3 className="px-2">All Users</h3>
+
       {loading ? (
         <Spinner animation="border" />
       ) : (
-        <div style={{ overflowX: "auto" }} className="px-4">
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>ID</th> {/* Added ID column */}
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="text-center">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user._id}>
-                    <td style={{ whiteSpace: "normal", wordBreak: "break-word", maxWidth: "220px" }}>
-                      {user._id}
-                    </td>
-                    <td style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{user.firstName}</td>
-                    <td style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{user.lastName}</td>
-                    <td style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{user.username}</td>
-                    <td style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString()
-                        : "N/A"}
-                    </td>
-                    <td>
-                      {user.updatedAt
-                        ? new Date(user.updatedAt).toLocaleDateString()
-                        : "N/A"}
-                    </td>
-                    <td>
-                      <Button
-                        variant="warning"
-                        size="sm"
-                        className="me-2"
-                        disabled
-                      >
-                        Update
-                      </Button>
-                      <Button variant="danger" size="sm" disabled>
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-        </div>
+        <>
+          {/* Search box */}
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search users..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+            />
+          </div>
+
+          {/* DataTable */}
+          <DataTable
+            columns={columns}
+            data={filteredUsers}
+            pagination
+            highlightOnHover
+            striped
+            dense
+            responsive
+            noDataComponent="No users found"
+          />
+        </>
       )}
     </div>
   );
