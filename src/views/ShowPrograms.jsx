@@ -43,7 +43,9 @@ export default function ShowPrograms() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then((data) => setMiscGroups(data))
+      .then((data) => {
+        console.log(data);
+        setMiscGroups(data)})
       .catch(() => notyf.error("Failed to fetch miscellaneous groups"));
   }
 

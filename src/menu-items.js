@@ -43,6 +43,24 @@ const menuItems = {
         }
       ]
     },
+
+    {
+      id: 'classes',
+      title: 'Classes',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'show-classes',
+          title: 'Show Classes',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/classes'
+        }
+      ]
+    },
+
     {
       id: 'enrollments',
       title: 'Enrollments',

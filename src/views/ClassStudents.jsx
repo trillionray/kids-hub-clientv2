@@ -1,0 +1,200 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import DataTable from "react-data-table-component";
+import { Button, Modal, Form } from "react-bootstrap";
+import { Notyf } from "notyf";
+
+export default function ClassStudents() {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const notyf = new Notyf();
+  const { id } = useParams(); // class id
+
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showModal, setShowModal] = useState(false);
+  const [allStudents, setAllStudents] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // Fetch students in this class
+  const fetchStudents = () => {
+    setLoading(true);
+    fetch(`${API_URL}/class/${id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Class data:", data);
+
+        // if backend returns just IDs (["id1", "id2"]) we need to fetch details
+        if (Array.isArray(data.students)) {
+          setStudents(data.students);
+        } else {
+          notyf.error(data.message || "Error fetching students");
+        }
+      })
+      .catch(() => notyf.error("Server error"))
+      .finally(() => setLoading(false));
+  };
+
+  // Fetch all students (for modal)
+  const fetchAllStudents = () => {
+    fetch(`${API_URL}/students`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("All students:", data);
+        if (Array.isArray(data)) {
+          setAllStudents(data);
+        } else if (Array.isArray(data.students)) {
+          setAllStudents(data.students);
+        } else {
+          notyf.error(data.message || "Error fetching all students");
+        }
+      })
+      .catch(() => notyf.error("Server error"));
+  };
+
+  // Assign student to class
+  const handleAssignStudent = (student) => {
+    fetch(`${API_URL}/class/${id}/students`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        students: [student._id], // ✅ send only array of IDs
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Assign response:", data);
+        if (data.class) {
+          notyf.success("Student added successfully");
+          fetchStudents();
+          setShowModal(false);
+        } else notyf.error(data.message || "Failed to add student");
+      })
+      .catch((err) => notyf.error(err || "Server error"));
+  };
+
+  // Remove student from class
+  const handleRemoveStudent = (studId) => {
+    if (!window.confirm("Remove this student?")) return;
+    fetch(`${API_URL}/class/${id}/students/${studId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.class) {
+          notyf.success("Student removed successfully");
+          fetchStudents();
+        } else notyf.error(data.message || "Failed to remove student");
+      })
+      .catch(() => notyf.error("Server error"));
+  };
+
+  // If `students` is only an array of IDs, we need to map IDs -> full details from allStudents
+  const studentsWithDetails = students.map((id) => {
+    const student = allStudents.find((s) => s._id === id);
+    return student ? student : { _id: id, firstName: "Unknown", lastName: "" };
+  });
+
+  const classColumns = [
+    { name: "Student ID", selector: (row) => row._id, sortable: true },
+    {
+      name: "Name",
+      selector: (row) =>
+        `${row.firstName || ""} ${row.middleName || ""} ${row.lastName || ""}`.trim(),
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <Button size="sm" variant="danger" onClick={() => handleRemoveStudent(row._id)}>
+          Remove
+        </Button>
+      ),
+    },
+  ];
+
+  const modalColumns = [
+    { name: "Student ID", selector: (row) => row._id, sortable: true },
+    {
+      name: "Name",
+      selector: (row) =>
+        `${row.firstName || ""} ${row.middleName || ""} ${row.lastName || ""}`.trim(),
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <Button size="sm" variant="success" onClick={() => handleAssignStudent(row)}>
+          Add
+        </Button>
+      ),
+    },
+  ];
+
+  const filteredStudents = allStudents.filter((s) => {
+    const fullName = `${s.firstName || ""} ${s.middleName || ""} ${s.lastName || ""}`.toLowerCase();
+    return fullName.includes(search.toLowerCase());
+  });
+
+  return (
+    <div className="p-4">
+      <div className="d-flex justify-content-between mb-3">
+        <h3>Students in Class</h3>
+        <Button
+          variant="primary"
+          onClick={() => {
+            fetchAllStudents();
+            setShowModal(true);
+          }}
+        >
+          Add Student
+        </Button>
+      </div>
+
+      <DataTable
+        columns={classColumns}
+        data={studentsWithDetails} // ✅ use mapped details
+        progressPending={loading}
+        pagination
+        highlightOnHover
+        responsive
+      />
+
+      {/* Add Student Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Select Student</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Control
+              type="text"
+              placeholder="Search students..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Form.Group>
+          <DataTable
+            columns={modalColumns}
+            data={filteredStudents}
+            pagination
+            highlightOnHover
+            responsive
+          />
+        </Modal.Body>
+      </Modal>
+    </div>
+  );
+}

@@ -30,6 +30,9 @@ const AddStudent = lazy(() => import('../views/AddStudent.jsx'));
 const ShowStudents = lazy(() => import('../views/ShowStudents.jsx'));
 const Enroll = lazy(() => import('../views/Enroll.jsx'));
 const Enrollments = lazy(() => import('../views/Enrollments.jsx'));
+const Classes = lazy(() => import('../views/Classes.jsx'));
+const ClassStudents = lazy(() => import('../views/ClassStudents.jsx')); // ✅ new page
+
 
 const ErrorPage = () => <h1>Page Not Found</h1>;
 
@@ -55,13 +58,14 @@ const router = createBrowserRouter(
           // element: <Dashboard />,
           children: [
             // Pages (no default redirect)
-            { path: 'dashboard/home', element: <h1>Welcome to Dashboard</h1> },
+            { path: '/dashboard/home', element: <h1>Welcome to Dashboard</h1> },
             { path: 'register', element: <Register /> },
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
             { path: 'logout', element: <Logout /> },
             { path: 'students/add', element: <AddStudent /> },
             { path: 'students', element: <ShowStudents /> },
+            { path: 'classes/:id/students', element: <ClassStudents /> },
             { path: 'enroll', element: <Enroll /> },
             { path: 'enrollments', element: <Enrollments /> },
             { path: 'academic-year/add', element: <AddAcademicYear /> },
@@ -72,6 +76,8 @@ const router = createBrowserRouter(
             { path: 'miscellaneous-package', element: <ShowMiscellaneousPackages /> },
             { path: 'programs/add', element: <AddProgram /> },
             { path: 'programs', element: <ShowPrograms /> },
+            { path: 'classes', element: <Classes /> },
+
             { path: 'typography', element: <Typography /> },
             { path: 'color', element: <Color /> },
             { path: 'icons/Feather', element: <FeatherIcon /> },
