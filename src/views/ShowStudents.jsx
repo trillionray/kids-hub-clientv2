@@ -140,18 +140,21 @@ export default function ShowStudents() {
               </p>
 
               <hr />
-              <h6>Contact Person</h6>
-              <p>
-                <strong>Name:</strong>{" "}
-                {selectedStudent.contact.firstName}{" "}
-                {selectedStudent.contact.middleName}{" "}
-                {selectedStudent.contact.lastName}{" "}
-                {selectedStudent.contact.suffix}
-              </p>
-              <p>
-                <strong>Relationship:</strong>{" "}
-                {selectedStudent.contact.relationship}
-              </p>
+              <h6>Contact Persons</h6>
+              {selectedStudent.contacts && selectedStudent.contacts.length > 0 ? (
+                selectedStudent.contacts.map((contact, idx) => (
+                  <div key={idx} className="mb-2 p-2 border rounded">
+                    <p>
+                      <strong>Name:</strong>{" "}
+                      {contact.firstName} {contact.middleName} {contact.lastName} {contact.suffix}
+                    </p>
+                    <p><strong>Relationship:</strong> {contact.relationship}</p>
+                    <p><strong>Contact #:</strong> {contact.contact_number}</p>
+                  </div>
+                ))
+              ) : (
+                <p>No contacts available.</p>
+              )}
             </>
           )}
         </Modal.Body>

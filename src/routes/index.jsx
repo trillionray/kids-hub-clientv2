@@ -33,6 +33,9 @@ const Enrollments = lazy(() => import('../views/Enrollments.jsx'));
 const Classes = lazy(() => import('../views/Classes.jsx'));
 const ClassStudents = lazy(() => import('../views/ClassStudents.jsx')); // ✅ new page
 
+const AttendanceClasses = lazy(() => import('../views/AttendanceClasses.jsx'));
+const AttendanceStudents = lazy(() => import('../views/AttendanceStudents.jsx'));
+
 
 const ErrorPage = () => <h1>Page Not Found</h1>;
 
@@ -77,6 +80,8 @@ const router = createBrowserRouter(
             { path: 'programs/add', element: <AddProgram /> },
             { path: 'programs', element: <ShowPrograms /> },
             { path: 'classes', element: <Classes /> },
+            { path: 'attendance/class-students/:classId', element: <AttendanceStudents /> },
+            { path: 'attendance/class', element: <AttendanceClasses /> },
 
             { path: 'typography', element: <Typography /> },
             { path: 'color', element: <Color /> },

@@ -62,6 +62,23 @@ const menuItems = {
     },
 
     {
+      id: 'attendance',
+      title: 'Attendance',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'show-attendance',
+          title: 'Show Attendance',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/attendance/class'
+        }
+      ]
+    },
+
+    {
       id: 'enrollments',
       title: 'Enrollments',
       type: 'group',

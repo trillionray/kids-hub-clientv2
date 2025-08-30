@@ -22,24 +22,23 @@ export default function ClassStudents() {
 
   // Fetch students in this class
   const fetchStudents = () => {
-    setLoading(true);
-    fetch(`${API_URL}/class/${id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Class data:", data);
+  setLoading(true);
+  fetch(`${API_URL}/class/${id}/students`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Class students:", data);
 
-        // if backend returns just IDs (["id1", "id2"]) we need to fetch details
-        if (Array.isArray(data.students)) {
-          setStudents(data.students);
-        } else {
-          notyf.error(data.message || "Error fetching students");
-        }
-      })
-      .catch(() => notyf.error("Server error"))
-      .finally(() => setLoading(false));
-  };
+      if (Array.isArray(data)) {
+        setStudents(data); // ✅ now we directly set full student docs
+      } else {
+        notyf.error(data.message || "Error fetching students");
+      }
+    })
+    .catch(() => notyf.error("Server error"))
+    .finally(() => setLoading(false));
+};
 
   // Fetch all students (for modal)
   const fetchAllStudents = () => {
@@ -165,7 +164,7 @@ export default function ClassStudents() {
 
       <DataTable
         columns={classColumns}
-        data={studentsWithDetails} // ✅ use mapped details
+        data={students}
         progressPending={loading}
         pagination
         highlightOnHover

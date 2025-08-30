@@ -18,7 +18,16 @@ export default function AddStudent() {
     birthdate: "",
     studentType: "new",
     address: { street: "", barangay: "", city: "", province: "" },
-    contact: { firstName: "", middleName: "", lastName: "", suffix: "", relationship: "" }
+    contacts: [] // ✅ now an array
+  });
+
+  const [contactForm, setContactForm] = useState({
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    suffix: "",
+    relationship: "",
+    contact_number: ""
   });
 
   const [showContact, setShowContact] = useState(false);
@@ -31,7 +40,7 @@ export default function AddStudent() {
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
       fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`
         },
@@ -52,7 +61,7 @@ export default function AddStudent() {
       setFormData(prev => ({ ...prev, address: { ...prev.address, [field]: value } }));
     } else if (name.startsWith("contact.")) {
       const field = name.split(".")[1];
-      setFormData(prev => ({ ...prev, contact: { ...prev.contact, [field]: value } }));
+      setContactForm(prev => ({ ...prev, [field]: value }));
     } else if (name === "studentType") {
       setFormData(prev => ({ ...prev, studentType: value }));
       if (value === "new") {
@@ -60,8 +69,9 @@ export default function AddStudent() {
           firstName: "", middleName: "", lastName: "", suffix: "",
           gender: "Male", birthdate: "", studentType: "new",
           address: { street: "", barangay: "", city: "", province: "" },
-          contact: { firstName: "", middleName: "", lastName: "", suffix: "", relationship: "" }
+          contacts: []
         });
+        setContactForm({ firstName: "", middleName: "", lastName: "", suffix: "", relationship: "", contact_number: "" });
         setSearchQuery("");
         setOldStudents([]);
         setIsOldStudentSelected(false);
@@ -81,22 +91,50 @@ export default function AddStudent() {
     setShowContact(true);
   };
 
+  const addContact = () => {
+    if (formData.contacts.length >= 3) {
+      notyf.error("You can only add up to 3 contacts.");
+      return;
+    }
+    if (!contactForm.firstName || !contactForm.lastName || !contactForm.relationship || !contactForm.contact_number) {
+      notyf.error("Please fill all required contact fields.");
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, contacts: [...prev.contacts, contactForm] }));
+    setContactForm({ firstName: "", middleName: "", lastName: "", suffix: "", relationship: "", contact_number: "" });
+  };
+
+  const removeContact = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      contacts: prev.contacts.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (formData.contacts.length === 0) {
+      notyf.error("Please add at least one contact person.");
+      return;
+    }
+
     Swal.fire({
       title: "Confirm Student",
       html: `
         <p><strong>First Name:</strong> ${formData.firstName}</p>
-        <p><strong>Middle Name:</strong> ${formData.middleName}</p>
         <p><strong>Last Name:</strong> ${formData.lastName}</p>
         <p><strong>Gender:</strong> ${formData.gender}</p>
         <p><strong>Birthdate:</strong> ${formData.birthdate}</p>
         <p><strong>Address:</strong> ${formData.address.street}, ${formData.address.barangay}, ${formData.address.city}, ${formData.address.province}</p>
-        <p><strong>Contact:</strong> ${formData.contact.firstName} ${formData.contact.middleName} ${formData.contact.lastName} (${formData.contact.relationship})</p>
+        <hr/>
+        <p><strong>Contacts:</strong></p>
+        ${formData.contacts.map(c => `<p>${c.firstName} ${c.lastName} (${c.relationship}) - ${c.contact_number}</p>`).join("")}
       `,
       icon: "info",
       showCancelButton: true,
-      confirmButtonText: "Continue",
+      confirmButtonText: "Continue to Enrollment",
       cancelButtonText: "Cancel"
     }).then(result => {
       if (result.isConfirmed) {
@@ -132,7 +170,7 @@ export default function AddStudent() {
                   <Form.Label>Search Old Student</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Type first, middle, or last name..." 
+                    placeholder="Type first, middle, or last name..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
@@ -241,53 +279,109 @@ export default function AddStudent() {
           {/* Step 2: Contact Info */}
           {showContact && (
             <>
-              <h5 className="mt-3">Contact Person</h5>
-              <Row className="g-3">
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control type="text" name="contact.firstName" value={formData.contact.firstName} onChange={handleChange} required disabled={disabled} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Middle Name (Optional)</Form.Label>
-                    <Form.Control type="text" name="contact.middleName" value={formData.contact.middleName} onChange={handleChange} disabled={disabled} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control type="text" name="contact.lastName" value={formData.contact.lastName} onChange={handleChange} required disabled={disabled} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Suffix (Optional)</Form.Label>
-                    <Form.Control type="text" name="contact.suffix" value={formData.contact.suffix} onChange={handleChange} disabled={disabled} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Relationship</Form.Label>
-                    <Form.Select
-                      name="contact.relationship"
-                      value={formData.contact.relationship}
-                      onChange={handleChange}
-                      disabled={disabled}
-                      required
-                    >
-                      <option value="">-- Select Relationship --</option>
-                      <option value="Father">Father</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Guardian">Guardian</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Relative">Relative</option>
-                      <option value="Other">Other</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
+              <h5 className="mt-3">Contact Persons</h5>
+
+              {/* Existing Contacts List */}
+              {formData.contacts.length > 0 && (
+                <div className="mb-3">
+                  {formData.contacts.map((c, index) => (
+                    <div key={index} className="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+                      <div>
+                        {c.firstName} {c.lastName} ({c.relationship}) - {c.contact_number}
+                      </div>
+                      <Button variant="danger" size="sm" onClick={() => removeContact(index)}>
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add New Contact */}
+              {formData.contacts.length < 3 && (
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>First Name</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="contact.firstName"
+                        value={contactForm.firstName}
+                        onChange={handleChange}
+                        required={contactForm.firstName !== ""}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Middle Name (Optional)</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="contact.middleName"
+                        value={contactForm.middleName}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Last Name</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="contact.lastName"
+                        value={contactForm.lastName}
+                        onChange={handleChange}
+                        required={contactForm.lastName !== ""}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Suffix (Optional)</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="contact.suffix"
+                        value={contactForm.suffix}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Relationship</Form.Label>
+                      <Form.Select
+                        name="contact.relationship"
+                        value={contactForm.relationship}
+                        onChange={handleChange}
+                        required={contactForm.relationship !== ""}
+                      >
+                        <option value="">-- Select Relationship --</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Guardian">Guardian</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Relative">Relative</option>
+                        <option value="Other">Other</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Contact Number</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="contact.contact_number"
+                        value={contactForm.contact_number}
+                        onChange={handleChange}
+                        required={contactForm.contact_number !== ""}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col xs={12}>
+                    <Button variant="success" onClick={addContact}>+ Add Contact</Button>
+                  </Col>
+                </Row>
+              )}
 
               <div className="d-flex justify-content-end gap-2 mt-3">
                 <Button variant="secondary" onClick={() => setShowContact(false)}>
@@ -297,7 +391,6 @@ export default function AddStudent() {
                   Next <FeatherIcon icon="chevron-right" />
                 </Button>
               </div>
-
             </>
           )}
         </Form>
