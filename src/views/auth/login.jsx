@@ -10,13 +10,13 @@ export default function Login() {
   const { user, setUser } = useContext(UserContext);
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  // 🔑 Use userId instead of username
+  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
-      // ✅ If already logged in, push to dashboard/home
       navigate("/dashboard/home", { replace: true });
     }
   }, [user, navigate]);
@@ -27,21 +27,19 @@ export default function Login() {
     fetch(`${import.meta.env.VITE_API_URL}/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ _id: userId, password }), // ✅ Send _id instead of username
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.access) {
           localStorage.setItem("token", data.access);
           retrieveUserDetails(data.access);
-          setUsername("");
+          setUserId("");
           setPassword("");
           notyf.success("You are now logged in");
-
-          // ✅ Navigate after setting user
           navigate("/dashboard/home", { replace: true });
         } else {
-          notyf.error(data.message || "Incorrect username or password");
+          notyf.error(data.message || "Invalid ID or password");
         }
       })
       .catch(() => notyf.error("Server not responding. Please wait."));
@@ -54,18 +52,17 @@ export default function Login() {
       .then((res) => res.json())
       .then((data) => {
         setUser({
-          id: data._id,
+          id: data._id, // ✅ user ID
           firstName: data.firstName,
           lastName: data.lastName,
-          username: data.username,
           role: data.role,
         });
       });
   }
 
   useEffect(() => {
-    setIsActive(username !== "" && password !== "");
-  }, [username, password]);
+    setIsActive(userId !== "" && password !== "");
+  }, [userId, password]);
 
   return (
     <div className="auth-wrapper">
@@ -78,13 +75,13 @@ export default function Login() {
                 <Form onSubmit={authenticate} className="m-0 p-0">
                   <InputGroup className="mb-3">
                     <InputGroup.Text>
-                      <FeatherIcon icon="user" />
+                      <FeatherIcon icon="hash" />
                     </InputGroup.Text>
                     <Form.Control
                       type="text"
-                      placeholder="Username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter your ID (e.g. AN202500001)"
+                      value={userId}
+                      onChange={(e) => setUserId(e.target.value)}
                       required
                     />
                   </InputGroup>
@@ -105,10 +102,12 @@ export default function Login() {
                     className="btn btn-block btn-primary mb-4"
                     disabled={!isActive}
                   >
-                    Signin
+                    Sign in
                   </Button>
                 </Form>
-                <p className="m-0">Created by <strong>Trillion Ray</strong></p>
+                <p className="m-0">
+                  Created by <strong>Trillion Ray</strong>
+                </p>
               </Card.Body>
             </Col>
           </Row>

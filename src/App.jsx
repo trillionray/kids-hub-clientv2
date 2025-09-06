@@ -50,7 +50,7 @@ export default function App() {
   // Debugging
   useEffect(() => {
     console.log("User:", user);
-    console.log("LocalStorage:", localStorage);
+    // console.log("LocalStorage:", localStorage);
   }, [user]);
 
   return (

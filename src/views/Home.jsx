@@ -12,9 +12,9 @@ export default function Home() {
     console.log("stored user:", storedUser);
   }, [storedUser, user]);
 
-  if (user?.role == null) {
-    window.location.replace("/login");
-  }
+  // if (user?.role == null) {
+  //   window.location.replace("/login");
+  // }
 
   return (
     <div className="mt-5 p-6">
@@ -22,8 +22,6 @@ export default function Home() {
       <h1 className="text-4xl font-extrabold text-center mb-8 text-blue-700">
         Kids Hub Enrollment System
       </h1>
-
-      
 
       {/* Get Started Button */}
       <div className="mt-5 text-center">

@@ -34,11 +34,12 @@ const Classes = lazy(() => import('../views/Classes.jsx'));
 const ClassStudents = lazy(() => import('../views/ClassStudents.jsx')); // ✅ new page
 
 const AttendanceClasses = lazy(() => import('../views/AttendanceClasses.jsx'));
-const AttendanceStudents = lazy(() => import('../views/AttendanceStudents.jsx'));
+const AttendanceStudents = lazy(() => import('../views/AttendanceStudents'));
 
 const Home = lazy(() => import('../views/Home.jsx'));
 
 const ErrorPage = lazy(() => import('../views/NotFound.jsx'));
+const ChangePassword = lazy(() => import('../views/auth/ChangePassword.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -65,7 +66,9 @@ const router = createBrowserRouter(
             // Pages (no default redirect)
             { path: '/', element: <Login /> },
             { path: 'login', element: <Login /> },
-            { path: '/dashboard/home', element: <Home/> },
+            
+            { path: 'dashboard/home', element: <Home/> },
+            { path: 'profile/change-password', element: <ChangePassword /> },
             { path: 'register', element: <Register /> },
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
