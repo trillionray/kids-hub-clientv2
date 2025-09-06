@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Form, Button, Card, Container, Alert, Spinner } from "react-bootstrap";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function ChangePassword() {
+  const navigate = useNavigate();
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,7 +16,8 @@ export default function ChangePassword() {
     setMessage("");
 
     if (newPassword !== confirmPassword) {
-      setMessage("❌ New password and confirmation do not match");
+      console.log("New password and confirmation do not match");
+      setMessage("New password and confirmation do not match");
       return;
     }
 
@@ -21,8 +25,8 @@ export default function ChangePassword() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:4000/api/users/change-password", {
-        method: "POST",
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/change-password`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
@@ -31,13 +35,16 @@ export default function ChangePassword() {
       });
 
       const data = await res.json();
+      console.log(data);
       if (!res.ok) throw new Error(data.message || "❌ Error changing password");
 
       setMessage(`✅ ${data.message}`);
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      navigate("/dashboard/home", { replace: true });
     } catch (err) {
+      console.log(err)
       setMessage(err.message);
     } finally {
       setLoading(false);

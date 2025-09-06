@@ -3,10 +3,12 @@ import DataTable from "react-data-table-component";
 import { Button, Modal, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
+import { useNavigate } from "react-router-dom";
 
 export default function ShowStudents() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate();
 
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,17 +57,17 @@ export default function ShowStudents() {
     },
     {
       name: "First Name",
-      selector: (row) => row.firstName,
+      selector: (row) => row.first_name,
       sortable: true,
     },
     {
       name: "Middle Name",
-      selector: (row) => row.middleName,
+      selector: (row) => row.middle_name,
       sortable: true,
     },
     {
       name: "Last Name",
-      selector: (row) => row.lastName,
+      selector: (row) => row.last_name,
       sortable: true,
     },
     {
@@ -89,14 +91,19 @@ export default function ShowStudents() {
   const filteredStudents = students.filter(
     (student) =>
       student._id?.toLowerCase().includes(filterText.toLowerCase()) ||
-      student.firstName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      student.middleName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      student.lastName?.toLowerCase().includes(filterText.toLowerCase())
+      student.first_name?.toLowerCase().includes(filterText.toLowerCase()) ||
+      student.middle_name?.toLowerCase().includes(filterText.toLowerCase()) ||
+      student.last_name?.toLowerCase().includes(filterText.toLowerCase())
   );
 
   return (
     <div className="p-5 px-5">
-      <h3 className="mb-4">Students</h3>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3 className="mb-0">Students</h3>
+        <Button variant="primary" onClick={() => navigate("/register")}>
+          <FeatherIcon icon="user-plus" size="16" /> Register Student
+        </Button>
+      </div>
 
       {/* Search box */}
       <Form.Control
@@ -129,32 +136,47 @@ export default function ShowStudents() {
           {selectedStudent && (
             <>
               <h5>
-                {selectedStudent.firstName} {selectedStudent.middleName}{" "}
-                {selectedStudent.lastName} {selectedStudent.suffix}
+                {selectedStudent.first_name} {selectedStudent.middle_name}{" "}
+                {selectedStudent.last_name} {selectedStudent.suffix}
               </h5>
               <p><strong>Gender:</strong> {selectedStudent.gender}</p>
               <p><strong>Birthdate:</strong> {selectedStudent.birthdate}</p>
               <p>
                 <strong>Address:</strong>{" "}
-                {`${selectedStudent.address.street}, ${selectedStudent.address.barangay}, ${selectedStudent.address.city}, ${selectedStudent.address.province}`}
+                {`${selectedStudent.address?.street || ""}, 
+                  ${selectedStudent.address?.barangay || ""}, 
+                  ${selectedStudent.address?.municipality_or_city || ""}`}
               </p>
 
               <hr />
-              <h6>Contact Persons</h6>
-              {selectedStudent.contacts && selectedStudent.contacts.length > 0 ? (
-                selectedStudent.contacts.map((contact, idx) => (
-                  <div key={idx} className="mb-2 p-2 border rounded">
-                    <p>
-                      <strong>Name:</strong>{" "}
-                      {contact.firstName} {contact.middleName} {contact.lastName} {contact.suffix}
-                    </p>
-                    <p><strong>Relationship:</strong> {contact.relationship}</p>
-                    <p><strong>Contact #:</strong> {contact.contact_number}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No contacts available.</p>
-              )}
+              <h6>Mother</h6>
+              <p>
+                {selectedStudent.mother?.first_name}{" "}
+                {selectedStudent.mother?.middle_name}{" "}
+                {selectedStudent.mother?.last_name}
+              </p>
+              <p><strong>Occupation:</strong> {selectedStudent.mother?.occupation}</p>
+              <p><strong>Mobile:</strong> {selectedStudent.mother?.contacts?.mobile_number}</p>
+
+              <hr />
+              <h6>Father</h6>
+              <p>
+                {selectedStudent.father?.first_name}{" "}
+                {selectedStudent.father?.middle_name}{" "}
+                {selectedStudent.father?.last_name}
+              </p>
+              <p><strong>Occupation:</strong> {selectedStudent.father?.occupation}</p>
+              <p><strong>Mobile:</strong> {selectedStudent.father?.contacts?.mobile_number}</p>
+
+              <hr />
+              <h6>Emergency Contact</h6>
+              <p>
+                {selectedStudent.emergency?.first_name}{" "}
+                {selectedStudent.emergency?.middle_name}{" "}
+                {selectedStudent.emergency?.last_name}
+              </p>
+              <p><strong>Occupation:</strong> {selectedStudent.emergency?.occupation}</p>
+              <p><strong>Mobile:</strong> {selectedStudent.emergency?.contacts?.mobile_number}</p>
             </>
           )}
         </Modal.Body>

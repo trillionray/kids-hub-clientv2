@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { Notyf } from "notyf";
-import { Spinner } from "react-bootstrap";
+import { Spinner, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 export default function ShowAllUsers() {
   const [users, setUsers] = useState([]);
@@ -9,6 +10,7 @@ export default function ShowAllUsers() {
   const [filterText, setFilterText] = useState("");
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate();
 
   // Fetch all users
   useEffect(() => {
@@ -45,11 +47,6 @@ export default function ShowAllUsers() {
     {
       name: "Last Name",
       selector: (row) => row.lastName,
-      sortable: true,
-    },
-    {
-      name: "Username",
-      selector: (row) => row.username,
       sortable: true,
     },
     {
@@ -98,13 +95,17 @@ export default function ShowAllUsers() {
     (user) =>
       user.firstName?.toLowerCase().includes(filterText.toLowerCase()) ||
       user.lastName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      user.username?.toLowerCase().includes(filterText.toLowerCase()) ||
       user.email?.toLowerCase().includes(filterText.toLowerCase())
   );
 
   return (
     <div className="container mt-4 px-5">
-      <h3 className="px-2">All Users</h3>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="px-2">All Users</h3>
+        <Button variant="primary" onClick={() => navigate("/register")}>
+          Register Employee
+        </Button>
+      </div>
 
       {loading ? (
         <Spinner animation="border" />

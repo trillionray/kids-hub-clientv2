@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext } from "react";
-import { Card, Row, Col, Spinner } from "react-bootstrap";
+import { Card, Row, Col, Spinner, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import UserContext from "../context/UserContext";
 
 export default function Profile() {
@@ -50,10 +51,17 @@ export default function Profile() {
             <Col>
               <Card.Body className="card-body">
                 <h3 className="mb-3">My Profile</h3>
+                <p><strong>ID:</strong> {details._id}</p>
                 <p><strong>Name:</strong> {details.firstName} {details.lastName}</p>
-                <p><strong>Username:</strong> {details.username}</p>
                 <p><strong>Email:</strong> {details.email || "N/A"}</p>
                 <p><strong>Role:</strong> {details.role}</p>
+
+                {/* 🔗 Change Password Button */}
+                <div className="mt-4">
+                  <Button as={Link} to="/profile/change-password" variant="primary" className="text-white">
+                    Change Password
+                  </Button>
+                </div>
               </Card.Body>
             </Col>
           </Row>

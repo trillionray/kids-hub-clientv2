@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Table, Button, Modal, Form, InputGroup } from "react-bootstrap";
+import { Button, Modal, Form, InputGroup } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
@@ -22,6 +22,7 @@ export default function ShowMiscellaneousPackages() {
   const [selectedMiscs, setSelectedMiscs] = useState([]);
   const [packagePrice, setPackagePrice] = useState(0);
 
+  // 🔹 Auto-calc package price from selected miscs
   useEffect(() => {
     if (!miscs.length) return;
     const total = selectedMiscs.reduce((sum, id) => {
@@ -51,13 +52,12 @@ export default function ShowMiscellaneousPackages() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({ ids })
+      body: JSON.stringify({ ids }),
     });
 
     const data = await res.json();
-    console.log(data)
     if (data.success) {
       return data.miscs.map((m) => m.name);
     }
@@ -68,10 +68,11 @@ export default function ShowMiscellaneousPackages() {
   function fetchPackages() {
     setLoading(true);
     fetch(`${API_URL}/miscellaneous-package/read`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then(async (data) => {
+        console.log(data);
         if (Array.isArray(data)) {
           const packagesWithNames = await Promise.all(
             data.map(async (pkg) => {
@@ -97,7 +98,7 @@ export default function ShowMiscellaneousPackages() {
 
     fetch(`${API_URL}/miscellaneous-package/delete/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -119,7 +120,7 @@ export default function ShowMiscellaneousPackages() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify({
         package_name: currentPackage.package_name,
@@ -127,8 +128,8 @@ export default function ShowMiscellaneousPackages() {
         package_price: packagePrice,
         miscs: selectedMiscs,
         is_active: currentPackage.is_active,
-        last_updated_by: user.username
-      })
+        last_updated_by: user.username,
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -148,7 +149,7 @@ export default function ShowMiscellaneousPackages() {
     setCurrentPackage({ ...pkg });
 
     fetch(`${API_URL}/miscellaneous`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -168,14 +169,20 @@ export default function ShowMiscellaneousPackages() {
   const columns = [
     {
       name: "No.",
-      selector: (row, index) => index + 1 + " )",
+      selector: (row, index) => index + 1,
       width: "60px",
-      center: true
+      center: true,
     },
     {
       name: "Package Name",
       selector: (row) => row.package_name,
-      sortable: true
+      sortable: true,
+    },
+    
+    {
+      name: "Description",
+      selector: (row) => row.package_description || "—",
+      wrap: true,
     },
     {
       name: "Misc Items",
@@ -189,22 +196,19 @@ export default function ShowMiscellaneousPackages() {
         ) : (
           "No items"
         ),
-      wrap: true
+      wrap: true,
     },
     {
       name: "Price",
-      selector: (row) => `₱${row.package_price}`,
-      sortable: true
+      selector: (row) => `₱${Number(row.package_price).toLocaleString()}`,
+      sortable: true,
+      right: false,
     },
-    {
-      name: "Description",
-      selector: (row) => row.package_description,
-      wrap: true
-    },
+   
     {
       name: "Actions",
       cell: (row) => (
-        <>
+        
           <Button
             size="sm"
             variant="warning"
@@ -213,25 +217,26 @@ export default function ShowMiscellaneousPackages() {
           >
             <FeatherIcon icon="edit" size="14" />
           </Button>
-        </>
-      )
-    }
+         
+        
+      ),
+    },
   ];
 
   const filteredPackages = packages.filter(
     (pkg) =>
-      pkg.package_name.toLowerCase().includes(searchText.toLowerCase()) ||
-      pkg.package_description.toLowerCase().includes(searchText.toLowerCase())
+      pkg.package_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      pkg.package_description?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
     <div className="p-3">
-        <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="p-0">Miscellaneous Packages</h3>
 
         <Link to="/miscellaneous-package/add">
           <Button variant="primary" className="p-2 rounded-circle me-5">
-            <FeatherIcon icon="plus" size="1" className="" />
+            <FeatherIcon icon="plus" size="16" />
           </Button>
         </Link>
       </div>
@@ -248,30 +253,22 @@ export default function ShowMiscellaneousPackages() {
       <DataTable
         columns={columns}
         data={filteredPackages}
-        progressPending={loading}
         pagination
         highlightOnHover
         striped
         responsive
+        noDataComponent="No packages found"
         conditionalRowStyles={[
           {
-            when: row => row.is_active === false,
+            when: (row) => row.is_active === false,
             style: {
               backgroundColor: "#f0f0f0",
               color: "#6c757d",
               textDecoration: "line-through",
-              fontStyle: "italic"
-            }
-          }
-        ]}
-        customStyles={{
-          rows: {
-            style: {
-              paddingTop: "12px",
-              paddingBottom: "12px",
+              fontStyle: "italic",
             },
           },
-        }}
+        ]}
       />
 
       {/* Edit Modal */}
@@ -291,7 +288,7 @@ export default function ShowMiscellaneousPackages() {
                 onChange={(e) =>
                   setCurrentPackage((prev) => ({
                     ...prev,
-                    package_name: e.target.value
+                    package_name: e.target.value,
                   }))
                 }
                 required
@@ -309,7 +306,7 @@ export default function ShowMiscellaneousPackages() {
                 onChange={(e) =>
                   setCurrentPackage((prev) => ({
                     ...prev,
-                    package_description: e.target.value
+                    package_description: e.target.value,
                   }))
                 }
                 required
@@ -330,7 +327,7 @@ export default function ShowMiscellaneousPackages() {
                     <Form.Check
                       key={misc._id}
                       type="checkbox"
-                      label={`${misc.name} - ₱${misc.price}`}
+                      label={`${misc.name} - ₱${Number(misc.price).toLocaleString()}`}
                       checked={selectedMiscs.includes(misc._id)}
                       onChange={() => handleMiscSelection(misc._id)}
                     />
@@ -340,7 +337,7 @@ export default function ShowMiscellaneousPackages() {
             </Form.Group>
 
             <Form.Group className="mt-3">
-              <Form.Label>Total Price: ₱{packagePrice.toFixed(2)}</Form.Label>
+              <Form.Label>Total Price: ₱{packagePrice.toLocaleString()}</Form.Label>
             </Form.Group>
 
             <Form.Group>
@@ -351,7 +348,7 @@ export default function ShowMiscellaneousPackages() {
                 onChange={(e) =>
                   setCurrentPackage((prev) => ({
                     ...prev,
-                    is_active: e.target.checked
+                    is_active: e.target.checked,
                   }))
                 }
               />

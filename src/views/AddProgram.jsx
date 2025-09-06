@@ -49,6 +49,7 @@ export default function AddProgram() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         if (data.success) {
           notyf.success("Program added successfully!");
           navigate("/programs");

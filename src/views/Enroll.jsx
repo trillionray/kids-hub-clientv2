@@ -11,63 +11,64 @@ export default function Enroll() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get studentData from AddStudent page
+  // Get studentData from previous page
   const studentData = location.state?.studentData || null;
 
-  const [students, setStudents] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [programRate, setProgramRate] = useState(0);
 
-  // formData for enrollment
   const [formData, setFormData] = useState({
     branch: "",
-    student_id: studentData?._id || "", // If old student selected
+    student_id: "", // will be set via useEffect
     program_id: "",
     num_of_sessions: "",
     duration: "",
     academic_year_id: "",
     status: "pending",
-    total: 0
+    total: 0,
   });
 
+  // Auto-fill student_id if we have an old student
   useEffect(() => {
-    fetchStudents();
+    if (studentData?._id) {
+      setFormData((prev) => ({ ...prev, student_id: studentData._id }));
+    }
+  }, [studentData]);
+
+  useEffect(() => {
     fetchPrograms();
     fetchAcademicYears();
   }, []);
 
   useEffect(() => {
     const program = programs.find((p) => p._id === formData.program_id);
-    const programRateVal = program ? program.rate : 0;
-    setProgramRate(programRateVal);
-    setFormData((prev) => ({ ...prev, total: programRateVal }));
+    if (program) {
+      const rate = program.rate || 0;
+      const misc = program.miscellaneous_group?.miscs_total || 0;
+      setProgramRate(rate);
+      setFormData((prev) => ({ ...prev, total: rate + misc }));
+    } else {
+      setProgramRate(0);
+      setFormData((prev) => ({ ...prev, total: 0 }));
+    }
   }, [formData.program_id, programs]);
-
-  const fetchStudents = () => {
-    fetch(`${API_URL}/students`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then((res) => res.json())
-      .then((data) => setStudents(data.students))
-      .catch(() => notyf.error("Failed to fetch students"));
-  };
 
   const fetchPrograms = () => {
     fetch(`${API_URL}/programs`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then(setPrograms)
+      .then((data) => setPrograms(data.programs || []))
       .catch(() => notyf.error("Failed to fetch programs"));
   };
 
   const fetchAcademicYears = () => {
     fetch(`${API_URL}/academic-year`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then(setAcademicYears)
+      .then((data) => setAcademicYears(data || []))
       .catch(() => notyf.error("Failed to fetch academic years"));
   };
 
@@ -79,46 +80,81 @@ export default function Enroll() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log(studentData);
+    // Determine studentId
     let studentId = formData.student_id;
 
-    // If AddStudent provided a new student (not yet registered), register first
+    if(studentData._id == undefined){
+      console.log("Student ID not received")
+    }
+
+
+    // If no _id, create new student first
     if (studentData && !studentData._id) {
       try {
-        const res = await fetch(`${API_URL}/students/`, {
+        const res = await fetch(`${API_URL}/students`, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify(studentData)
+          body: JSON.stringify(studentData),
         });
         const data = await res.json();
-        console.log(data)
-        if (!data.student) {
+        console.log("New student created:", data);
+
+        if (!data.student?._id) {
           notyf.error(data.message || "Failed to register student");
           return;
         }
-        studentId = data.student._id; // Use the newly created student ID
+
+        studentId = data.student._id;
         notyf.success("Student registered successfully!");
       } catch (err) {
+        console.error("Student registration error:", err);
         notyf.error("Server error during student registration");
         return;
       }
     }
 
-    // Now enroll the student
+    // Validate required fields
+    if (!formData.branch || !studentId || !formData.program_id) {
+      notyf.error("Please select branch, student, and program.");
+      console.log("Invalid enrollment form data:", {
+        branch: formData.branch,
+        student_id: studentId,
+        program_id: formData.program_id,
+      });
+      return;
+    }
+
+    // Prepare payload: only include necessary fields
+    const enrollmentData = {
+      branch: formData.branch,
+      student_id: studentId,
+      program_id: formData.program_id,
+      num_of_sessions: formData.num_of_sessions || undefined,
+      duration: formData.duration || undefined,
+      academic_year_id: formData.academic_year_id || undefined,
+      status: formData.status || "pending",
+    };
+
+    console.log("Sending enrollment data:", enrollmentData);
+
+    // Submit enrollment
     try {
-      const enrollmentData = { ...formData, student_id: studentId };
       const res = await fetch(`${API_URL}/enrollments/enroll`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(enrollmentData)
+        body: JSON.stringify(enrollmentData),
       });
+
       const data = await res.json();
-      console.log(data);
+      console.log("Enrollment response:", data);
+
       if (data.success) {
         notyf.success(data.message);
         setFormData({
@@ -129,17 +165,19 @@ export default function Enroll() {
           duration: "",
           academic_year_id: "",
           status: "pending",
-          total: 0
+          total: 0,
         });
         setProgramRate(0);
-        navigate("/enrollments"); // redirect to enrollment list
+        navigate("/enrollments");
       } else {
         notyf.error(data.message || "Enrollment failed");
       }
     } catch (err) {
+      console.error("Enrollment server error:", err);
       notyf.error("Server error. Please try again.");
     }
   };
+
 
   return (
     <div className="p-3 px-5">
@@ -165,7 +203,7 @@ export default function Enroll() {
             {studentData ? (
               <Form.Control
                 type="text"
-                value={`${studentData.firstName} ${studentData.middleName} ${studentData.lastName}`}
+                value={`${studentData.firstName} ${studentData.middleName || ""} ${studentData.lastName}`}
                 disabled
               />
             ) : (
@@ -222,7 +260,8 @@ export default function Enroll() {
               <option value="">Select Academic Year</option>
               {academicYears.map((a) => (
                 <option key={a._id} value={a._id}>
-                  {new Date(a.startDate).toLocaleDateString()} - {new Date(a.endDate).toLocaleDateString()}
+                  {new Date(a.startDate).toLocaleDateString()} -{" "}
+                  {new Date(a.endDate).toLocaleDateString()}
                 </option>
               ))}
             </Form.Select>

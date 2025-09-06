@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { Button, Modal, ModalFooter } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import { Notyf } from "notyf";
 
 export default function Enrollments() {
@@ -12,139 +12,87 @@ export default function Enrollments() {
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [filterText, setFilterText] = useState("");
-  const [enrollDetails, setEnrollDetails] = useState("");
 
   useEffect(() => {
     fetchEnrollments();
   }, []);
 
-  const fetchEnrollments = () => {
+  const fetchEnrollments = async () => {
     setLoading(true);
-    fetch(`${API_URL}/enrollments`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setEnrollments(data);
-        } else {
-          notyf.error("Invalid response from server");
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        notyf.error("Failed to fetch enrollments");
-        setLoading(false);
+    try {
+      const res = await fetch(`${API_URL}/enrollments`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        // map all IDs
+        const studentIds = [...new Set(data.map(e => e.student_id))].join(",");
+        const programIds = [...new Set(data.map(e => e.program_id))].join(",");
+        const userIds = [
+          ...new Set(data.flatMap(e => [e.created_by, e.updated_by]))
+        ].filter(Boolean).join(",");
+        const academicIds = [...new Set(data.map(e => e.academic_year_id))].join(",");
+        const miscIds = [...new Set(data.map(e => e.miscellaneous_group_id))].filter(Boolean).join(",");
+
+        // fetch summaries in parallel
+        const [students, programs, users, academicYears, miscPackages] = await Promise.all([
+          fetch(`${API_URL}/summary/findname/students?ids=${studentIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
+          fetch(`${API_URL}/summary/findprogram/programs?ids=${programIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
+          fetch(`${API_URL}/summary/findname/users?ids=${userIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
+          fetch(`${API_URL}/summary/academicyear/academicYears?ids=${academicIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
+          miscIds
+            ? fetch(`${API_URL}/summary/findmisc/miscPackages/${miscIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json())
+            : { success: false }
+        ]);
+
+        // make lookup maps
+        const studentMap = Object.fromEntries((students.results || []).map(s => [s._id, s.name]));
+        const programMap = Object.fromEntries((programs.results || []).map(p => [p._id, p.name]));
+        const userMap = Object.fromEntries((users.results || []).map(u => [u._id, u.name]));
+        const academicMap = Object.fromEntries((academicYears.results || []).map(a => [a._id, a.name]));
+        const miscMap = miscPackages.success
+          ? { [miscPackages.result._id]: miscPackages.result.package_name }
+          : {};
+
+        // enrich data
+        const enriched = data.map(e => ({
+          ...e,
+          student_name: studentMap[e.student_id] || e.student_id,
+          program_name: programMap[e.program_id] || e.program_id,
+          created_by_name: userMap[e.created_by] || e.created_by,
+          updated_by_name: userMap[e.updated_by] || e.updated_by,
+          academic_year_name: academicMap[e.academic_year_id] || e.academic_year_id,
+          misc_package_name: miscMap[e.miscellaneous_group_id] || "N/A"
+        }));
+
+        setEnrollments(enriched);
+      } else {
+        notyf.error("Invalid response from server");
+      }
+    } catch (err) {
+      console.error("fetchEnrollments error:", err);
+      notyf.error("Failed to fetch enrollments");
+    }
+    setLoading(false);
   };
 
-  const openDetails = async (enrollment) => {
-    // collect ids
-    const createdBy = enrollment.created_by;
-    const updatedBy = enrollment.updated_by;
-    const studentId = enrollment.student_id;
-    const programId = enrollment.program_id;
-    const academicyearId = enrollment.academic_year_id;
 
-    // plain JS maps (no types)
-    let userMapCB = {};
-    let userMapUB = {};
-    let studentMap = {};
-    let programMap = {};
-    let academicyearMap = {};
-
-    // fetch created_by
-    if (createdBy) {
-      const res = await fetch(`${API_URL}/summary/findname/users?ids=${createdBy}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        data.results.forEach(u => {
-          userMapCB['created_by_name'] = u.name;
-        });
-      }
-    }
-
-    // fetch updated_by
-    if (updatedBy) {
-      const res = await fetch(`${API_URL}/summary/findname/users?ids=${updatedBy}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        data.results.forEach(u => {
-          userMapUB['updated_by_name'] = u.name;
-        });
-      }
-    }
-
-    // fetch student name
-    if (studentId) {
-      const res = await fetch(`${API_URL}/summary/findname/students?ids=${studentId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        data.results.forEach(u => {
-          studentMap['student_name'] = u.name;
-        });
-      }
-    }
-
-    // fetch program name
-    if (programId) {
-      const res = await fetch(`${API_URL}/summary/findprogram/programs?ids=${programId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        data.results.forEach(u => {
-          programMap['program_name'] = u.name;
-        });
-      }
-    }
-
-    // fetch academic year
-    if (academicyearId) {
-      const res = await fetch(`${API_URL}/summary/academicyear/academicYears?ids=${academicyearId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        academicyearMap['academic_year'] = data.results.map(u => u.name).join(", ");
-      }
-
-
-    }
-
-    //merge all info into enriched enrollment
-    const enriched = {
-      ...enrollment,
-      created_by_name: userMapCB.created_by_name || "N/A",
-      updated_by_name: userMapUB.updated_by_name || "N/A",
-      student_name: studentMap.student_name || "N/A",
-      program_name: programMap.program_name || "N/A",
-      academicyear: academicyearMap.academic_year || "N/A"
-    };
-
-    console.log(academicyearMap)
-    setSelectedEnrollment(enriched);
+  const openDetails = (enrollment) => {
+    setSelectedEnrollment(enrollment);
     setShowModal(true);
   };
-
-
 
   // Columns for DataTable
   const columns = [
     {
-      name: "Student ID",
-      selector: (row) => row.student_id,
+      name: "Student",
+      selector: (row) => row.student_name || row.student_id,
       sortable: true,
     },
     {
-      name: "Program ID",
-      selector: (row) => row.program_id,
+      name: "Program",
+      selector: (row) => row.program_name || row.program_id,
       sortable: true,
     },
     {
@@ -178,8 +126,8 @@ export default function Enrollments() {
   // Filtering
   const filteredData = enrollments.filter(
     (enroll) =>
-      enroll.student_id?.toLowerCase().includes(filterText.toLowerCase()) ||
-      enroll.program_id?.toLowerCase().includes(filterText.toLowerCase()) ||
+      enroll.student_name?.toLowerCase().includes(filterText.toLowerCase()) ||
+      enroll.program_name?.toLowerCase().includes(filterText.toLowerCase()) ||
       enroll.branch?.toLowerCase().includes(filterText.toLowerCase()) ||
       enroll.status?.toLowerCase().includes(filterText.toLowerCase())
   );
@@ -221,13 +169,12 @@ export default function Enrollments() {
           {selectedEnrollment && (
             <div>
               <p><strong>Branch:</strong> {selectedEnrollment.branch}</p>
-              <p><strong>Student ID:</strong> {selectedEnrollment.student_id}</p>
-              <p><strong>Student Name:</strong> {selectedEnrollment.student_name}</p>
-              <p><strong>Program Name:</strong> {selectedEnrollment.program_name}</p>
+              <p><strong>Student:</strong> {selectedEnrollment.student_name}</p>
+              <p><strong>Program:</strong> {selectedEnrollment.program_name}</p>
               <p><strong>Number of Sessions:</strong> {selectedEnrollment.num_of_sessions || "N/A"}</p>
               <p><strong>Duration:</strong> {selectedEnrollment.duration}</p>
-              <p><strong>Academic Year:</strong> {selectedEnrollment.academicyear || "N/A"}</p>
-              <p><strong>Miscellaneous Package ID:</strong> {selectedEnrollment.miscellaneous_group_id}</p>
+              <p><strong>Academic Year:</strong> {selectedEnrollment.academic_year_name || "N/A"}</p>
+              <p><strong>Miscellaneous Package:</strong> {selectedEnrollment.misc_package_name}</p>
               <p><strong>Status:</strong> {selectedEnrollment.status}</p>
               <p><strong>Total:</strong> ₱{selectedEnrollment.total}</p>
               <hr />
@@ -245,7 +192,6 @@ export default function Enrollments() {
           >
             Download PDF
           </button>
-
         </Modal.Footer>
       </Modal>
     </div>

@@ -33,7 +33,10 @@ export default function ShowPrograms() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then((data) => setPrograms(data))
+      .then((data) => {
+        console.log(data);
+        setPrograms(data.programs || []);
+      })
       .catch(() => notyf.error("Failed to fetch programs"))
       .finally(() => setLoading(false));
   }
@@ -44,7 +47,7 @@ export default function ShowPrograms() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        console.log(data); 
         setMiscGroups(data)})
       .catch(() => notyf.error("Failed to fetch miscellaneous groups"));
   }
@@ -136,7 +139,12 @@ export default function ShowPrograms() {
     { name: "No.", selector: (row, index) => index + 1, width: "60px", center: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Category", selector: (row) => row.category, sortable: true },
-    { name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true },
+    {
+      name: "Rate",
+      selector: (row) => `₱${row.rate}`,
+      sortable: true,
+      style: { textAlign: "right" }, // ✅ no warning
+    },
     {
       name: "Miscellaneous Group",
       selector: (row) => {
@@ -155,6 +163,14 @@ export default function ShowPrograms() {
       },
     },
     { name: "Description", selector: (row) => row.description },
+    // ✅ New Total Column
+    {
+      name: "Total",
+      selector: (row) => `₱${row.total}`,
+      sortable: true,
+      style: { textAlign: "right" },
+    },
+
     {
       name: "Actions",
       cell: (row) => (
@@ -165,9 +181,11 @@ export default function ShowPrograms() {
     },
   ];
 
-  const filteredPrograms = programs.filter((item) =>
-    item.name.toLowerCase().includes(filterText.toLowerCase())
+
+  const filteredPrograms = (programs || []).filter((item) =>
+    item.name?.toLowerCase().includes(filterText.toLowerCase())
   );
+
 
   return (
     <div className="px-5 py-4">
@@ -215,7 +233,7 @@ export default function ShowPrograms() {
               </InputGroup.Text>
               <Form.Control
                 type="text"
-                value={currentProgram?.name || ""}
+                value={currentProgram?.category || "short"}
                 onChange={(e) => setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))}
                 required
               />

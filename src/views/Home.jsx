@@ -12,11 +12,17 @@ export default function Home() {
     console.log("stored user:", storedUser);
   }, [storedUser, user]);
 
-  // if (user?.role == null) {
-  //   window.location.replace("/login");
-  // }
+  if (user?.role == null) {
+    window.location.replace("/login");
+  }
+
+  if (user.status == "initial"){
+    window.location.replace("/profile/change-password")
+  }
 
   return (
+
+
     <div className="mt-5 p-6">
       {/* System Title */}
       <h1 className="text-4xl font-extrabold text-center mb-8 text-blue-700">

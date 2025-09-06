@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setUser({ id: null, role: null });
+      setUser({ id: null, role: null, status: null });
       return;
     }
 
@@ -33,12 +33,12 @@ export default function App() {
       .then((data) => {
         console.log(data);
         if(data.auth == "Failed"){
-          setUser({ id: null, role: null });
+          setUser({ id: null, role: null, status: null });
         }
         if (data && data._id) {
-          setUser({ id: data._id, role: data.role });
+          setUser({ id: data._id, role: data.role, status: data.status});
         } else {
-          setUser({ id: null, role: null });
+          setUser({ id: null, role: null, status: null });
         }
       })
       .catch((error) => {

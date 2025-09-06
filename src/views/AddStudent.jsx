@@ -5,10 +5,26 @@ import { Notyf } from "notyf";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
+// Helper: camelCase -> snake_case
+const toSnakeCase = (obj) => {
+  if (Array.isArray(obj)) return obj.map(toSnakeCase);
+  if (obj && typeof obj === "object") {
+    return Object.keys(obj).reduce((acc, key) => {
+      const snakeKey = key
+        .replace(/([a-z0-9])([A-Z])/g, "$1_$2") // handles blockOrLot → block_or_lot
+        .toLowerCase();
+      acc[snakeKey] = toSnakeCase(obj[key]);
+      return acc;
+    }, {});
+  }
+  return obj;
+};
+
 export default function AddStudent() {
   const notyf = new Notyf();
   const navigate = useNavigate();
 
+  // ---------- FORM STATE ----------
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -17,25 +33,74 @@ export default function AddStudent() {
     gender: "Male",
     birthdate: "",
     studentType: "new",
-    address: { street: "", barangay: "", city: "", province: "" },
-    contacts: [] // ✅ now an array
+
+    // ✅ FIXED student address
+    address: {
+      blockOrLot: "",
+      street: "",
+      barangay: "",
+      municipalityOrCity: ""
+    },
+
+    // parent/guardian blocks (already matching schema)
+    mother: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      occupation: "",
+      address: {
+        blockOrLot: "",
+        street: "",
+        barangay: "",
+        municipality_or_city: ""
+      },
+      contacts: {
+        mobile_number: "",
+        messenger_account: ""
+      }
+    },
+    father: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      occupation: "",
+      address: {
+        blockOrLot: "",
+        street: "",
+        barangay: "",
+        municipality_or_city: ""
+      },
+      contacts: {
+        mobile_number: "",
+        messenger_account: ""
+      }
+    },
+    emergency: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      occupation: "",
+      address: {
+        blockOrLot: "",
+        street: "",
+        barangay: "",
+        municipality_or_city: ""
+      },
+      contacts: {
+        mobile_number: "",
+        messenger_account: ""
+      }
+    }
   });
 
-  const [contactForm, setContactForm] = useState({
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    suffix: "",
-    relationship: "",
-    contact_number: ""
-  });
+  const [step, setStep] = useState(1);
 
-  const [showContact, setShowContact] = useState(false);
+  // (Optional) old student search if you still want it
   const [searchQuery, setSearchQuery] = useState("");
   const [oldStudents, setOldStudents] = useState([]);
   const [isOldStudentSelected, setIsOldStudentSelected] = useState(false);
 
-  // Fetch old students for search
+  // ---------- OLD STUDENT SEARCH ----------
   useEffect(() => {
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
       fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
@@ -46,159 +111,308 @@ export default function AddStudent() {
         },
         body: JSON.stringify({ query: searchQuery })
       })
-        .then(res => res.json())
-        .then(data => setOldStudents(data.students || []))
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          setOldStudents(data.students || []);
+      })
         .catch(() => notyf.error("Failed to fetch old students"));
     } else {
       setOldStudents([]);
     }
   }, [searchQuery, formData.studentType]);
 
+  // ---------- HANDLERS ----------
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Top-level address.*
     if (name.startsWith("address.")) {
       const field = name.split(".")[1];
-      setFormData(prev => ({ ...prev, address: { ...prev.address, [field]: value } }));
-    } else if (name.startsWith("contact.")) {
-      const field = name.split(".")[1];
-      setContactForm(prev => ({ ...prev, [field]: value }));
-    } else if (name === "studentType") {
-      setFormData(prev => ({ ...prev, studentType: value }));
-      if (value === "new") {
-        setFormData({
-          firstName: "", middleName: "", lastName: "", suffix: "",
-          gender: "Male", birthdate: "", studentType: "new",
-          address: { street: "", barangay: "", city: "", province: "" },
-          contacts: []
-        });
-        setContactForm({ firstName: "", middleName: "", lastName: "", suffix: "", relationship: "", contact_number: "" });
-        setSearchQuery("");
-        setOldStudents([]);
-        setIsOldStudentSelected(false);
-        setShowContact(false);
-      }
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({
+        ...prev,
+        address: { ...prev.address, [field]: value }
+      }));
+      return;
     }
+
+    // Nested: mother.*, father.*, emergency.*
+    // e.g. mother.address.blockOrLot, father.contacts.mobile_number
+    if (
+      name.startsWith("mother.") ||
+      name.startsWith("father.") ||
+      name.startsWith("emergency.")
+    ) {
+      const [who, section, subfield] = name.split(".");
+      // If only two levels: mother.firstName
+      if (!section) return;
+      setFormData((prev) => {
+        const block = { ...prev[who] };
+
+        if (section === "address" || section === "contacts") {
+          block[section] = {
+            ...block[section],
+            [subfield]: value
+          };
+        } else {
+          // direct field on mother/father/emergency (e.g., firstName, occupation)
+          block[section] = value;
+        }
+        return { ...prev, [who]: block };
+      });
+      return;
+    }
+
+    if (name === "studentType") {
+      // Reset when toggling back to "new"
+      if (value === "new") {
+        setIsOldStudentSelected(false);
+        setSearchQuery("");
+      }
+      setFormData((prev) => ({ ...prev, studentType: value }));
+      return;
+    }
+
+    // default: top-level simple fields
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectOldStudent = (student) => {
-    setFormData(prev => ({ ...prev, ...student, studentType: "old" }));
+    const mapped = {
+      _id: student._id,
+      firstName: student.first_name || "",
+      middleName: student.middle_name || "",
+      lastName: student.last_name || "",
+      suffix: student.suffix || "",
+      gender: student.gender || "Male",
+      birthdate: student.birthdate || "",
+      address: {
+        blockOrLot: student.address?.block_or_lot || "",
+        street: student.address?.street || "",
+        barangay: student.address?.barangay || "",
+        municipalityOrCity: student.address?.municipality_or_city || ""
+      },
+      mother: {
+        firstName: student.mother?.first_name || "",
+        middleName: student.mother?.middle_name || "",
+        lastName: student.mother?.last_name || "",
+        occupation: student.mother?.occupation || "",
+        address: {
+          blockOrLot: student.mother?.address?.block_or_lot || "",
+          street: student.mother?.address?.street || "",
+          barangay: student.mother?.address?.barangay || "",
+          municipality_or_city: student.mother?.address?.municipality_or_city || ""
+        },
+        contacts: {
+          mobile_number: student.mother?.contacts?.mobile_number || "",
+          messenger_account: student.mother?.contacts?.messenger_account || ""
+        }
+      },
+      father: {
+        firstName: student.father?.first_name || "",
+        middleName: student.father?.middle_name || "",
+        lastName: student.father?.last_name || "",
+        occupation: student.father?.occupation || "",
+        address: {
+          blockOrLot: student.father?.address?.block_or_lot || "",
+          street: student.father?.address?.street || "",
+          barangay: student.father?.address?.barangay || "",
+          municipality_or_city: student.father?.address?.municipality_or_city || ""
+        },
+        contacts: {
+          mobile_number: student.father?.contacts?.mobile_number || "",
+          messenger_account: student.father?.contacts?.messenger_account || ""
+        }
+      },
+      emergency: {
+        firstName: student.emergency?.first_name || "",
+        middleName: student.emergency?.middle_name || "",
+        lastName: student.emergency?.last_name || "",
+        occupation: student.emergency?.occupation || "",
+        address: {
+          blockOrLot: student.emergency?.address?.block_or_lot || "",
+          street: student.emergency?.address?.street || "",
+          barangay: student.emergency?.address?.barangay || "",
+          municipality_or_city: student.emergency?.address?.municipality_or_city || ""
+        },
+        contacts: {
+          mobile_number: student.emergency?.contacts?.mobile_number || "",
+          messenger_account: student.emergency?.contacts?.messenger_account || ""
+        }
+      }
+    };
+
+    setFormData((prev) => ({ ...prev, ...mapped, studentType: "old" }));
     setOldStudents([]);
     setSearchQuery("");
     localStorage.setItem("selectedStudentId", student._id);
     setIsOldStudentSelected(true);
-    setShowContact(true);
+
+    // 🚀 Redirect immediately to enroll with student data
+    navigate("/enroll", { state: { studentData: mapped, isOldStudent: true } });
   };
 
-  const addContact = () => {
-    if (formData.contacts.length >= 3) {
-      notyf.error("You can only add up to 3 contacts.");
-      return;
-    }
-    if (!contactForm.firstName || !contactForm.lastName || !contactForm.relationship || !contactForm.contact_number) {
-      notyf.error("Please fill all required contact fields.");
-      return;
-    }
 
-    setFormData(prev => ({ ...prev, contacts: [...prev.contacts, contactForm] }));
-    setContactForm({ firstName: "", middleName: "", lastName: "", suffix: "", relationship: "", contact_number: "" });
-  };
 
-  const removeContact = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      contacts: prev.contacts.filter((_, i) => i !== index)
-    }));
+
+  const validateStep1 = () => {
+    if (!formData.firstName || !formData.lastName || !formData.birthdate) {
+      notyf.error("First name, last name and birthdate are required.");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (formData.contacts.length === 0) {
-      notyf.error("Please add at least one contact person.");
+    if (step === 1) {
+      if (!validateStep1()) return;
+      setStep(2);
       return;
     }
 
+    // Confirm and submit
     Swal.fire({
       title: "Confirm Student",
       html: `
-        <p><strong>First Name:</strong> ${formData.firstName}</p>
-        <p><strong>Last Name:</strong> ${formData.lastName}</p>
+        <p><strong>Name:</strong> ${formData.firstName} ${formData.middleName} ${formData.lastName} ${formData.suffix}</p>
         <p><strong>Gender:</strong> ${formData.gender}</p>
         <p><strong>Birthdate:</strong> ${formData.birthdate}</p>
-        <p><strong>Address:</strong> ${formData.address.street}, ${formData.address.barangay}, ${formData.address.city}, ${formData.address.province}</p>
+        <p><strong>Address:</strong> 
+          ${formData.address.blockOrLot}, 
+          ${formData.address.street}, 
+          ${formData.address.barangay}, 
+          ${formData.address.municipalityOrCity}
+        </p>
         <hr/>
-        <p><strong>Contacts:</strong></p>
-        ${formData.contacts.map(c => `<p>${c.firstName} ${c.lastName} (${c.relationship}) - ${c.contact_number}</p>`).join("")}
+        <p><strong>Mother:</strong> ${formData.mother.firstName} ${formData.mother.lastName} (${formData.mother.occupation})</p>
+        <p><strong>Father:</strong> ${formData.father.firstName} ${formData.father.lastName} (${formData.father.occupation})</p>
+        <p><strong>Emergency:</strong> ${formData.emergency.firstName} ${formData.emergency.lastName} (${formData.emergency.occupation})</p>
       `,
       icon: "info",
       showCancelButton: true,
-      confirmButtonText: "Continue to Enrollment",
+      confirmButtonText: "Save Student",
       cancelButtonText: "Cancel"
-    }).then(result => {
-      if (result.isConfirmed) {
-        navigate("/enroll", { state: { studentData: formData } });
-      }
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      const snakeData = toSnakeCase(formData);
+
+      fetch(`${import.meta.env.VITE_API_URL}/students`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify(snakeData)
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.student || data.success) {
+            notyf.success("Student added successfully!");
+            const studentPayload = data.student || snakeData; // fallback
+            navigate("/enroll", { state: { studentData: studentPayload } });
+          } else {
+            notyf.error(data.message || "Failed to add student");
+          }
+        })
+        .catch(() => notyf.error("Server error. Try again."));
     });
   };
 
   const disabled = isOldStudentSelected;
 
+  // ---------- RENDER ----------
   return (
     <Container className="mt-4 px-3">
       <Card className="p-4 shadow-sm">
         <h3 className="mb-3">Student Information</h3>
+
         <Form onSubmit={handleSubmit}>
-          {/* Step 1: Student Info */}
-          {!showContact && (
-            <>
-              {/* Student Type */}
-              <Form.Group className="mb-3">
-                <Form.Label>Student Type</Form.Label>
-                <div>
-                  <Form.Check inline type="radio" label="New Student" name="studentType" value="new"
-                    checked={formData.studentType === "new"} onChange={handleChange} />
-                  <Form.Check inline type="radio" label="Old Student" name="studentType" value="old"
-                    checked={formData.studentType === "old"} onChange={handleChange} />
-                </div>
-              </Form.Group>
+          {/* Student Type */}
+          <Form.Group className="mb-3">
+            <Form.Label>Student Type</Form.Label>
+            <div>
+              <Form.Check
+                inline
+                type="radio"
+                label="New Student"
+                name="studentType"
+                value="new"
+                checked={formData.studentType === "new"}
+                onChange={handleChange}
+              />
+              <Form.Check
+                inline
+                type="radio"
+                label="Old Student"
+                name="studentType"
+                value="old"
+                checked={formData.studentType === "old"}
+                onChange={handleChange}
+              />
+            </div>
+          </Form.Group>
 
-              {/* Old Student Search */}
-              {formData.studentType === "old" && !isOldStudentSelected && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Search Old Student</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Type first, middle, or last name..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                  />
-                  {oldStudents.length > 0 && (
-                    <div className="border p-2 mt-1" style={{ maxHeight: "150px", overflowY: "auto" }}>
-                      {oldStudents.map(s => (
-                        <div key={s._id} style={{ padding: "4px", cursor: "pointer" }}
-                          onClick={() => handleSelectOldStudent(s)}>
-                          {s.firstName} {s.middleName} {s.lastName}
-                        </div>
-                      ))}
+          {/* Old Student Search */}
+          {formData.studentType === "old" && !isOldStudentSelected && (
+            <Form.Group className="mb-3">
+              <Form.Label>Search Old Student</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Type first, middle, or last name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {oldStudents.length > 0 && (
+                <div
+                  className="border p-2 mt-1"
+                  style={{ maxHeight: "150px", overflowY: "auto" }}
+                >
+                  {oldStudents.map((s) => (
+                    <div
+                      key={s._id}
+                      style={{ padding: "4px", cursor: "pointer" }}
+                      onClick={() => handleSelectOldStudent(s)}
+                    >
+                      {(s.first_name || s.firstName) || ""}{" "}
+                      {(s.middle_name || s.middleName) || ""}{" "}
+                      {(s.last_name || s.lastName) || ""}
                     </div>
-                  )}
-                </Form.Group>
+                  ))}
+                </div>
               )}
+            </Form.Group>
+          )}
 
-              {/* Student Basic Info */}
+          {/* STEP 1: Student Core + Address */}
+          {step === 1 && (
+            <>
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>First Name</Form.Label>
-                    <Form.Control type="text" name="firstName" value={formData.firstName} onChange={handleChange} required disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Middle Name (Optional)</Form.Label>
-                    <Form.Control type="text" name="middleName" value={formData.middleName} onChange={handleChange} disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="middleName"
+                      value={formData.middleName}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
               </Row>
@@ -207,23 +421,40 @@ export default function AddStudent() {
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Last Name</Form.Label>
-                    <Form.Control type="text" name="lastName" value={formData.lastName} onChange={handleChange} required disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Suffix (Optional)</Form.Label>
-                    <Form.Control type="text" name="suffix" value={formData.suffix} onChange={handleChange} disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="suffix"
+                      value={formData.suffix}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
               </Row>
 
-              {/* Gender & Birthdate */}
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Gender</Form.Label>
-                    <Form.Select name="gender" value={formData.gender} onChange={handleChange} disabled={disabled}>
+                    <Form.Select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    >
                       <option>Male</option>
                       <option>Female</option>
                     </Form.Select>
@@ -232,163 +463,459 @@ export default function AddStudent() {
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Birthdate</Form.Label>
-                    <Form.Control type="date" name="birthdate" value={formData.birthdate} onChange={handleChange} required disabled={disabled} />
+                    <Form.Control
+                      type="date"
+                      name="birthdate"
+                      value={formData.birthdate}
+                      onChange={handleChange}
+                      required
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
               </Row>
 
-              {/* Address */}
               <h5 className="mt-3">Address</h5>
               <Row>
-                <Col md={6}>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Block/Lot</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="address.blockOrLot"
+                      value={formData.address.blockOrLot}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
                   <Form.Group className="mb-3">
                     <Form.Label>Street</Form.Label>
-                    <Form.Control type="text" name="address.street" value={formData.address.street} onChange={handleChange} disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="address.street"
+                      value={formData.address.street}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
-                <Col md={6}>
+                <Col md={3}>
                   <Form.Group className="mb-3">
                     <Form.Label>Barangay</Form.Label>
-                    <Form.Control type="text" name="address.barangay" value={formData.address.barangay} onChange={handleChange} disabled={disabled} />
+                    <Form.Control
+                      type="text"
+                      name="address.barangay"
+                      value={formData.address.barangay}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
+                <Col md={3}>
                   <Form.Group className="mb-3">
-                    <Form.Label>City</Form.Label>
-                    <Form.Control type="text" name="address.city" value={formData.address.city} onChange={handleChange} disabled={disabled} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Province</Form.Label>
-                    <Form.Control type="text" name="address.province" value={formData.address.province} onChange={handleChange} disabled={disabled} />
+                    <Form.Label>Municipality/City</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="address.municipalityOrCity"
+                      value={formData.address.municipalityOrCity}
+                      onChange={handleChange}
+                      disabled={disabled}
+                    />
                   </Form.Group>
                 </Col>
               </Row>
 
+
+
               <div className="d-flex justify-content-end mt-3">
-                <Button variant="secondary" onClick={() => setShowContact(true)}>
+                <Button variant="secondary" onClick={() => setStep(2)}>
                   Continue <FeatherIcon icon="chevron-right" />
                 </Button>
               </div>
             </>
           )}
 
-          {/* Step 2: Contact Info */}
-          {showContact && (
+          {/* STEP 2: Mother / Father / Emergency */}
+          {step === 2 && (
             <>
-              <h5 className="mt-3">Contact Persons</h5>
+              {/* Mother */}
+              <h5 className="mt-2">Mother</h5>
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.firstName"
+                      value={formData.mother.firstName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Middle Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.middleName"
+                      value={formData.mother.middleName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.lastName"
+                      value={formData.mother.lastName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Occupation</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.occupation"
+                      value={formData.mother.occupation}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-              {/* Existing Contacts List */}
-              {formData.contacts.length > 0 && (
-                <div className="mb-3">
-                  {formData.contacts.map((c, index) => (
-                    <div key={index} className="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
-                      <div>
-                        {c.firstName} {c.lastName} ({c.relationship}) - {c.contact_number}
-                      </div>
-                      <Button variant="danger" size="sm" onClick={() => removeContact(index)}>
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Row>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Block/Lot</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.address.blockOrLot"
+                      value={formData.mother.address.blockOrLot}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Street</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.address.street"
+                      value={formData.mother.address.street}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Barangay</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.address.barangay"
+                      value={formData.mother.address.barangay}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Municipality/City</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.address.municipality_or_city"
+                      value={formData.mother.address.municipality_or_city}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-              {/* Add New Contact */}
-              {formData.contacts.length < 3 && (
-                <Row className="g-3">
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>First Name</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="contact.firstName"
-                        value={contactForm.firstName}
-                        onChange={handleChange}
-                        required={contactForm.firstName !== ""}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Middle Name (Optional)</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="contact.middleName"
-                        value={contactForm.middleName}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Last Name</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="contact.lastName"
-                        value={contactForm.lastName}
-                        onChange={handleChange}
-                        required={contactForm.lastName !== ""}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Suffix (Optional)</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="contact.suffix"
-                        value={contactForm.suffix}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Relationship</Form.Label>
-                      <Form.Select
-                        name="contact.relationship"
-                        value={contactForm.relationship}
-                        onChange={handleChange}
-                        required={contactForm.relationship !== ""}
-                      >
-                        <option value="">-- Select Relationship --</option>
-                        <option value="Father">Father</option>
-                        <option value="Mother">Mother</option>
-                        <option value="Guardian">Guardian</option>
-                        <option value="Sibling">Sibling</option>
-                        <option value="Relative">Relative</option>
-                        <option value="Other">Other</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Contact Number</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="contact.contact_number"
-                        value={contactForm.contact_number}
-                        onChange={handleChange}
-                        required={contactForm.contact_number !== ""}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col xs={12}>
-                    <Button variant="success" onClick={addContact}>+ Add Contact</Button>
-                  </Col>
-                </Row>
-              )}
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Mobile Number</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.contacts.mobile_number"
+                      value={formData.mother.contacts.mobile_number}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Messenger Account</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="mother.contacts.messenger_account"
+                      value={formData.mother.contacts.messenger_account}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              {/* Father */}
+              <h5 className="mt-4">Father</h5>
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.firstName"
+                      value={formData.father.firstName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Middle Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.middleName"
+                      value={formData.father.middleName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.lastName"
+                      value={formData.father.lastName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Occupation</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.occupation"
+                      value={formData.father.occupation}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Block/Lot</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.address.blockOrLot"
+                      value={formData.father.address.blockOrLot}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Street</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.address.street"
+                      value={formData.father.address.street}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Barangay</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.address.barangay"
+                      value={formData.father.address.barangay}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Municipality/City</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.address.municipality_or_city"
+                      value={formData.father.address.municipality_or_city}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Mobile Number</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.contacts.mobile_number"
+                      value={formData.father.contacts.mobile_number}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Messenger Account</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="father.contacts.messenger_account"
+                      value={formData.father.contacts.messenger_account}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              {/* Emergency Contact */}
+              <h5 className="mt-4">Emergency Contact</h5>
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.firstName"
+                      value={formData.emergency.firstName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Middle Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.middleName"
+                      value={formData.emergency.middleName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.lastName"
+                      value={formData.emergency.lastName}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Occupation</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.occupation"
+                      value={formData.emergency.occupation}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Block/Lot</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.address.blockOrLot"
+                      value={formData.emergency.address.blockOrLot}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Street</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.address.street"
+                      value={formData.emergency.address.street}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Barangay</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.address.barangay"
+                      value={formData.emergency.address.barangay}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Municipality/City</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.address.municipality_or_city"
+                      value={formData.emergency.address.municipality_or_city}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Mobile Number</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.contacts.mobile_number"
+                      value={formData.emergency.contacts.mobile_number}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Messenger Account</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="emergency.contacts.messenger_account"
+                      value={formData.emergency.contacts.messenger_account}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
               <div className="d-flex justify-content-end gap-2 mt-3">
-                <Button variant="secondary" onClick={() => setShowContact(false)}>
+                <Button variant="secondary" onClick={() => setStep(1)}>
                   <FeatherIcon icon="chevron-left" /> Back
                 </Button>
                 <Button type="submit" variant="primary">
-                  Next <FeatherIcon icon="chevron-right" />
+                  Save Student <FeatherIcon icon="check" />
                 </Button>
               </div>
             </>
