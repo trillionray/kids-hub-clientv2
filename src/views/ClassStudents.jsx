@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { Button, Modal, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
@@ -7,6 +7,7 @@ import { Notyf } from "notyf";
 export default function ClassStudents() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate();
   const { id } = useParams(); // class id
 
   const [students, setStudents] = useState([]);
@@ -170,6 +171,12 @@ export default function ClassStudents() {
         highlightOnHover
         responsive
       />
+
+      <div className="mt-3">
+        <Button variant="secondary" onClick={() => navigate("/classes")}>
+          Back to Classes
+        </Button>
+      </div>
 
       {/* Add Student Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>

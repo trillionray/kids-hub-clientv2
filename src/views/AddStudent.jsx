@@ -253,7 +253,13 @@ export default function AddStudent() {
   };
 
 
-
+  const goToContacts = () => {
+    if (!formData.firstName || !formData.lastName || !formData.birthdate) {
+      notyf.error("Please fill in required fields.");
+      return;
+    }
+    setShowContact(true);
+  }
 
   const validateStep1 = () => {
     if (!formData.firstName || !formData.lastName || !formData.birthdate) {
@@ -392,7 +398,7 @@ export default function AddStudent() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
+                    <Form.Label>First Name  <span style={{ color: "red" }}>*</span></Form.Label>
                     <Form.Control
                       type="text"
                       name="firstName"
@@ -420,7 +426,7 @@ export default function AddStudent() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
+                    <Form.Label>Last Name  <span style={{ color: "red" }}>*</span></Form.Label>
                     <Form.Control
                       type="text"
                       name="lastName"
@@ -448,7 +454,7 @@ export default function AddStudent() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Gender</Form.Label>
+                    <Form.Label>Gender  <span style={{ color: "red" }}>*</span></Form.Label>
                     <Form.Select
                       name="gender"
                       value={formData.gender}
@@ -462,7 +468,7 @@ export default function AddStudent() {
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Birthdate</Form.Label>
+                    <Form.Label>Birthdate  <span style={{ color: "red" }}>*</span></Form.Label>
                     <Form.Control
                       type="date"
                       name="birthdate"
@@ -530,9 +536,10 @@ export default function AddStudent() {
 
 
               <div className="d-flex justify-content-end mt-3">
-                <Button variant="secondary" onClick={() => setStep(2)}>
+                <Button variant="secondary" onClick={goToContacts}>
                   Continue <FeatherIcon icon="chevron-right" />
                 </Button>
+
               </div>
             </>
           )}

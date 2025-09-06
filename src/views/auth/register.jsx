@@ -82,76 +82,130 @@ export default function SignUp1() {
   // if (user.id) return <Navigate to="/" />;
 
   return (
-    <div className="auth-wrapper pt-3 pb-5">
-      <div className="auth-content text-center">
-        <Card className="borderless">
-          <Row className="align-items-center text-center">
-            <Col>
-              <Card.Body className="card-body">
-                <img src={logoDark} alt="" className="img-fluid mb-4" />
-                <h4 className="mb-3 f-w-400">Employee Registration</h4>
-                <Form onSubmit={registerAdmin}>
+    <div className="auth-wrapper pt-3 pb-5 d-flex justify-content-center">
+      <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
+        <Card className="borderless shadow-lg">
+          <Card.Body className="card-body">
+            <h4 className="mb-4 f-w-400 text-center">Employee Registration</h4>
+            <Form onSubmit={registerAdmin}>
+              <Row>
+                {/* LEFT COLUMN */}
+                <Col md={6} className="pe-md-3">
+                  <Form.Group className="mb-3">
+                    <Form.Label>First Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter first name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="user" /></InputGroup.Text>
-                    <Form.Control type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required />
-                  </InputGroup>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Middle Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter middle name"
+                      value={middleName}
+                      onChange={(e) => setMiddleName(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="user" /></InputGroup.Text>
-                    <Form.Control type="text" placeholder="Middle Name" value={middleName} onChange={e => setMiddleName(e.target.value)} required />
-                  </InputGroup>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter last name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="user" /></InputGroup.Text>
-                    <Form.Control type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required />
-                  </InputGroup>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Suffix (Optional)</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter suffix (optional)"
+                      value={suffix}
+                      onChange={(e) => setSuffix(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="user" /></InputGroup.Text>
-                    <Form.Control type="text" placeholder="Suffix (optional)" value={suffix} onChange={e => setSuffix(e.target.value)} />
-                  </InputGroup>
+                {/* RIGHT COLUMN */}
+                <Col md={6} className="ps-md-3">
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email Address</Form.Label>
+                    <Form.Control
+                      type="email"
+                      placeholder="Enter email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="mail" /></InputGroup.Text>
-                    <Form.Control type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
-                  </InputGroup>
+                  {/* <Form.Group className="mb-3">
+                    <Form.Label>Username</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </Form.Group> */}
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="user" /></InputGroup.Text>
-                    <Form.Control type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
-                  </InputGroup>
-
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="briefcase" /></InputGroup.Text>
-                    <Form.Select value={role} onChange={e => setRole(e.target.value)} required>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Role</Form.Label>
+                    <Form.Select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      required
+                    >
                       <option value="teacher">Teacher</option>
                       <option value="cashier">Cashier</option>
                     </Form.Select>
-                  </InputGroup>
+                  </Form.Group>
 
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text><FeatherIcon icon="lock" /></InputGroup.Text>
-                    <Form.Control type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-                  </InputGroup>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      placeholder="Enter password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
 
-                  <InputGroup className="mb-4">
-                    <InputGroup.Text><FeatherIcon icon="lock" /></InputGroup.Text>
-                    <Form.Control type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                  </InputGroup>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Confirm Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                  <Button className="btn-block mb-4" type="submit" disabled={!isActive}>
-                    Sign up
-                  </Button>
-                </Form>
+              {/* Submit button centered below both columns */}
+              <Button className="btn-block mb-3 w-100" type="submit" disabled={!isActive}>
+                Sign up
+              </Button>
 
-                <p className="mb-2">
-                  Already have an account?{' '}
-                  <NavLink to="/login" className="f-w-400">Signin</NavLink>
-                </p>
-              </Card.Body>
-            </Col>
-          </Row>
+              <p className="mb-2 text-center">
+                Already have an account?{' '}
+                <NavLink to="/login" className="f-w-400">Signin</NavLink>
+              </p>
+            </Form>
+          </Card.Body>
         </Card>
       </div>
     </div>
