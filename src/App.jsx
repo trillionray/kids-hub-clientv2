@@ -31,6 +31,10 @@ export default function App() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
+        if(data.auth == "Failed"){
+          setUser({ id: null, role: null });
+        }
         if (data && data._id) {
           setUser({ id: data._id, role: data.role });
         } else {

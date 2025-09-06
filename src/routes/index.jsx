@@ -36,8 +36,9 @@ const ClassStudents = lazy(() => import('../views/ClassStudents.jsx')); // ✅ n
 const AttendanceClasses = lazy(() => import('../views/AttendanceClasses.jsx'));
 const AttendanceStudents = lazy(() => import('../views/AttendanceStudents.jsx'));
 
+const Home = lazy(() => import('../views/Home.jsx'));
 
-const ErrorPage = () => <h1>Page Not Found</h1>;
+const ErrorPage = lazy(() => import('../views/NotFound.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -47,6 +48,7 @@ const router = createBrowserRouter(
       element: <GuestLayout />,
       errorElement: <ErrorPage />,
       children: [
+        { path: '/', element: <Login /> },
         { path: 'login', element: <Login /> },
       ]
     },
@@ -61,7 +63,9 @@ const router = createBrowserRouter(
           // element: <Dashboard />,
           children: [
             // Pages (no default redirect)
-            { path: '/dashboard/home', element: <h1>Welcome to Dashboard</h1> },
+            { path: '/', element: <Login /> },
+            { path: 'login', element: <Login /> },
+            { path: '/dashboard/home', element: <Home/> },
             { path: 'register', element: <Register /> },
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
