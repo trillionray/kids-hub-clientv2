@@ -61,18 +61,6 @@ export default function ShowAllUsers() {
       sortable: true,
     },
     {
-      name: "Created",
-      selector: (row) =>
-        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A",
-      sortable: true,
-    },
-    {
-      name: "Updated",
-      selector: (row) =>
-        row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : "N/A",
-      sortable: true,
-    },
-    {
       name: "Actions",
       cell: (row) => (
         <div>
@@ -90,6 +78,7 @@ export default function ShowAllUsers() {
     },
   ];
 
+
   // Filtering
   const filteredUsers = users.filter(
     (user) =>
@@ -101,8 +90,8 @@ export default function ShowAllUsers() {
   return (
     <div className="container mt-4 px-5">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="px-2">All Users</h3>
-        <Button variant="primary" onClick={() => navigate("/register")}>
+        {/*<h3 className="px-2">All Users</h3>*/}
+        <Button variant="primary" onClick={() => navigate("/register")} className="ms-auto">
           Register Employee
         </Button>
       </div>

@@ -1,16 +1,26 @@
 // Top imports (unchanged)
-import { useState, useEffect, useContext } from 'react';
-import { NavLink, Navigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useContext} from 'react';
+import { NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Button, InputGroup, Form } from 'react-bootstrap';
 import FeatherIcon from 'feather-icons-react';
 import { Notyf } from 'notyf';
 import UserContext from '../../context/UserContext';
 import logoDark from 'assets/images/logo-dark.svg';
+import { OverlayTrigger, Popover } from 'react-bootstrap';
 
-export default function SignUp1() {
+
+export default function Register() {
+  const navigate = useNavigate();
   const { user } = useContext(UserContext);
-  const notyf = new Notyf();
-
+  const notyf = new Notyf({
+    position: { 
+      x: 'right', 
+      y: 'top' 
+    },
+    duration: 3000, // optional: how long the notification stays
+    ripple: true,   // optional: ripple effect
+    dismissible: true // optional: allow user to close manually
+  });
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -21,14 +31,18 @@ export default function SignUp1() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isActive, setIsActive] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+
   useEffect(() => {
+
     if (
-      firstName && lastName && email && role &&
-      password === confirmPassword &&
-      password.length >= 8
+      firstName && lastName && email && role && password && confirmPassword
     ) {
       setIsActive(true);
     } else {
@@ -39,6 +53,23 @@ export default function SignUp1() {
   function registerAdmin(e) {
     e.preventDefault();
 
+    const passwordRule = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+
+    if (!passwordRule.test(password)) {
+        notyf.error("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character");
+        setPasswordError(true);
+        setConfirmPasswordError(false);
+        passwordRef.current?.focus();
+        return;
+    } 
+    else if (password !== confirmPassword) {
+        notyf.error("Password mismatch");
+        setConfirmPasswordError(true);
+        setPasswordError(false);
+        confirmPasswordRef.current?.focus();
+        return;
+    }
+
     fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: { "Content-Type": "application/json" },
@@ -48,47 +79,6 @@ export default function SignUp1() {
         lastName,
         suffix,
         email,
-        password,
-        role
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.message === "User registered successfully") {
-          notyf.success("Registration successful!");
-
-          // Reset fields
-          setFirstName("");
-          setMiddleName("");
-          setLastName("");
-          setSuffix("");
-          setEmail("");
-          setPassword("");
-          setConfirmPassword("");
-          setRole("teacher");
-        } else {
-          notyf.error(data.message || "Something went wrong.");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        notyf.error("Server error. Please try again.");
-      });
-  }
-
-
-  function registerAdmin(e) {
-    e.preventDefault();
-
-    fetch(`${API_URL}/users/register`, {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstName,
-        middleName,
-        lastName,
-        suffix,
-        email, // ✅ included
         username,
         password,
         role
@@ -104,33 +94,53 @@ export default function SignUp1() {
           setMiddleName("");
           setLastName("");
           setSuffix("");
-          setEmail(""); // ✅
+          setEmail("");
           setUsername("");
           setPassword("");
           setConfirmPassword("");
           setRole("teacher");
+          
+          setPasswordError(false);
+          setConfirmPasswordError(false);
+
+          navigate('/all-users');
+
+        } else if (data.message?.toLowerCase().includes("password")) {
+          notyf.error(data.message);
+
+          setPasswordError(true);
+
+          setTimeout(() => {
+            passwordRef.current?.focus();
+            passwordRef.current?.select(); // highlight text
+          }, 100);
+
         } else {
           notyf.error(data.message || "Something went wrong.");
         }
       })
       .catch((error) => {
-        console.log(error)
+        console.error(error);
         notyf.error("Server error. Please try again.");
       });
   }
 
+
   // if (user.id) return <Navigate to="/" />;
 
   return (
-    <div className="auth-wrapper pt-3 pb-5 d-flex justify-content-center">
+    <div className="auth-wrapper py-3 d-flex justify-content-center">
       <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
         <Card className="borderless shadow-lg">
           <Card.Body className="card-body">
-            <h4 className="mb-4 f-w-400 text-center">Employee Registration</h4>
-            <Form onSubmit={registerAdmin}>
+            <h4 className="mb-4 f-w-400 text-center text-uppercase text-bold">Employee Registration</h4>
+            <Form onSubmit={registerAdmin} className="px-3">
+              {/* SECTION 1: Employee Information */}
+              <h5 className="mb-3">Employee Information</h5>
+
+              {/* NAME ROW */}
               <Row>
-                {/* LEFT COLUMN */}
-                <Col md={6} className="pe-md-3">
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>First Name</Form.Label>
                     <Form.Control
@@ -141,7 +151,8 @@ export default function SignUp1() {
                       required
                     />
                   </Form.Group>
-
+                </Col>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Middle Name</Form.Label>
                     <Form.Control
@@ -152,7 +163,12 @@ export default function SignUp1() {
                       required
                     />
                   </Form.Group>
+                </Col>
+              </Row>
 
+              {/* LASTNAME + SUFFIX */}
+              <Row>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Last Name</Form.Label>
                     <Form.Control
@@ -163,7 +179,8 @@ export default function SignUp1() {
                       required
                     />
                   </Form.Group>
-
+                </Col>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Suffix (Optional)</Form.Label>
                     <Form.Control
@@ -174,9 +191,11 @@ export default function SignUp1() {
                     />
                   </Form.Group>
                 </Col>
+              </Row>
 
-                {/* RIGHT COLUMN */}
-                <Col md={6} className="ps-md-3">
+              {/* EMAIL + ROLE */}
+              <Row>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Email Address</Form.Label>
                     <Form.Control
@@ -187,18 +206,8 @@ export default function SignUp1() {
                       required
                     />
                   </Form.Group>
-
-                  {/* <Form.Group className="mb-3">
-                    <Form.Label>Username</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
-                  </Form.Group> */}
-
+                </Col>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Role</Form.Label>
                     <Form.Select
@@ -210,41 +219,76 @@ export default function SignUp1() {
                       <option value="cashier">Cashier</option>
                     </Form.Select>
                   </Form.Group>
+                </Col>
+              </Row>
 
+
+              {/* SECTION 2: Account Information */}
+              <h5 className="mt-4 mb-3">Account Information</h5>
+
+              {/* PASSWORD + CONFIRM PASSWORD */}
+              <Row>
+                <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      placeholder="Enter password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
+                    <OverlayTrigger
+                      trigger={['focus', 'hover']}
+                      placement="right"
+                      overlay={
+                        <Popover id="popover-password">
+                          <Popover.Header as="h6">Password should be at least:</Popover.Header>
+                          <Popover.Body>
+                            <ul className="mb-0">
+                              <li>8 characters long</li>
+                              <li>One uppercase letter</li>
+                              <li>One lowercase letter</li>
+                              <li>One number</li>
+                              <li>One special character</li>
+                            </ul>
+                          </Popover.Body>
+                        </Popover>
+                      }
+                    >
+                      <Form.Control
+                        type="password"
+                        placeholder="Enter password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        ref={passwordRef} // 3. Attach the ref here
+                        required
 
-                  <Form.Group className="mb-4">
+                        className={passwordError ? "border border-1 border-danger" : ""}
+                      />
+                    </OverlayTrigger>
+                  </Form.Group>
+                </Col>
+
+                <Col md={6}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Confirm Password</Form.Label>
                     <Form.Control
                       type="password"
                       placeholder="Confirm password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      ref={confirmPasswordRef} // ✅ use the correct ref
                       required
+                      className={confirmPasswordError ? "border border-1 border-danger" : ""}
                     />
+
                   </Form.Group>
                 </Col>
               </Row>
 
-              {/* Submit button centered below both columns */}
-              <Button className="btn-block mb-3 w-100" type="submit" disabled={!isActive}>
+              {/* SUBMIT */}
+              <Button className="btn-block mb-3 w-100 mt-4" type="submit" disabled={!isActive}>
                 Sign up
               </Button>
 
-              <p className="mb-2 text-center">
-                Already have an account?{' '}
-                <NavLink to="/login" className="f-w-400">Signin</NavLink>
-              </p>
+ 
             </Form>
+
+
           </Card.Body>
         </Card>
       </div>

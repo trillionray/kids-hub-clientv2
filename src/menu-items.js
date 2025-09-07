@@ -18,7 +18,7 @@ const menuItems = {
         },
         {
           id: 'all-users',
-          title: 'Show All Users',
+          title: 'Employees',
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'group',
