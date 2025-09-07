@@ -262,10 +262,9 @@ export default function Enrollments() {
                   // Extract starting part from "August 2025 to August 2026"
                   let academicYearStart = "";
                   if (selectedEnrollment.academic_year_name) {
-                    academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0]; 
+                    academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
                   }
 
-                  // Open PDFRegForm with only the start year
                   window.open(
                     `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
                     "_blank"
@@ -281,7 +280,6 @@ export default function Enrollments() {
                   const programId = selectedEnrollment.program_id;
                   const miscId = selectedEnrollment.miscellaneous_group_id;
 
-                  // Open Breakdown page with program + misc
                   window.open(
                     `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
                     "_blank"
@@ -290,9 +288,27 @@ export default function Enrollments() {
               >
                 Download Breakdown
               </Button>
+
+              {/* New Acknowledgement & Consent button */}
+              <Button
+                variant="success"
+                onClick={() => {
+                  const studentName = encodeURIComponent(selectedEnrollment.student_name);
+                  const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                  const date = encodeURIComponent(new Date().toLocaleDateString());
+
+                  window.open(
+                    `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Acknowledgement & Consent
+              </Button>
             </>
           )}
         </Modal.Footer>
+
  
       </Modal>
     </div>

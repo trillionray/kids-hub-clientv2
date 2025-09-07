@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { Button, Modal, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
@@ -7,6 +7,7 @@ import { Notyf } from "notyf";
 export default function ClassStudents() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate();
   const { id } = useParams(); // class id
 
   const [students, setStudents] = useState([]);
@@ -149,8 +150,15 @@ export default function ClassStudents() {
 
   return (
     <div className="p-4">
-      <div className="d-flex justify-content-between mb-3">
-        <h3>Students in Class</h3>
+      {/* Top bar with Back button on left and Add Student on right */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/classes")}
+        >
+          ← Back
+        </Button>
+        <h3 className="mb-0">Students in Class</h3>
         <Button
           variant="primary"
           onClick={() => {
@@ -196,4 +204,5 @@ export default function ClassStudents() {
       </Modal>
     </div>
   );
+
 }
