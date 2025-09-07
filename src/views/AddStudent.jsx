@@ -325,603 +325,608 @@ export default function AddStudent() {
 
   // ---------- RENDER ----------
   return (
-    <Container className="mt-4 px-3">
-      <Card className="p-4 shadow-sm">
-        <h3 className="mb-3">Student Information</h3>
 
-        <Form onSubmit={handleSubmit}>
-          {/* Student Type */}
-          <Form.Group className="mb-3">
-            <Form.Label>Student Type</Form.Label>
-            <div>
-              <Form.Check
-                inline
-                type="radio"
-                label="New Student"
-                name="studentType"
-                value="new"
-                checked={formData.studentType === "new"}
-                onChange={handleChange}
-              />
-              <Form.Check
-                inline
-                type="radio"
-                label="Old Student"
-                name="studentType"
-                value="old"
-                checked={formData.studentType === "old"}
-                onChange={handleChange}
-              />
-            </div>
-          </Form.Group>
+    <div className="auth-wrapper py-2 pb-5 d-flex justify-content-center">
+      <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
+        <Container className="mt-4 px-3">
+          <Card className="p-4 shadow-sm">
+            <h3 className="mb-3 text-center">Student Information</h3>
 
-          {/* Old Student Search */}
-          {formData.studentType === "old" && !isOldStudentSelected && (
-            <Form.Group className="mb-3">
-              <Form.Label>Search Old Student</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Type first, middle, or last name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {oldStudents.length > 0 && (
-                <div
-                  className="border p-2 mt-1"
-                  style={{ maxHeight: "150px", overflowY: "auto" }}
-                >
-                  {oldStudents.map((s) => (
-                    <div
-                      key={s._id}
-                      style={{ padding: "4px", cursor: "pointer" }}
-                      onClick={() => handleSelectOldStudent(s)}
-                    >
-                      {(s.first_name || s.firstName) || ""}{" "}
-                      {(s.middle_name || s.middleName) || ""}{" "}
-                      {(s.last_name || s.lastName) || ""}
-                    </div>
-                  ))}
+            <Form onSubmit={handleSubmit}>
+              {/* Student Type */}
+              <Form.Group className="mb-3">
+                <Form.Label>Student Type</Form.Label>
+                <div>
+                  <Form.Check
+                    inline
+                    type="radio"
+                    label="New Student"
+                    name="studentType"
+                    value="new"
+                    checked={formData.studentType === "new"}
+                    onChange={handleChange}
+                  />
+                  <Form.Check
+                    inline
+                    type="radio"
+                    label="Old Student"
+                    name="studentType"
+                    value="old"
+                    checked={formData.studentType === "old"}
+                    onChange={handleChange}
+                  />
                 </div>
-              )}
-            </Form.Group>
-          )}
+              </Form.Group>
 
-          {/* STEP 1: Student Core + Address */}
-          {step === 1 && (
-            <>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      required
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Middle Name (Optional)</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="middleName"
-                      value={formData.middleName}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      required
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Suffix (Optional)</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="suffix"
-                      value={formData.suffix}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Gender</Form.Label>
-                    <Form.Select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleChange}
-                      disabled={disabled}
+              {/* Old Student Search */}
+              {formData.studentType === "old" && !isOldStudentSelected && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Search Old Student</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Type first, middle, or last name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {oldStudents.length > 0 && (
+                    <div
+                      className="border p-2 mt-1"
+                      style={{ maxHeight: "150px", overflowY: "auto" }}
                     >
-                      <option>Male</option>
-                      <option>Female</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Birthdate</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="birthdate"
-                      value={formData.birthdate}
-                      onChange={handleChange}
-                      required
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                      {oldStudents.map((s) => (
+                        <div
+                          key={s._id}
+                          style={{ padding: "4px", cursor: "pointer" }}
+                          onClick={() => handleSelectOldStudent(s)}
+                        >
+                          {(s.first_name || s.firstName) || ""}{" "}
+                          {(s.middle_name || s.middleName) || ""}{" "}
+                          {(s.last_name || s.lastName) || ""}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Form.Group>
+              )}
 
-              <h5 className="mt-3">Address</h5>
-              <Row>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Block/Lot</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="address.blockOrLot"
-                      value={formData.address.blockOrLot}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Street</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="address.street"
-                      value={formData.address.street}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Barangay</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="address.barangay"
-                      value={formData.address.barangay}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Municipality/City</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="address.municipalityOrCity"
-                      value={formData.address.municipalityOrCity}
-                      onChange={handleChange}
-                      disabled={disabled}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+              {/* STEP 1: Student Core + Address */}
+              {step === 1 && (
+                <>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>First Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleChange}
+                          required
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Middle Name (Optional)</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="middleName"
+                          value={formData.middleName}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Last Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleChange}
+                          required
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Suffix (Optional)</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="suffix"
+                          value={formData.suffix}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Gender</Form.Label>
+                        <Form.Select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        >
+                          <option>Male</option>
+                          <option>Female</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Birthdate</Form.Label>
+                        <Form.Control
+                          type="date"
+                          name="birthdate"
+                          value={formData.birthdate}
+                          onChange={handleChange}
+                          required
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <h5 className="mt-3">Address</h5>
+                  <Row>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Block/Lot</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="address.blockOrLot"
+                          value={formData.address.blockOrLot}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Street</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="address.street"
+                          value={formData.address.street}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Barangay</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="address.barangay"
+                          value={formData.address.barangay}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Municipality/City</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="address.municipalityOrCity"
+                          value={formData.address.municipalityOrCity}
+                          onChange={handleChange}
+                          disabled={disabled}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
 
 
-              <div className="d-flex justify-content-end mt-3">
-                <Button variant="secondary" onClick={() => setStep(2)}>
-                  Continue <FeatherIcon icon="chevron-right" />
-                </Button>
-              </div>
-            </>
-          )}
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button variant="secondary" onClick={() => setStep(2)}>
+                      Continue <FeatherIcon icon="chevron-right" />
+                    </Button>
+                  </div>
+                </>
+              )}
 
-          {/* STEP 2: Mother / Father / Emergency */}
-          {step === 2 && (
-            <>
-              {/* Mother */}
-              <h5 className="mt-2">Mother</h5>
-              <Row>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.firstName"
-                      value={formData.mother.firstName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Middle Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.middleName"
-                      value={formData.mother.middleName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.lastName"
-                      value={formData.mother.lastName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Occupation</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.occupation"
-                      value={formData.mother.occupation}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+              {/* STEP 2: Mother / Father / Emergency */}
+              {step === 2 && (
+                <>
+                  {/* Mother */}
+                  <h5 className="mt-2">Mother</h5>
+                  <Row>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>First Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.firstName"
+                          value={formData.mother.firstName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Middle Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.middleName"
+                          value={formData.mother.middleName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Last Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.lastName"
+                          value={formData.mother.lastName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Occupation</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.occupation"
+                          value={formData.mother.occupation}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Block/Lot</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.address.blockOrLot"
-                      value={formData.mother.address.blockOrLot}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Street</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.address.street"
-                      value={formData.mother.address.street}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Barangay</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.address.barangay"
-                      value={formData.mother.address.barangay}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Municipality/City</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.address.municipality_or_city"
-                      value={formData.mother.address.municipality_or_city}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Block/Lot</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.address.blockOrLot"
+                          value={formData.mother.address.blockOrLot}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Street</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.address.street"
+                          value={formData.mother.address.street}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Barangay</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.address.barangay"
+                          value={formData.mother.address.barangay}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Municipality/City</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.address.municipality_or_city"
+                          value={formData.mother.address.municipality_or_city}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.contacts.mobile_number"
-                      value={formData.mother.contacts.mobile_number}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Messenger Account</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mother.contacts.messenger_account"
-                      value={formData.mother.contacts.messenger_account}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.contacts.mobile_number"
+                          value={formData.mother.contacts.mobile_number}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Messenger Account</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="mother.contacts.messenger_account"
+                          value={formData.mother.contacts.messenger_account}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              {/* Father */}
-              <h5 className="mt-4">Father</h5>
-              <Row>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.firstName"
-                      value={formData.father.firstName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Middle Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.middleName"
-                      value={formData.father.middleName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.lastName"
-                      value={formData.father.lastName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Occupation</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.occupation"
-                      value={formData.father.occupation}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  {/* Father */}
+                  <h5 className="mt-4">Father</h5>
+                  <Row>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>First Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.firstName"
+                          value={formData.father.firstName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Middle Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.middleName"
+                          value={formData.father.middleName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Last Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.lastName"
+                          value={formData.father.lastName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Occupation</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.occupation"
+                          value={formData.father.occupation}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Block/Lot</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.address.blockOrLot"
-                      value={formData.father.address.blockOrLot}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Street</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.address.street"
-                      value={formData.father.address.street}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Barangay</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.address.barangay"
-                      value={formData.father.address.barangay}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Municipality/City</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.address.municipality_or_city"
-                      value={formData.father.address.municipality_or_city}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Block/Lot</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.address.blockOrLot"
+                          value={formData.father.address.blockOrLot}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Street</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.address.street"
+                          value={formData.father.address.street}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Barangay</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.address.barangay"
+                          value={formData.father.address.barangay}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Municipality/City</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.address.municipality_or_city"
+                          value={formData.father.address.municipality_or_city}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.contacts.mobile_number"
-                      value={formData.father.contacts.mobile_number}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Messenger Account</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="father.contacts.messenger_account"
-                      value={formData.father.contacts.messenger_account}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.contacts.mobile_number"
+                          value={formData.father.contacts.mobile_number}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Messenger Account</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="father.contacts.messenger_account"
+                          value={formData.father.contacts.messenger_account}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              {/* Emergency Contact */}
-              <h5 className="mt-4">Emergency Contact</h5>
-              <Row>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.firstName"
-                      value={formData.emergency.firstName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Middle Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.middleName"
-                      value={formData.emergency.middleName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.lastName"
-                      value={formData.emergency.lastName}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  {/* Emergency Contact */}
+                  <h5 className="mt-4">Emergency Contact</h5>
+                  <Row>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>First Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.firstName"
+                          value={formData.emergency.firstName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Middle Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.middleName"
+                          value={formData.emergency.middleName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Last Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.lastName"
+                          value={formData.emergency.lastName}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Occupation</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.occupation"
-                      value={formData.emergency.occupation}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Occupation</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.occupation"
+                          value={formData.emergency.occupation}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Block/Lot</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.address.blockOrLot"
-                      value={formData.emergency.address.blockOrLot}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Street</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.address.street"
-                      value={formData.emergency.address.street}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Barangay</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.address.barangay"
-                      value={formData.emergency.address.barangay}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Municipality/City</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.address.municipality_or_city"
-                      value={formData.emergency.address.municipality_or_city}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Block/Lot</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.address.blockOrLot"
+                          value={formData.emergency.address.blockOrLot}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Street</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.address.street"
+                          value={formData.emergency.address.street}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Barangay</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.address.barangay"
+                          value={formData.emergency.address.barangay}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Municipality/City</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.address.municipality_or_city"
+                          value={formData.emergency.address.municipality_or_city}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.contacts.mobile_number"
-                      value={formData.emergency.contacts.mobile_number}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Messenger Account</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="emergency.contacts.messenger_account"
-                      value={formData.emergency.contacts.messenger_account}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.contacts.mobile_number"
+                          value={formData.emergency.contacts.mobile_number}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Messenger Account</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="emergency.contacts.messenger_account"
+                          value={formData.emergency.contacts.messenger_account}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
 
-              <div className="d-flex justify-content-end gap-2 mt-3">
-                <Button variant="secondary" onClick={() => setStep(1)}>
-                  <FeatherIcon icon="chevron-left" /> Back
-                </Button>
-                <Button type="submit" variant="primary">
-                  Save Student <FeatherIcon icon="check" />
-                </Button>
-              </div>
-            </>
-          )}
-        </Form>
-      </Card>
-    </Container>
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    <Button variant="secondary" onClick={() => setStep(1)}>
+                      <FeatherIcon icon="chevron-left" /> Back
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      Save Student <FeatherIcon icon="check" />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </Form>
+          </Card>
+        </Container>
+      </div>
+    </div>
   );
 }
