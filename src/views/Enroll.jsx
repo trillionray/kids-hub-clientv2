@@ -17,6 +17,8 @@ export default function Enroll() {
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [programRate, setProgramRate] = useState(0);
+  const [branches, setBranches] = useState([]);
+
 
   const [formData, setFormData] = useState({
     branch: "",
@@ -53,6 +55,28 @@ export default function Enroll() {
       setFormData((prev) => ({ ...prev, total: 0 }));
     }
   }, [formData.program_id, programs]);
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await fetch(`${API_URL}/branches/all`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Only active branches
+          const activeBranches = data.branches.filter((b) => b.is_active);
+          setBranches(activeBranches);
+        } else {
+          notyf.error("Failed to fetch branches");
+        }
+      } catch (err) {
+        console.error(err);
+        notyf.error("Error fetching branches");
+      }
+    };
+    fetchBranches();
+  }, []);
 
   const fetchPrograms = () => {
     fetch(`${API_URL}/programs`, {
@@ -193,8 +217,11 @@ export default function Enroll() {
               required
             >
               <option value="">-- Select Branch --</option>
-              <option value="Tanza">Tanza</option>
-              <option value="General Trias">General Trias</option>
+              {branches.map((b) => (
+                <option key={b._id} value={b.branch_name}>
+                  {b.branch_name}
+                </option>
+              ))}
             </Form.Select>
           </Form.Group>
 

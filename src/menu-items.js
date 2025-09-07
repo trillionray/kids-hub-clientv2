@@ -4,7 +4,6 @@ const menuItems = {
     {
       id: 'accounts',
       title: 'Accounts',
-      // subtitle: '(c) Trillion Ray',
       type: 'group',
       icon: 'icon-pages',
       children: [
@@ -43,7 +42,6 @@ const menuItems = {
         }
       ]
     },
-
     {
       id: 'classes',
       title: 'Classes',
@@ -60,7 +58,6 @@ const menuItems = {
         }
       ]
     },
-
     {
       id: 'attendance',
       title: 'Attendance',
@@ -77,7 +74,6 @@ const menuItems = {
         }
       ]
     },
-
     {
       id: 'enrollments',
       title: 'Enrollments',
@@ -132,7 +128,6 @@ const menuItems = {
       type: 'group',
       icon: 'icon-pages',
       children: [
-        
         {
           id: 'list-misc',
           title: 'Miscellaneous',
@@ -141,7 +136,6 @@ const menuItems = {
           iconname: 'list_alt',
           url: '/miscellaneous'
         },
-        
         {
           id: 'list-misc-package',
           title: 'Miscellaneous Packages',
@@ -165,6 +159,31 @@ const menuItems = {
           icon: 'material-icons-two-tone',
           iconname: 'list_alt',
           url: '/programs/'
+        }
+      ]
+    },
+    // Branches
+    {
+      id: 'branches',
+      title: 'Branches',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'add-branch',
+          title: 'Add Branch',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'add_circle',
+          url: '/branch/add'
+        },
+        {
+          id: 'show-branches',
+          title: 'Show Branches',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          url: '/branches'
         }
       ]
     }
