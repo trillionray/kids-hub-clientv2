@@ -5,9 +5,14 @@ const PdfRegForm = () => {
   const query = new URLSearchParams(window.location.search);
   const studentId = query.get("studentId");
   const programId = query.get("programId");
+  const branchName = query.get("branch"); 
+  const academicYearStart = query.get("academicYearStart"); 
+  
   const [program, setProgram] = useState(null);
   const [student, setStudent] = useState(null);
+  const [branch, setBranch] = useState(null);  // ✅ Added this
   const [error, setError] = useState("");
+
 
   // Fetch student on mount
   useEffect(() => {
@@ -65,6 +70,38 @@ const PdfRegForm = () => {
     }
   };
 
+
+  useEffect(() => {
+    if (branchName) {
+      fetchBranch(branchName);
+    }
+  }, [branchName]);
+
+  const fetchBranch = async (name) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/branches/findByName/${encodeURIComponent(
+          name
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Branch not found");
+
+      const data = await response.json();
+      console.log("Fetched branch:", data);
+      setBranch(data);
+    } catch (err) {
+      console.error("Error fetching branch:", err);
+    }
+  };
+
   const formatName = (person) => {
     if (!person) return "";
     return `${person.last_name || ""}, ${person.first_name || ""} ${person.middle_name || ""}`.trim();
@@ -76,16 +113,23 @@ const PdfRegForm = () => {
   };
 
   const computeAge = (birthdate) => {
-    if (!birthdate) return "";
-    const birth = new Date(birthdate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
+      if (!birthdate) return "";
+
+      const birth = new Date(birthdate);
+
+      // ✅ Use academic year start date instead of today
+      let refDate = new Date();
+      if (academicYearStart) {
+        refDate = new Date(academicYearStart); 
+      }
+
+      let age = refDate.getFullYear() - birth.getFullYear();
+      const m = refDate.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && refDate.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
+    };
 
   const downloadPdf = () => {
     const element = document.getElementById("pdf-content");
@@ -130,13 +174,18 @@ const PdfRegForm = () => {
             />
           </div>
           <div style={{ textAlign: "center" }}>
-            <h2>KidsHub Playschool and Learning Center</h2>
-            <p>
-              A. Soriano Highway, Brgy. Sahud Ulan, Sitio Postema, Tanza Cavite
-              <br />
-              CALL: 09451192023 | EMAIL: kidshubphc@gmail.com
-            </p>
-            <h1>ENROLLMENT FORM</h1>
+              <h2>KidsHub Playschool and Learning Center</h2>
+              {branch ? (
+                <p>
+                  {branch.address}
+                  <br />
+                  CALL: {branch.contact_number} | EMAIL: {branch.email}
+                </p>
+              ) : (
+                <p>Loading branch info...</p>
+              )}
+              <h1>ENROLLMENT FORM</h1>
+            </div>
           </div>
         </div>
 
@@ -463,7 +512,7 @@ const PdfRegForm = () => {
             <p>Parent's/Guardian's Signature Over Printed Name</p>
           </div>
         </div>
-      </div>
+     
 
       {/* DOWNLOAD BUTTON */}
       <button

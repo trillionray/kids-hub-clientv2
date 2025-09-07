@@ -251,22 +251,49 @@ export default function Enrollments() {
         </Modal.Body>
         <Modal.Footer>
           {selectedEnrollment && (
-            <Button
-              variant="primary"
-              onClick={() => {
-                const studentId = selectedEnrollment.student_id;
-                const programId = selectedEnrollment.program_id;
-                // Open PDFRegForm page and send IDs via query params
-                window.open(
-                  `/pdf-reg-form?studentId=${studentId}&programId=${programId}`,
-                  "_blank"
-                );
-              }}
-            >
-              Download Registration Form
-            </Button>
+            <>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const studentId = selectedEnrollment.student_id;
+                  const programId = selectedEnrollment.program_id;
+                  const branchName = encodeURIComponent(selectedEnrollment.branch);
+
+                  // Extract starting part from "August 2025 to August 2026"
+                  let academicYearStart = "";
+                  if (selectedEnrollment.academic_year_name) {
+                    academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0]; 
+                  }
+
+                  // Open PDFRegForm with only the start year
+                  window.open(
+                    `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Registration Form
+              </Button>
+
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const programId = selectedEnrollment.program_id;
+                  const miscId = selectedEnrollment.miscellaneous_group_id;
+
+                  // Open Breakdown page with program + misc
+                  window.open(
+                    `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Breakdown
+              </Button>
+            </>
           )}
         </Modal.Footer>
+ 
       </Modal>
     </div>
   );
