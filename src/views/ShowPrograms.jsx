@@ -47,8 +47,9 @@ export default function ShowPrograms() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data); 
-        setMiscGroups(data)})
+        console.log(data);
+        setMiscGroups(data);
+      })
       .catch(() => notyf.error("Failed to fetch miscellaneous groups"));
   }
 
@@ -56,7 +57,6 @@ export default function ShowPrograms() {
     const group = miscGroups.find((g) => g._id === groupId);
     if (!group) return;
 
-    // Fetch full miscellaneous items
     fetch(`${API_URL}/miscellaneous/getSpecificMiscs`, {
       method: "POST",
       headers: {
@@ -110,6 +110,7 @@ export default function ShowPrograms() {
         category: currentProgram.category,
         description: currentProgram.description,
         rate: currentProgram.rate,
+        down_payment: currentProgram.down_payment, // ✅ include down_payment
         miscellaneous_group_id: currentProgram.miscellaneous_group_id,
         isActive: currentProgram.isActive,
         updated_by: user.id,
@@ -143,49 +144,55 @@ export default function ShowPrograms() {
       name: "Rate",
       selector: (row) => `₱${row.rate}`,
       sortable: true,
-      style: { textAlign: "right" }, // ✅ no warning
+      style: { textAlign: "right" },
     },
     {
-      name: "Miscellaneous Group",
-      selector: (row) => {
-        const group = miscGroups.find((g) => g._id === row.miscellaneous_group_id);
+      name: "Down Payment", // ✅ new column
+      selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"),
+      sortable: true,
+      style: { textAlign: "right" },
+    },
+    {
+      name: "Misc Group Amount", // ✅ clickable column
+      cell: (row) => {
+        const group = row.miscellaneous_group;
         return group ? (
           <Button
             variant="link"
             className="p-0 text-decoration-underline"
             onClick={() => openMiscModal(group._id)}
           >
-            {group.package_name}
+            ₱{group.miscs_total}
           </Button>
         ) : (
-          "—"
+          "₱0"
         );
       },
+      sortable: true,
+      style: { textAlign: "right" },
     },
     { name: "Description", selector: (row) => row.description },
-    // ✅ New Total Column
     {
       name: "Total",
       selector: (row) => `₱${row.total}`,
       sortable: true,
       style: { textAlign: "right" },
     },
-
     {
       name: "Actions",
       cell: (row) => (
         <Button size="sm" variant="warning" className="me-2" onClick={() => openEditModal(row)}>
-          <FeatherIcon icon="edit" size="14" />
+          Edit
         </Button>
       ),
     },
   ];
 
 
+
   const filteredPrograms = (programs || []).filter((item) =>
     item.name?.toLowerCase().includes(filterText.toLowerCase())
   );
-
 
   return (
     <div className="px-5 py-4">
@@ -227,17 +234,15 @@ export default function ShowPrograms() {
         </Modal.Header>
         <Form onSubmit={handleUpdateSubmit}>
           <Modal.Body>
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FeatherIcon icon="tag" />
-              </InputGroup.Text>
+            <Form.Group className="mb-3">
+              <Form.Label>Program Name</Form.Label>
               <Form.Control
                 type="text"
-                value={currentProgram?.category || "short"}
+                value={currentProgram?.name || ""}
                 onChange={(e) => setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))}
                 required
               />
-            </InputGroup>
+            </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Category</Form.Label>
@@ -260,8 +265,8 @@ export default function ShowPrograms() {
               />
             </Form.Group>
 
-            <InputGroup className="mb-3">
-              <InputGroup.Text>₱</InputGroup.Text>
+            <Form.Group className="mb-3">
+              <Form.Label>Rate (₱)</Form.Label>
               <Form.Control
                 type="number"
                 step="0.01"
@@ -269,7 +274,20 @@ export default function ShowPrograms() {
                 onChange={(e) => setCurrentProgram((prev) => ({ ...prev, rate: e.target.value }))}
                 required
               />
-            </InputGroup>
+            </Form.Group>
+
+            {/* ✅ Down Payment */}
+            <Form.Group className="mb-3">
+              <Form.Label>Down Payment (₱)</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.01"
+                value={currentProgram?.down_payment || ""}
+                onChange={(e) =>
+                  setCurrentProgram((prev) => ({ ...prev, down_payment: e.target.value }))
+                }
+              />
+            </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Miscellaneous Package</Form.Label>

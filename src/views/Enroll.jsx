@@ -247,13 +247,19 @@ export default function Enroll() {
               required
             >
               <option value="">Select Program</option>
-              {programs.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.name} (₱{p.rate})
-                </option>
-              ))}
+              {programs.map((p) => {
+                const rate = p.rate || 0;
+                const miscTotal = p.miscellaneous_group?.miscs_total || 0;
+                const combined = rate + miscTotal;
+                return (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ( Rate: ₱{rate} + Miscellaneous: ₱{miscTotal} = ₱{combined})
+                  </option>
+                );
+              })}
             </Form.Select>
           </Form.Group>
+
 
           <InputGroup className="mb-3">
             <InputGroup.Text>Number of Sessions</InputGroup.Text>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Form, Button, InputGroup } from "react-bootstrap";
-import FeatherIcon from "feather-icons-react";
+import { Form, Button } from "react-bootstrap";
 import { Notyf } from "notyf";
 import { useNavigate } from "react-router-dom";
 import UserContext from "../context/UserContext";
@@ -15,11 +14,12 @@ export default function AddProgram() {
   const [category, setCategory] = useState("short");
   const [description, setDescription] = useState("");
   const [rate, setRate] = useState(0);
+  const [downPayment, setDownPayment] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const [miscGroupId, setMiscGroupId] = useState(""); // ✅ required field
-  const [miscGroups, setMiscGroups] = useState([]);   // for dropdown options
+  const [miscGroupId, setMiscGroupId] = useState("");
+  const [miscGroups, setMiscGroups] = useState([]);
 
-  // Fetch Miscellaneous Groups for dropdown
+  // Fetch Miscellaneous Groups
   useEffect(() => {
     fetch(`${API_URL}/miscellaneous-package/read`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -43,8 +43,9 @@ export default function AddProgram() {
         category,
         description,
         rate,
+        down_payment: downPayment,
         isActive,
-        miscellaneous_group_id: miscGroupId // ✅ must be included
+        miscellaneous_group_id: miscGroupId
       })
     })
       .then((res) => res.json())
@@ -68,21 +69,19 @@ export default function AddProgram() {
           <Form onSubmit={handleSubmit}>
             
             {/* Program Name */}
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FeatherIcon icon="tag" />
-              </InputGroup.Text>
+            <Form.Group className="mb-3" controlId="programName">
+              <Form.Label>Program Name</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Program Name"
+                placeholder="Enter program name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
-            </InputGroup>
+            </Form.Group>
 
             {/* Category */}
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3" controlId="programCategory">
               <Form.Label>Category</Form.Label>
               <Form.Select
                 value={category}
@@ -95,36 +94,49 @@ export default function AddProgram() {
             </Form.Group>
 
             {/* Description */}
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3" controlId="programDescription">
               <Form.Label>Description</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
+                placeholder="Enter description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </Form.Group>
 
             {/* Rate */}
-            <InputGroup className="mb-3">
-              <InputGroup.Text>₱</InputGroup.Text>
+            <Form.Group className="mb-3" controlId="programRate">
+              <Form.Label>Rate (₱)</Form.Label>
               <Form.Control
                 type="number"
                 step="0.01"
-                placeholder="Rate"
+                placeholder="Enter rate"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
                 required
               />
-            </InputGroup>
+            </Form.Group>
+
+            {/* Down Payment */}
+            <Form.Group className="mb-3" controlId="programDownPayment">
+              <Form.Label>Down Payment (₱)</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.01"
+                placeholder="Enter down payment"
+                value={downPayment}
+                onChange={(e) => setDownPayment(e.target.value)}
+              />
+            </Form.Group>
 
             {/* Miscellaneous Group Selection */}
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3" controlId="miscGroup">
               <Form.Label>Miscellaneous Group</Form.Label>
               <Form.Select
                 value={miscGroupId}
                 onChange={(e) => setMiscGroupId(e.target.value)}
-                
+                required
               >
                 <option value="">-- Select Group --</option>
                 {miscGroups.map((group) => (
@@ -136,7 +148,7 @@ export default function AddProgram() {
             </Form.Group>
 
             {/* Save Button */}
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" className="w-100">
               Save Program
             </Button>
           </Form>

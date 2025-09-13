@@ -134,10 +134,27 @@ export default function PdfBreakdown() {
         )}
 
         {/* Grand Total */}
+        {/* Grand Total */}
         {grandTotal !== null && (
-          <Card bg="light" className="fw-bold fs-5 text-end p-3">
+          <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
             Grand Total: ₱{grandTotal}
           </Card>
+        )}
+
+        {/* Down Payment */}
+        {program?.down_payment !== undefined && (
+          <Card bg="light" className="fs-5 text-end mb-3">
+            Down Payment: ₱{program.down_payment}
+          </Card>
+        )}
+
+        {/* Remaining Balance & Monthly Payment */}
+        {program?.down_payment !== undefined && grandTotal !== null && (
+          <>
+            <Card bg="light" className="fs-6 text-end">
+              Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toFixed(2)}
+            </Card>
+          </>
         )}
       </div>
 
