@@ -18,64 +18,127 @@ export default function Enrollments() {
   }, []);
 
   const fetchEnrollments = async () => {
+    console.log("fetchEnrollments called");
     setLoading(true);
+
     try {
+      // 1. Fetch raw enrollments
       const res = await fetch(`${API_URL}/enrollments`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
+      console.log("Raw enrollments:", data);
 
-      if (Array.isArray(data)) {
-        // map all IDs
-        const studentIds = [...new Set(data.map(e => e.student_id))].join(",");
-        const programIds = [...new Set(data.map(e => e.program_id))].join(",");
-        const userIds = [
-          ...new Set(data.flatMap(e => [e.created_by, e.updated_by]))
-        ].filter(Boolean).join(",");
-        const academicIds = [...new Set(data.map(e => e.academic_year_id))].join(",");
-        const miscIds = [...new Set(data.map(e => e.miscellaneous_group_id))].filter(Boolean).join(",");
-
-        // fetch summaries in parallel
-        const [students, programs, users, academicYears, miscPackages] = await Promise.all([
-          fetch(`${API_URL}/summary/findname/students?ids=${studentIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
-          fetch(`${API_URL}/summary/findprogram/programs?ids=${programIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
-          fetch(`${API_URL}/summary/findname/users?ids=${userIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
-          fetch(`${API_URL}/summary/academicyear/academicYears?ids=${academicIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json()),
-          miscIds
-            ? fetch(`${API_URL}/summary/findmisc/miscPackages/${miscIds}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r=>r.json())
-            : { success: false }
-        ]);
-
-        // make lookup maps
-        const studentMap = Object.fromEntries((students.results || []).map(s => [s._id, s.name]));
-        const programMap = Object.fromEntries((programs.results || []).map(p => [p._id, p.name]));
-        const userMap = Object.fromEntries((users.results || []).map(u => [u._id, u.name]));
-        const academicMap = Object.fromEntries((academicYears.results || []).map(a => [a._id, a.name]));
-        const miscMap = miscPackages.success
-          ? { [miscPackages.result._id]: miscPackages.result.package_name }
-          : {};
-
-        // enrich data
-        const enriched = data.map(e => ({
-          ...e,
-          student_name: studentMap[e.student_id] || e.student_id,
-          program_name: programMap[e.program_id] || e.program_id,
-          created_by_name: userMap[e.created_by] || e.created_by,
-          updated_by_name: userMap[e.updated_by] || e.updated_by,
-          academic_year_name: academicMap[e.academic_year_id] || e.academic_year_id,
-          misc_package_name: miscMap[e.miscellaneous_group_id] || "N/A"
-        }));
-
-        setEnrollments(enriched);
-      } else {
+      if (!Array.isArray(data)) {
         notyf.error("Invalid response from server");
+        return;
       }
+
+      // 2. Collect unique IDs
+      const studentIds = [...new Set(data.map(e => e.student_id))];
+      const programIds = [...new Set(data.map(e => e.program_id))];
+      const academicIds = [...new Set(data.map(e => e.academic_year_id))];
+      const miscIds = [...new Set(data.map(e => e.miscellaneous_group_id))].filter(Boolean);
+
+      // 3. Fetch students
+      const studentsArray = await Promise.all(
+        studentIds.map(async (sid) => {
+          const res = await fetch(`${API_URL}/summary/findstudent/${sid}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          const studentData = await res.json();
+          console.log("Student response:", studentData);
+          return { _id: sid, ...studentData };
+        })
+      );
+
+      // 4. Fetch programs
+      const programsArray = await Promise.all(
+        programIds.map(async (pid) => {
+          const res = await fetch(`${API_URL}/summary/findprogram/${pid}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          const programData = await res.json();
+          console.log(`Program ${pid}:`, programData);
+          return programData;
+        })
+      );
+
+      // 5. Fetch academic years individually
+      const academicYearsArray = await Promise.all(
+        academicIds.map(async (aid) => {
+          const res = await fetch(`${API_URL}/summary/findacademicyear/${aid}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          const academicData = await res.json();
+          console.log(`AcademicYear ${aid}:`, academicData);
+          return { _id: aid, result: academicData.result || "N/A" };
+        })
+      );
+
+      // 6. Fetch miscellaneous packages
+      const miscPackages = miscIds.length
+        ? await Promise.all(
+            miscIds.map(async (mid) => {
+              const res = await fetch(`${API_URL}/summary/findmisc/miscPackages/${mid}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+              });
+              const miscData = await res.json();
+              console.log(`Misc ${mid}:`, miscData);
+              return { _id: mid, result: miscData.result || "N/A" };
+            })
+          )
+        : [];
+
+      // 7. Build lookup maps
+      const studentMap = {};
+      studentsArray.forEach(s => {
+        if (s && s.success) studentMap[s._id] = s.fullName || "Unknown Student";
+      });
+
+      const programMap = {};
+      programsArray.forEach(p => {
+        if (p) programMap[p._id] = p.name || "Unknown Program";
+      });
+
+      const academicMap = {};
+      academicYearsArray.forEach(a => {
+        academicMap[a._id] = a.result || "N/A";
+      });
+
+      const miscMap = {};
+      miscPackages.forEach(m => {
+        // Use package_name instead of the entire object
+        miscMap[m._id] = m.result?.package_name || "N/A";
+      });
+
+
+      // 8. Enrich enrollments
+      const enriched = data.map(e => ({
+        ...e,
+        student_name: studentMap[e.student_id] || e.student_id,
+        program_name: programMap[e.program_id] || e.program_id,
+        academic_year_name: academicMap[e.academic_year_id] || "N/A",
+        misc_package_name: miscMap[e.miscellaneous_group_id] || "N/A",
+      }));
+
+      console.log("Enriched enrollments:", enriched);
+      setEnrollments(enriched);
+
     } catch (err) {
       console.error("fetchEnrollments error:", err);
       notyf.error("Failed to fetch enrollments");
     }
+
     setLoading(false);
   };
+
+
+
+
+
+
+
 
 
   const openDetails = (enrollment) => {
@@ -117,11 +180,12 @@ export default function Enrollments() {
           Show Details
         </Button>
       ),
+      // Only keep column-level props, remove anything invalid
       ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
+      allowOverflow: true, // this is fine if used as a column prop, not on Button
     },
   ];
+
 
   // Filtering
   const filteredData = enrollments.filter(
@@ -186,13 +250,66 @@ export default function Enrollments() {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <button
-            className="btn btn-primary"
-            onClick={() => window.open("http://localhost:5000/pdf/download/123", "_blank")}
-          >
-            Download PDF
-          </button>
+          {selectedEnrollment && (
+            <>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const studentId = selectedEnrollment.student_id;
+                  const programId = selectedEnrollment.program_id;
+                  const branchName = encodeURIComponent(selectedEnrollment.branch);
+
+                  // Extract starting part from "August 2025 to August 2026"
+                  let academicYearStart = "";
+                  if (selectedEnrollment.academic_year_name) {
+                    academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
+                  }
+
+                  window.open(
+                    `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Registration Form
+              </Button>
+
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const programId = selectedEnrollment.program_id;
+                  const miscId = selectedEnrollment.miscellaneous_group_id;
+
+                  window.open(
+                    `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Breakdown
+              </Button>
+
+              {/* New Acknowledgement & Consent button */}
+              <Button
+                variant="success"
+                onClick={() => {
+                  const studentName = encodeURIComponent(selectedEnrollment.student_name);
+                  const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                  const date = encodeURIComponent(new Date().toLocaleDateString());
+
+                  window.open(
+                    `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Download Acknowledgement & Consent
+              </Button>
+            </>
+          )}
         </Modal.Footer>
+
+ 
       </Modal>
     </div>
   );

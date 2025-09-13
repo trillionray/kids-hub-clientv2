@@ -41,6 +41,12 @@ const Home = lazy(() => import('../views/Home.jsx'));
 const ErrorPage = lazy(() => import('../views/NotFound.jsx'));
 const ChangePassword = lazy(() => import('../views/auth/ChangePassword.jsx'));
 
+const ShowBranches = lazy(() => import("../views/ShowBranches.jsx"));
+const AddBranch = lazy(() => import("../views/AddBranch.jsx"));
+const PdfRegForm = lazy(() => import('../views/PdfRegForm.jsx'));
+const PdfBreakdown = lazy(() => import('../views/PdfBreakdown.jsx'));
+const PdfAcknowledgementConsent = lazy(() => import('../views/PdfAcknowledgementConsent.jsx')); 
+
 const router = createBrowserRouter(
   [
     // Guest routes
@@ -69,6 +75,9 @@ const router = createBrowserRouter(
             
             { path: 'dashboard/home', element: <Home/> },
             { path: 'profile/change-password', element: <ChangePassword /> },
+            { path: 'branch/add', element: <AddBranch /> },
+            { path: 'branches', element: <ShowBranches /> }, // matches menuItems `/branches`
+
             { path: 'register', element: <Register /> },
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
@@ -76,8 +85,13 @@ const router = createBrowserRouter(
             { path: 'students/add', element: <AddStudent /> },
             { path: 'students', element: <ShowStudents /> },
             { path: 'classes/:id/students', element: <ClassStudents /> },
+
             { path: 'enroll', element: <Enroll /> },
             { path: 'enrollments', element: <Enrollments /> },
+            { path: 'pdf-reg-form', element: <PdfRegForm /> },
+            { path: 'pdf-breakdown', element: <PdfBreakdown /> },  
+            { path: 'pdf-acknowledgement-consent', element: <PdfAcknowledgementConsent /> }, 
+
             { path: 'academic-year/add', element: <AddAcademicYear /> },
             { path: 'academic-year', element: <ShowAcademicYear /> },
             { path: 'miscellaneous/add', element: <AddMiscellaneous /> },
