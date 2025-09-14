@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 
 export default function PdfAcknowledgementConsent() {
@@ -21,6 +21,14 @@ export default function PdfAcknowledgementConsent() {
       .from(element)
       .save();
   };
+
+  useEffect(() => {
+      // Slight delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        downloadPdf();
+      }, 500);
+    }, []);
+
 
   return (
     <div className="container d-flex justify-content-center my-4">

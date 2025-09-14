@@ -140,6 +140,16 @@ const PdfRegForm = () => {
   };
 
 
+  useEffect(() => {
+    if (student) {
+      // slight delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        downloadPdf();
+      }, 500);
+    }
+  }, [student]);
+
+
 
 
 

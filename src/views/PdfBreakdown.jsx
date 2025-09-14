@@ -15,9 +15,12 @@ export default function PdfBreakdown() {
   const programId = queryParams.get("programId");
   const miscId = queryParams.get("miscId");
 
+  // Fetch program & misc package data
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (!programId) return;
+
         const resProgram = await fetch(`${API_URL}/summary/findprogram/${programId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
@@ -38,9 +41,37 @@ export default function PdfBreakdown() {
       }
     };
 
-    if (programId) fetchData();
-  }, [programId, miscId]);
+    fetchData();
+  }, [API_URL, programId, miscId]);
 
+  const grandTotal =
+    program?.rate && miscPackage?.miscs_total
+      ? program.rate + miscPackage.miscs_total
+      : program?.rate || null;
+
+  const downloadPdf = () => {
+    const element = document.getElementById("pdf-breakdown-content");
+    if (!element) return;
+
+    html2pdf()
+      .set({
+        margin: [10, 0],
+        filename: "Program_Breakdown.pdf",
+        pagebreak: { mode: "avoid-all" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(element)
+      .save();
+  };
+
+  // Auto-download PDF when program data is ready
+  useEffect(() => {
+    if (program) {
+      setTimeout(() => downloadPdf(), 500);
+    }
+  }, [program]);
+
+  // Show loader while fetching
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -53,27 +84,8 @@ export default function PdfBreakdown() {
     return <div className="p-4 text-center">Program not found</div>;
   }
 
-  const grandTotal =
-    program?.rate && miscPackage?.miscs_total
-      ? program.rate + miscPackage.miscs_total
-      : program?.rate || null;
-
-  const downloadPdf = () => {
-    const element = document.getElementById("pdf-breakdown-content");
-    html2pdf()
-      .set({
-        margin: [10, 0], // top/bottom 10mm, left/right auto handled by CSS
-        filename: "Program_Breakdown.pdf",
-        pagebreak: { mode: "avoid-all" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(element)
-      .save();
-  };
-
   return (
     <div className="container d-flex justify-content-center my-4">
-      {/* PDF Content */}
       <div
         id="pdf-breakdown-content"
         style={{ maxWidth: "600px", width: "50%", margin: "0 auto" }}
@@ -94,8 +106,8 @@ export default function PdfBreakdown() {
               </thead>
               <tbody>
                 <tr>
-                  <td>{program.name}</td>
-                  <td className="text-end">{program.rate}</td>
+                  <td>{program?.name || "-"}</td>
+                  <td className="text-end">{program?.rate || 0}</td>
                 </tr>
               </tbody>
             </Table>
@@ -107,7 +119,7 @@ export default function PdfBreakdown() {
           <Card className="mb-4">
             <Card.Body>
               <h5 className="mb-3">
-                Miscellaneous Package — {miscPackage.package_name}
+                Miscellaneous
               </h5>
               <Table striped bordered hover size="sm">
                 <thead>
@@ -134,7 +146,6 @@ export default function PdfBreakdown() {
         )}
 
         {/* Grand Total */}
-        {/* Grand Total */}
         {grandTotal !== null && (
           <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
             Grand Total: ₱{grandTotal}
@@ -148,35 +159,33 @@ export default function PdfBreakdown() {
           </Card>
         )}
 
-        {/* Remaining Balance & Monthly Payment */}
+        {/* Monthly Payment */}
         {program?.down_payment !== undefined && grandTotal !== null && (
-          <>
-            <Card bg="light" className="fs-6 text-end">
-              Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toFixed(2)}
-            </Card>
-          </>
+          <Card bg="light" className="fs-6 text-end">
+            Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toFixed(2)}
+          </Card>
         )}
       </div>
 
       {/* Floating Download Button */}
       <button
-            onClick={downloadPdf}
-            style={{
-              position: "fixed",
-              bottom: "20px",
-              right: "20px",
-              padding: "12px 20px",
-              fontSize: "16px",
-              backgroundColor: "#007bff",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              zIndex: 1000,
-            }}
-          >
-            Download PDF
-          </button>
+        onClick={downloadPdf}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          padding: "12px 20px",
+          fontSize: "16px",
+          backgroundColor: "#007bff",
+          color: "#fff",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer",
+          zIndex: 1000,
+        }}
+      >
+        Download PDF
+      </button>
     </div>
   );
 }

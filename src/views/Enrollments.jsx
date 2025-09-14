@@ -196,6 +196,47 @@ export default function Enrollments() {
       enroll.status?.toLowerCase().includes(filterText.toLowerCase())
   );
 
+
+  const handleDownloadAll = () => {
+    if (!selectedEnrollment) return;
+
+    const studentId = selectedEnrollment.student_id;
+    const programId = selectedEnrollment.program_id;
+    const branchName = encodeURIComponent(selectedEnrollment.branch);
+
+    let academicYearStart = "";
+    if (selectedEnrollment.academic_year_name) {
+      academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
+    }
+
+    const studentName = encodeURIComponent(selectedEnrollment.student_name);
+    const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+    const date = encodeURIComponent(new Date().toLocaleDateString());
+
+    // Open PDFs
+    const regForm = window.open(
+      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+      "_blank"
+    );
+
+    setTimeout(() => regForm?.close(), 4000); // 4s for reg form
+
+    const breakdown = window.open(
+      `/pdf-breakdown?programId=${programId}&miscId=${selectedEnrollment.miscellaneous_group_id}`,
+      "_blank"
+    );
+
+    setTimeout(() => breakdown?.close(), 6000); // 6s for breakdown
+
+    const ackConsent = window.open(
+      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+      "_blank"
+    );
+
+    setTimeout(() => ackConsent?.close(), 8000); // 8s for ack consent
+  };
+
+
   return (
     <div className="p-4 px-5">
       <h3 className="mb-3">Enrollments</h3>
@@ -250,6 +291,14 @@ export default function Enrollments() {
           )}
         </Modal.Body>
         <Modal.Footer>
+
+          {selectedEnrollment && (
+              <Button variant="primary" onClick={handleDownloadAll}>
+                Download All PDFs
+              </Button>
+            )}
+
+          
           {selectedEnrollment && (
             <>
               <Button
