@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { Button, Modal } from "react-bootstrap";
 import { Notyf } from "notyf";
+import html2pdf from "html2pdf.js";
 
 export default function Enrollments() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -134,17 +135,24 @@ export default function Enrollments() {
   };
 
 
-
-
-
-
-
-
-
   const openDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
     setShowModal(true);
   };
+
+  const handleDownloadCombined = () => {
+    if (!selectedEnrollment) return;
+
+    const element = document.getElementById("combined-pdf");
+    html2pdf().set({
+      margin: 10,
+      filename: `${selectedEnrollment.student_name}-all.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    }).from(element).save();
+  };
+
 
   // Columns for DataTable
   const columns = [
@@ -202,6 +210,7 @@ export default function Enrollments() {
 
     const studentId = selectedEnrollment.student_id;
     const programId = selectedEnrollment.program_id;
+    const miscId = selectedEnrollment.miscellaneous_group_id;
     const branchName = encodeURIComponent(selectedEnrollment.branch);
 
     let academicYearStart = "";
@@ -213,28 +222,39 @@ export default function Enrollments() {
     const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
     const date = encodeURIComponent(new Date().toLocaleDateString());
 
-    // Open PDFs
-    const regForm = window.open(
-      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
-      "_blank"
-    );
+    // Sequentially open pages with delays to ensure each one loads
+    const openPDF = (url, delay) => {
+      return new Promise((resolve) => {
+        const win = window.open(url, "_blank");
+        setTimeout(() => {
+          win?.close();
+          resolve();
+        }, delay);
+      });
+    };
 
-    setTimeout(() => regForm?.close(), 4000); // 4s for reg form
+    (async () => {
+      // Open registration form (wait 4s)
+      await openPDF(
+        `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+        4000
+      );
 
-    const breakdown = window.open(
-      `/pdf-breakdown?programId=${programId}&miscId=${selectedEnrollment.miscellaneous_group_id}`,
-      "_blank"
-    );
+      // Open breakdown (wait 4s)
+      await openPDF(
+        `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
+        4000
+      );
 
-    setTimeout(() => breakdown?.close(), 6000); // 6s for breakdown
-
-    const ackConsent = window.open(
-      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
-      "_blank"
-    );
-
-    setTimeout(() => ackConsent?.close(), 8000); // 8s for ack consent
+      // Open acknowledgement & consent (wait 4s)
+      await openPDF(
+        `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+        4000
+      );
+    })();
   };
+
+
 
 
   return (
@@ -292,23 +312,20 @@ export default function Enrollments() {
         </Modal.Body>
         <Modal.Footer>
 
-          {selectedEnrollment && (
-              <Button variant="primary" onClick={handleDownloadAll}>
-                Download All PDFs
-              </Button>
-            )}
-
           
+
+
+
           {selectedEnrollment && (
-            <>
+            <div className="d-flex w-100 gap-2">
               <Button
+                className="flex-fill"
                 variant="primary"
                 onClick={() => {
                   const studentId = selectedEnrollment.student_id;
                   const programId = selectedEnrollment.program_id;
                   const branchName = encodeURIComponent(selectedEnrollment.branch);
 
-                  // Extract starting part from "August 2025 to August 2026"
                   let academicYearStart = "";
                   if (selectedEnrollment.academic_year_name) {
                     academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
@@ -320,11 +337,12 @@ export default function Enrollments() {
                   );
                 }}
               >
-                Download Registration Form
+                Registration Form
               </Button>
 
               <Button
-                variant="secondary"
+                className="flex-fill"
+                variant="primary"
                 onClick={() => {
                   const programId = selectedEnrollment.program_id;
                   const miscId = selectedEnrollment.miscellaneous_group_id;
@@ -335,12 +353,12 @@ export default function Enrollments() {
                   );
                 }}
               >
-                Download Breakdown
+                Breakdown
               </Button>
 
-              {/* New Acknowledgement & Consent button */}
               <Button
-                variant="success"
+                className="flex-fill"
+                variant="primary"
                 onClick={() => {
                   const studentName = encodeURIComponent(selectedEnrollment.student_name);
                   const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
@@ -352,10 +370,34 @@ export default function Enrollments() {
                   );
                 }}
               >
-                Download Acknowledgement & Consent
+                Ack & Consent
               </Button>
-            </>
+            </div>
+
           )}
+
+
+          <Button
+            variant="success"
+            className="w-100"
+            onClick={() => {
+              const studentId = selectedEnrollment.student_id;
+              const programId = selectedEnrollment.program_id;
+              const branchName = encodeURIComponent(selectedEnrollment.branch);
+              const miscId = selectedEnrollment.miscellaneous_group_id;
+              const studentName = encodeURIComponent(selectedEnrollment.student_name);
+              const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+              const academicYearStart = selectedEnrollment.academic_year_name?.split(" to ")[0] || "";
+              const date = encodeURIComponent(new Date().toLocaleDateString());
+
+              window.open(
+                `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}`,
+                "_blank"
+              );
+            }}
+          >
+            All Files
+          </Button>
         </Modal.Footer>
 
  

@@ -46,6 +46,8 @@ const AddBranch = lazy(() => import("../views/AddBranch.jsx"));
 const PdfRegForm = lazy(() => import('../views/PdfRegForm.jsx'));
 const PdfBreakdown = lazy(() => import('../views/PdfBreakdown.jsx'));
 const PdfAcknowledgementConsent = lazy(() => import('../views/PdfAcknowledgementConsent.jsx')); 
+const PdfAll = lazy(() => import('../views/PdfAll.jsx'));
+
 
 const router = createBrowserRouter(
   [
@@ -91,6 +93,7 @@ const router = createBrowserRouter(
             { path: 'pdf-reg-form', element: <PdfRegForm /> },
             { path: 'pdf-breakdown', element: <PdfBreakdown /> },  
             { path: 'pdf-acknowledgement-consent', element: <PdfAcknowledgementConsent /> }, 
+            { path: 'pdf-all', element: <PdfAll />},
 
             { path: 'academic-year/add', element: <AddAcademicYear /> },
             { path: 'academic-year', element: <ShowAcademicYear /> },
