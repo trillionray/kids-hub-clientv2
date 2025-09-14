@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import html2pdf from "html2pdf.js";
+// import html2pdf from "html2pdf.js";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas"; // ✅ Add this
 
 const PdfRegForm = () => {
   const query = new URLSearchParams(window.location.search);
@@ -81,21 +83,75 @@ const PdfRegForm = () => {
   const downloadPdf = async () => {
     const element = document.getElementById("pdf-content");
     const btn = document.getElementById("download-btn");
+
+    if (!element) return;
     if (btn) btn.style.display = "none";
 
-    const opt = {
-      margin: 10,
-      filename: "Enrollment_Form.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 1, useCORS: true, scrollY: 0 },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        scrollY: 0,
+      });
 
-    await html2pdf().set(opt).from(element).save();
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
 
-    if (btn) btn.style.display = "block";
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgAspect = imgProps.width / imgProps.height;
+
+      // Maximize width (just 5mm margin on each side)
+      const margin = 5;
+      const copyWidth = pageWidth - 2 * margin;
+      const copyHeight = copyWidth / imgAspect; // scale height proportionally
+      const xOffset = margin;
+
+      // First copy
+      let yOffset = margin;
+      pdf.addImage(imgData, "PNG", xOffset, yOffset, copyWidth, copyHeight);
+      pdf.setLineWidth(0.5);
+      pdf.rect(xOffset, yOffset, copyWidth, copyHeight);
+
+      // Second copy
+      yOffset = copyHeight + 2 * margin; // gap between copies
+      pdf.addImage(imgData, "PNG", xOffset, yOffset, copyWidth, copyHeight);
+      pdf.rect(xOffset, yOffset, copyWidth, copyHeight);
+
+      pdf.save("Enrollment_Form.pdf");
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+    } finally {
+      if (btn) btn.style.display = "block";
+    }
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const formatDateToWords = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+
+
 
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
@@ -106,34 +162,36 @@ const PdfRegForm = () => {
       style={{
         width: "794px",  // EXACT A4 width in px at 96dpi
         minHeight: "1123px", // A4 height in px
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "'Century Gothic', CenturyGothic, AppleGothic, sans-serif",
         fontSize: "12px",
         margin: "0 auto",
       }}
     >
       <div id="pdf-content">
         {/* HEADER */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0px" }}>
           <div style={{ marginRight: "20px" }}>
-            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" style={{ width: "120px" }} />
+            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "100px" }} />
           </div>
           <div style={{ textAlign: "center" }}>
-            <h2>KidsHub Playschool and Learning Center</h2>
+            <h3 className="fw-bolder" style={{marginTop: "-5px"}}>KidsHub Playschool and Learning Center</h3>
             {branch ? (
-              <p>
+              <p className="p-0 m-0" style="">
                 {branch.address}<br />
                 CALL: {branch.contact_number} | EMAIL: {branch.email}
               </p>
             ) : (
               <p>Loading branch info...</p>
             )}
-            <h1>ENROLLMENT FORM</h1>
+            
           </div>
         </div>
 
+        <h3 className="text-center fw-bolder" style={{ marginTop: "-10px"}}>ENROLLMENT FORM</h3>
+
         {/* STUDENT DETAILS */}
-        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
-        <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>STUDENT'S DETAILS</div>
+        <div style={{ border: "1px solid #000", padding: "5px", marginBottom: "5px", pageBreakInside: "avoid", fontSize: "12px" }}>
+        <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "0px", fontSize: "11px" }}>STUDENT'S DETAILS</div>
         
         {/* TWO-COLUMN LAYOUT */}
         <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
@@ -162,7 +220,15 @@ const PdfRegForm = () => {
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    borderBottom: "1px solid #000",
+                    paddingBottom: "1px",
+                    gap: "5px",
+                    alignItems: "flex-end", // ✅ align text to bottom
+                  }}
+                >
                   <span style={{ flex: 1, textAlign: "center" }}>{student.address?.block_or_lot || ""}</span>
                   <span style={{ flex: 1, textAlign: "center" }}>{student.address?.street || ""}</span>
                   <span style={{ flex: 1, textAlign: "center" }}>{student.address?.barangay || ""}</span>
@@ -187,20 +253,20 @@ const PdfRegForm = () => {
 
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>DATE OF BIRTH:</div>
-              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.birthdate || ""}</div>
+              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{formatDateToWords(student.birthdate)}</div>
             </div>
 
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>PROGRAM:</div>
-              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.program || ""}</div>
+              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{program?.name || ""}</div>
             </div>
           </div>
         </div>
         </div>
 
         {/* PARENT'S DETAILS */}
-        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
-            <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>PARENT'S DETAILS</div>
+        <div style={{ border: "1px solid #000", padding: "5px", marginBottom: "5px", pageBreakInside: "avoid", fontSize: "12px" }}>
+            <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "0px", fontSize: "11px" }}>PARENT'S DETAILS</div>
 
             <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
               {/* LEFT SIDE: Names + Addresses */}
@@ -225,7 +291,7 @@ const PdfRegForm = () => {
 
                 {/* COMPLETE ADDRESS MOTHER */}
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px", alignItems: "flex-end" }}>COMPLETE ADDRESS:</div>
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
                       <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.address?.block_or_lot || ""}</span>
@@ -261,7 +327,7 @@ const PdfRegForm = () => {
 
                 {/* COMPLETE ADDRESS FATHER */}
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px", alignItems: "flex-end" }}>COMPLETE ADDRESS:</div>
                   <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
                       <span style={{ flex: 1, textAlign: "center" }}>{student.father?.address?.block_or_lot || ""}</span>
@@ -299,8 +365,8 @@ const PdfRegForm = () => {
         </div>
 
         {/* EMERGENCY CONTACT */}
-        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
-          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>EMERGENCY CONTACT DETAILS</div>
+        <div style={{ border: "1px solid #000", padding: "5px", marginBottom: "5px", pageBreakInside: "avoid", fontSize: "12px" }}>
+          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "0px", fontSize: "11px" }}>EMERGENCY CONTACT DETAILS</div>
           
           {/* TWO-COLUMN LAYOUT */}
           <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
@@ -308,11 +374,10 @@ const PdfRegForm = () => {
             {/* LEFT COLUMN (NAME + ADDRESS) */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
               
-              {/* NAME OF THE CHILD */}
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>NAME OF CONTACT PERSON:</div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "3px" }}>
+                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "3px"}}>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.last_name || ""}</span>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.first_name || ""}</span>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.middle_name || ""}</span>
@@ -329,7 +394,7 @@ const PdfRegForm = () => {
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px", alignItems: "flex-end" }}>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.block_or_lot || ""}</span>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.street || ""}</span>
                     <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.barangay || ""}</span>
@@ -366,13 +431,15 @@ const PdfRegForm = () => {
         </div>
  
         {/* FOOTER */}
-        <div className="footer" style={{ marginTop: "30px", pageBreakInside: "avoid" }}>
+        <div className="footer" className="ps-2" style={{ marginTop: "5px", pageBreakInside: "avoid" }}>
           <p>
-            I hereby understand the <u>NO REFUND POLICY</u> of any deposits made upon enrollment.
+            I hereby understand the <u className="fw-bolder">NO REFUND POLICY</u> of any deposits made upon enrollment. 
           </p>
-          <div className="signature">
-            <p>_________________________</p>
-            <p>Parent's/Guardian's Signature Over Printed Name</p>
+          <div style={{ textAlign: "right", marginTop: "-30px"}} className="pe-2">
+            ____________________________________
+          </div>
+          <div style={{ textAlign: "right" }} className="pe-2">
+            <p>Signature Over Printed Name</p>
           </div>
         </div>
       </div>

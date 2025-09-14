@@ -100,9 +100,9 @@ export default function ShowStudents() {
     <div className="p-5 px-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3 className="mb-0">Students</h3>
-        <Button variant="primary" onClick={() => navigate("/register")}>
+       {/* <Button variant="primary" onClick={() => navigate("/register")}>
           <FeatherIcon icon="user-plus" size="16" /> Register Student
-        </Button>
+        </Button>*/}
       </div>
 
       {/* Search box */}

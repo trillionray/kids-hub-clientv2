@@ -33,10 +33,12 @@ export default function Login() {
       .then((data) => {
         if (data.access) {
           localStorage.setItem("token", data.access);
-          retrieveUserDetails(data.access);
           setUserId("");
           setPassword("");
           notyf.success("You are now logged in");
+
+          retrieveUserDetails(data.access);
+
           navigate("/dashboard/home", { replace: true });
         } else {
           notyf.error(data.message || "Invalid ID or password");
@@ -56,7 +58,12 @@ export default function Login() {
           firstName: data.firstName,
           lastName: data.lastName,
           role: data.role,
+          status: data.status
         });
+
+        if (data.status == "initial"){
+            navigate("/profile/change-password", { replace: true });
+        }
       });
   }
 

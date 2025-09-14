@@ -13,7 +13,7 @@ export default function App() {
 
   function unsetUser() {
     localStorage.clear();
-    setUser({ id: null, role: null });
+    setUser({ id: null, role: null, status: null });
   }
 
   // Check token and fetch user details on mount

@@ -10,7 +10,7 @@ import useWindowSize from 'hooks/useWindowSize';
 import { ConfigContext } from 'contexts/ConfigContext';
 import * as actionType from 'store/actions';
 import Loader from 'components/Loader/Loader';
-
+import UserContext  from '../../context/UserContext'; 
 // -----------------------|| ADMIN LAYOUT ||-----------------------//
 
 export default function AdminLayout() {
@@ -19,6 +19,9 @@ export default function AdminLayout() {
   const bodyElement = document.body;
   const { collapseLayout } = configContext.state;
   const { dispatch } = configContext;
+
+  const { user } = useContext(UserContext); // ✅ get user
+
   useEffect(() => {
     if (windowSize.width > 992 && windowSize.width <= 1024) {
       dispatch({ type: actionType.COLLAPSE_MENU });
@@ -37,7 +40,19 @@ export default function AdminLayout() {
     <>
       <MobileHeader />
       <NavBar />
-      <Navigation />
+      <div
+        style={{
+          position: "relative",
+          opacity: user?.status === "initial" ? 0.5 : 1,   // make it look disabled
+          pointerEvents: user?.status === "initial" ? "none" : "auto", // block clicks
+          filter: user?.status === "initial" ? "grayscale(100%)" : "none" // extra gray effect
+        }}
+      >
+        <Navigation />
+      </div>
+
+
+
       <div className={containerClass.join(' ')}>
         <div className="pcoded-content p-0">
           <>
