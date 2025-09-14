@@ -83,23 +83,20 @@ const PdfRegForm = () => {
     const btn = document.getElementById("download-btn");
     if (btn) btn.style.display = "none";
 
-    try {
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: "Enrollment_Form.pdf",
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: element.scrollWidth },
-          pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-        })
-        .from(element)
-        .save();
-    } catch (err) {
-      console.error("PDF generation error:", err);
-    } finally {
-      if (btn) btn.style.display = "block";
-    }
+    const opt = {
+      margin: 10,
+      filename: "Enrollment_Form.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 1, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    };
+
+    await html2pdf().set(opt).from(element).save();
+
+    if (btn) btn.style.display = "block";
   };
+
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!student) return <p>Loading...</p>;
@@ -107,10 +104,11 @@ const PdfRegForm = () => {
   return (
     <div
       style={{
-        margin: "20px auto",
+        width: "794px",  // EXACT A4 width in px at 96dpi
+        minHeight: "1123px", // A4 height in px
         fontFamily: "Arial, sans-serif",
-        fontSize: "14px",
-        maxWidth: "210mm", // A4 width
+        fontSize: "12px",
+        margin: "0 auto",
       }}
     >
       <div id="pdf-content">
@@ -134,119 +132,239 @@ const PdfRegForm = () => {
         </div>
 
         {/* STUDENT DETAILS */}
-        <div style={{ border: "1px solid #000", padding: "15px", marginBottom: "15px", pageBreakInside: "avoid" }}>
-          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "20px" }}>STUDENT'S DETAILS</div>
-          <div style={{ display: "flex", flexWrap: "wrap", marginBottom: "10px" }}>
-            <div style={{ flex: 3, marginRight: "10px" }}>
-              <div style={{ fontWeight: "bold", marginBottom: "6px" }}>NAME OF THE CHILD:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "100%" }}>
-                  {formatName(student)}
-                </span>
-              </div>
-              <div style={{ fontWeight: "bold", marginBottom: "6px" }}>COMPLETE ADDRESS:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "100%" }}>
-                  {formatAddress(student.address)}
-                </span>
+        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
+        <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>STUDENT'S DETAILS</div>
+        
+        {/* TWO-COLUMN LAYOUT */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+          
+          {/* LEFT COLUMN (NAME + ADDRESS) */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
+            
+            {/* NAME OF THE CHILD */}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>NAME OF THE CHILD:</div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "3px" }}>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.last_name}</span>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.first_name}</span>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.middle_name}</span>
+                </div>
+                <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "3px" }}>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Last Name</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>First Name</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Middle Name</span>
+                </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", paddingLeft: "20px" }}>
-              <div style={{ fontWeight: "bold" }}>AGE:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "89%" }}>
-                  {computeAge(student.birthdate)}
-                </span>
+
+            {/* COMPLETE ADDRESS */}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.address?.block_or_lot || ""}</span>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.address?.street || ""}</span>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.address?.barangay || ""}</span>
+                  <span style={{ flex: 1, textAlign: "center" }}>{student.address?.municipality_or_city || ""}</span>
+                </div>
+                <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Blk/Lot</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Street</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Brgy.</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Municipality/City</span>
+                </div>
               </div>
-              <div style={{ fontWeight: "bold" }}>DATE OF BIRTH:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "72%" }}>
-                  {student.birthdate || ""}
-                </span>
-              </div>
-              <div style={{ fontWeight: "bold" }}>PROGRAM:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "79%" }}>
-                  {program?.name || ""}
-                </span>
-              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN (AGE, DOB, PROGRAM) */}
+          <div style={{ width: "250px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>AGE:</div>
+              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{computeAge(student.birthdate)}</div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>DATE OF BIRTH:</div>
+              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.birthdate || ""}</div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>PROGRAM:</div>
+              <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.program || ""}</div>
             </div>
           </div>
         </div>
+        </div>
 
-        {/* PARENTS DETAILS */}
-        <div style={{ border: "1px solid #000", padding: "15px", marginBottom: "15px", pageBreakInside: "avoid" }}>
-          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "20px" }}>PARENTS DETAILS</div>
-          {/* Father */}
-          <div style={{ marginBottom: "10px" }}>
-            <div style={{ fontWeight: "bold" }}>FATHER’S NAME:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "80%" }}>
-                {formatName(student.father)}
-              </span>
-            </div>
-            <div style={{ fontWeight: "bold" }}>OCCUPATION:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "70%" }}>
-                {student.father?.occupation || ""}
-              </span>
-            </div>
-            <div style={{ fontWeight: "bold" }}>CONTACT NUMBER:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "70%" }}>
-                {student.father?.contacts?.mobile_number || ""}
-              </span>
-            </div>
-          </div>
+        {/* PARENT'S DETAILS */}
+        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
+            <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>PARENT'S DETAILS</div>
 
-          {/* Mother */}
-          <div style={{ marginBottom: "10px" }}>
-            <div style={{ fontWeight: "bold" }}>MOTHER’S NAME:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "80%" }}>
-                {formatName(student.mother)}
-              </span>
+            <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+              {/* LEFT SIDE: Names + Addresses */}
+              <div style={{ flex: "0 0 66%", display: "flex", flexDirection: "column", gap: "10px" }}>
+                
+                {/* NAME OF THE MOTHER */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>NAME OF MOTHER:</div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.last_name || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.first_name || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.middle_name || ""}</span>
+                    </div>
+                    <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Last Name</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>First Name</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Middle Name</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* COMPLETE ADDRESS MOTHER */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.address?.block_or_lot || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.address?.street || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.address?.barangay || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.mother?.address?.municipality_or_city || ""}</span>
+                    </div>
+                    <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Blk/Lot</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Street</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Brgy.</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Municipality/City</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NAME OF THE FATHER */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>NAME OF FATHER:</div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.last_name || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.first_name || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.middle_name || ""}</span>
+                    </div>
+                    <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Last Name</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>First Name</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Middle Name</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* COMPLETE ADDRESS FATHER */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.address?.block_or_lot || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.address?.street || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.address?.barangay || ""}</span>
+                      <span style={{ flex: 1, textAlign: "center" }}>{student.father?.address?.municipality_or_city || ""}</span>
+                    </div>
+                    <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Blk/Lot</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Street</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Brgy.</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Municipality/City</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN (Occupation, Contact, FB) */}
+              <div style={{ width: "250px", display: "flex", flexDirection: "column", gap: "8px", marginTop:"8px" }}>
+                {[
+                  { label: "OCCUPATION", value: student.mother?.occupation },
+                  { label: "CONTACT NUMBER", value: student.mother?.contacts?.mobile_number },
+                  { label: "FB ACCOUNT", value: student.mother?.contacts?.messenger_account },
+                  { label: "OCCUPATION", value: student.father?.occupation },
+                  { label: "CONTACT NUMBER", value: student.father?.contacts?.mobile_number },
+                  { label: "FB ACCOUNT", value: student.father?.contacts?.messenger_account },
+                ].map((item, index) => (
+                  <div key={index} style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>{item.label}:</div>
+                    <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{item.value || ""}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ fontWeight: "bold" }}>OCCUPATION:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "70%" }}>
-                {student.mother?.occupation || ""}
-              </span>
-            </div>
-            <div style={{ fontWeight: "bold" }}>CONTACT NUMBER:
-              <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "70%" }}>
-                {student.mother?.contacts?.mobile_number || ""}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* EMERGENCY CONTACT */}
-        <div style={{ border: "1px solid #000", padding: "15px", marginBottom: "15px", pageBreakInside: "avoid" }}>
-          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "20px" }}>EMERGENCY CONTACT DETAILS</div>
-          <div style={{ display: "flex", flexWrap: "wrap", marginBottom: "10px" }}>
-            <div style={{ flex: 3, marginRight: "10px" }}>
-              <div style={{ fontWeight: "bold", marginBottom: "6px" }}>NAME OF CONTACT PERSON:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "100%" }}>
-                  {formatName(student.emergency)}
-                </span>
+        <div style={{ border: "1px solid #000", padding: "10px", marginBottom: "10px", pageBreakInside: "avoid", fontSize: "12px" }}>
+          <div style={{ fontWeight: "bold", textDecoration: "underline", marginBottom: "10px", fontSize: "11px" }}>EMERGENCY CONTACT DETAILS</div>
+          
+          {/* TWO-COLUMN LAYOUT */}
+          <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+            
+            {/* LEFT COLUMN (NAME + ADDRESS) */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
+              
+              {/* NAME OF THE CHILD */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>NAME OF CONTACT PERSON:</div>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "3px" }}>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.last_name || ""}</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.first_name || ""}</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.middle_name || ""}</span>
+                  </div>
+                  <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "3px" }}>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Last Name</span>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>First Name</span>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Middle Name</span>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontWeight: "bold", marginBottom: "6px" }}>COMPLETE ADDRESS:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "100%" }}>
-                  {formatAddress(student.emergency?.address)}
-                </span>
+
+              {/* COMPLETE ADDRESS */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ fontWeight: "bold", marginRight: "5px", fontSize: "10px" }}>COMPLETE ADDRESS:</div>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", borderBottom: "1px solid #000", paddingBottom: "1px", gap: "5px" }}>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.block_or_lot || ""}</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.street || ""}</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.barangay || ""}</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>{student.emergency?.address.municipality_or_city || ""}</span>
+                  </div>
+                  <div style={{ display: "flex", marginTop: "1px", fontSize: "8px", color: "#555", letterSpacing: "1px", gap: "5px" }}>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Blk/Lot</span>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Street</span>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Brgy.</span>
+                    <span style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}>Municipality/City</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ fontWeight: "bold" }}>OCCUPATION:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "75%" }}>
-                  {student.emergency?.occupation || ""}
-                </span>
+
+            {/* RIGHT COLUMN (AGE, DOB, PROGRAM) */}
+            <div style={{ width: "250px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>OCCUPATION:</div>
+                <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.emergency?.occupation || ""}</div>
               </div>
-              <div style={{ fontWeight: "bold" }}>CONTACT NUMBER:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "66%" }}>
-                  {student.emergency?.contacts?.mobile_number || ""}
-                </span>
+
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>CONTACT NUMBER:</div>
+                <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.emergency?.contacts.mobile_number || ""}</div>
               </div>
-              <div style={{ fontWeight: "bold" }}>MESSENGER ACCOUNT:
-                <span style={{ borderBottom: "1px solid #000", display: "inline-block", width: "59%" }}>
-                  {student.emergency?.contacts?.messenger_account || ""}
-                </span>
+
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ fontWeight: "bold", marginRight: "5px", whiteSpace: "nowrap", fontSize: "10px" }}>FB ACCOUNT:</div>
+                <div style={{ flex: 1, borderBottom: "1px solid #000", paddingBottom: "1px", textAlign: "center" }}>{student.emergency?.contacts.messenger_account || ""}</div>
               </div>
             </div>
           </div>
         </div>
-
+ 
         {/* FOOTER */}
         <div className="footer" style={{ marginTop: "30px", pageBreakInside: "avoid" }}>
           <p>
