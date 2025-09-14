@@ -103,11 +103,22 @@ const PdfRegForm = () => {
       const imgProps = pdf.getImageProperties(imgData);
       const imgAspect = imgProps.width / imgProps.height;
 
-      // Maximize width (just 5mm margin on each side)
-      const margin = 5;
-      const copyWidth = pageWidth - 2 * margin;
-      const copyHeight = copyWidth / imgAspect; // scale height proportionally
-      const xOffset = margin;
+      const margin = 5; // left/right margins
+      const gap = 2;    // vertical gap between copies
+
+      // Maximum height per copy (half page minus gap and margins)
+      const maxCopyHeight = (pageHeight - 2 * margin - gap) / 2;
+
+      let copyHeight = maxCopyHeight;
+      let copyWidth = copyHeight * imgAspect;
+
+      // If width exceeds page, scale down to fit width
+      if (copyWidth > pageWidth - 2 * margin) {
+        copyWidth = pageWidth - 2 * margin;
+        copyHeight = copyWidth / imgAspect;
+      }
+
+      const xOffset = (pageWidth - copyWidth) / 2;
 
       // First copy
       let yOffset = margin;
@@ -116,7 +127,7 @@ const PdfRegForm = () => {
       pdf.rect(xOffset, yOffset, copyWidth, copyHeight);
 
       // Second copy
-      yOffset = copyHeight + 2 * margin; // gap between copies
+      yOffset = copyHeight + margin + gap;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, copyWidth, copyHeight);
       pdf.rect(xOffset, yOffset, copyWidth, copyHeight);
 
@@ -127,6 +138,8 @@ const PdfRegForm = () => {
       if (btn) btn.style.display = "block";
     }
   };
+
+
 
 
 
@@ -171,12 +184,12 @@ const PdfRegForm = () => {
         {/* HEADER */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0px" }}>
           <div style={{ marginRight: "20px" }}>
-            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "100px" }} />
+            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "80px" }} />
           </div>
           <div style={{ textAlign: "center" }}>
-            <h3 className="fw-bolder" style={{marginTop: "-5px"}}>KidsHub Playschool and Learning Center</h3>
+            <h4 className="fw-bolder" >KidsHub Playschool and Learning Center</h4>
             {branch ? (
-              <p className="p-0 m-0" style="">
+              <p className="p-0 m-0" style={{ fontSize: "12px"}}>
                 {branch.address}<br />
                 CALL: {branch.contact_number} | EMAIL: {branch.email}
               </p>
@@ -187,7 +200,7 @@ const PdfRegForm = () => {
           </div>
         </div>
 
-        <h3 className="text-center fw-bolder" style={{ marginTop: "-10px"}}>ENROLLMENT FORM</h3>
+        <h4 className="text-center fw-bolder" style={{ marginTop: "0px"}}>ENROLLMENT FORM</h4>
 
         {/* STUDENT DETAILS */}
         <div style={{ border: "1px solid #000", padding: "5px", marginBottom: "5px", pageBreakInside: "avoid", fontSize: "12px" }}>
@@ -436,7 +449,7 @@ const PdfRegForm = () => {
             I hereby understand the <u className="fw-bolder">NO REFUND POLICY</u> of any deposits made upon enrollment. 
           </p>
           <div style={{ textAlign: "right", marginTop: "-30px"}} className="pe-2">
-            ____________________________________
+            __________________________________
           </div>
           <div style={{ textAlign: "right" }} className="pe-2">
             <p>Signature Over Printed Name</p>
