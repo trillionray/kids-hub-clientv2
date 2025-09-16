@@ -454,7 +454,7 @@ const PdfRegForm = () => {
         </div>
  
         {/* FOOTER */}
-        <div className="footer" className="ps-2" style={{ marginTop: "5px", pageBreakInside: "avoid" }}>
+        <div className="footer ps-2" style={{ marginTop: "5px", pageBreakInside: "avoid" }}>
           <p>
             I hereby understand the <u className="fw-bolder">NO REFUND POLICY</u> of any deposits made upon enrollment. 
           </p>
