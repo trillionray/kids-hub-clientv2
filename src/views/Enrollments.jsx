@@ -7,7 +7,7 @@ import html2pdf from "html2pdf.js";
 export default function Enrollments() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
-
+ 
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
