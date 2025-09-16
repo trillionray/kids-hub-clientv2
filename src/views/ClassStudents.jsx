@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { Button, Modal, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
-import './index.scss';
+// import './index.scss';
 
 export default function ClassStudents() {
   const API_URL = import.meta.env.VITE_API_URL;
