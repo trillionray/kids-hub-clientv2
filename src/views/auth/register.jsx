@@ -133,7 +133,7 @@ export default function Register() {
       <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
         <Card className="borderless shadow-lg">
           <Card.Body className="card-body">
-            <h4 className="mb-4 f-w-400 text-center text-uppercase text-bold">Employee Registration</h4>
+            <h2 className="mb-4 f-w-400 text-center text-uppercase" style={{ fontWeight: "900" }}>Employee Registration</h2>
             <Form onSubmit={registerAdmin} className="px-3">
               {/* SECTION 1: Employee Information */}
               <h5 className="mb-3">Employee Information</h5>
@@ -142,7 +142,7 @@ export default function Register() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>First Name</Form.Label>
+                    <Form.Label>First Name <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="text"
                       placeholder="Enter first name"
@@ -154,7 +154,7 @@ export default function Register() {
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Middle Name</Form.Label>
+                    <Form.Label>Middle Name <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="text"
                       placeholder="Enter middle name"
@@ -170,7 +170,7 @@ export default function Register() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Last Name</Form.Label>
+                    <Form.Label>Last Name <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="text"
                       placeholder="Enter last name"
@@ -197,7 +197,7 @@ export default function Register() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Email Address</Form.Label>
+                    <Form.Label>Email Address <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="email"
                       placeholder="Enter email"
@@ -230,7 +230,7 @@ export default function Register() {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Password</Form.Label>
+                    <Form.Label>Password <span className="text-danger">*</span></Form.Label>
                     <OverlayTrigger
                       trigger={['focus', 'hover']}
                       placement="right"
@@ -265,7 +265,7 @@ export default function Register() {
 
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Confirm Password</Form.Label>
+                    <Form.Label>Confirm Password <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="password"
                       placeholder="Confirm password"
