@@ -71,14 +71,30 @@ const PdfRegForm = () => {
   };
 
   const computeAge = (birthdate) => {
+    console.log("Raw birthdate:", birthdate);
+    console.log("Academic year start:", academicYearStart);
+
     if (!birthdate) return "";
+
     const birth = new Date(birthdate);
+    if (isNaN(birth)) {
+      console.warn("Invalid birthdate format:", birthdate);
+      return "";
+    }
+
     let refDate = academicYearStart ? new Date(academicYearStart) : new Date();
+    if (isNaN(refDate)) {
+      console.warn("Invalid academicYearStart format:", academicYearStart);
+      refDate = new Date();
+    }
+
     let age = refDate.getFullYear() - birth.getFullYear();
     const m = refDate.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && refDate.getDate() < birth.getDate())) age--;
+
     return age;
   };
+
 
   const downloadPdf = async () => {
     const element = document.getElementById("pdf-content");

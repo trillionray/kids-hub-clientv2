@@ -21,6 +21,8 @@ const toSnakeCase = (obj) => {
 };
 
 export default function AddStudent() {
+
+  const [selectionDisabled, setSelectionDisabled] = useState(false);
   const notyf = new Notyf();
   const navigate = useNavigate();
 
@@ -284,6 +286,8 @@ export default function AddStudent() {
 
 
   const handleContinue = () => {
+    setSelectionDisabled(true);
+    
     if (formData.studentType === "old"){
       if (isDataChanged()) {
         if (!validateStep1()) return;
@@ -409,10 +413,12 @@ export default function AddStudent() {
                         value={formData.studentType}
                         onChange={handleChange}
                         required
+                        disabled={selectionDisabled}   // ✅ Disable after continue
                       >
                         <option value="new">New Student</option>
                         <option value="old">Old Student</option>
                       </Form.Select>
+
                     </Form.Group>
                   </Col>
                 </Row>
