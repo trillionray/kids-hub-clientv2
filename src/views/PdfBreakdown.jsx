@@ -59,10 +59,27 @@ export default function PdfBreakdown() {
         filename: "Program_Breakdown.pdf",
         pagebreak: { mode: "avoid-all" },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,            // 👈 allow cross-origin
+          allowTaint: true,         // 👈 handle images without CORS headers
+        },
       })
       .from(element)
       .save();
   };
+
+  // Auto-download when data is ready AND DOM has rendered
+  useEffect(() => {
+    if (program) {
+      const timer = setTimeout(() => {
+        downloadPdf();
+      }, 1500); // 👈 give more time in prod for render
+
+      return () => clearTimeout(timer);
+    }
+  }, [program]);
+
 
   // Auto-download PDF when program data is ready
   useEffect(() => {
