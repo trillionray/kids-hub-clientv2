@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 // import html2pdf from "html2pdf.js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas"; // ✅ Add this
+import logo from "../assets/logo.png"; // adjust path
 
 const PdfRegForm = () => {
   const query = new URLSearchParams(window.location.search);
@@ -210,7 +211,7 @@ const PdfRegForm = () => {
         {/* HEADER */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0px" }}>
           <div style={{ marginRight: "20px" }}>
-            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "80px" }} />
+            <img src="/logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "80px" }} />
           </div>
           <div style={{ textAlign: "center" }}>
             <h4 className="fw-bolder" >KidsHub Playschool and Learning Center</h4>
