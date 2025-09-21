@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 // import html2pdf from "html2pdf.js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas"; // ✅ Add this
-import logo from "../assets/logo.png"; // adjust path
 
 const PdfRegForm = () => {
   const query = new URLSearchParams(window.location.search);
