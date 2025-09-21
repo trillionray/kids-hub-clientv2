@@ -210,7 +210,7 @@ const PdfRegForm = () => {
         {/* HEADER */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0px" }}>
           <div style={{ marginRight: "20px" }}>
-            <img src="../../logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "80px" }} />
+            <img src="logo.png" crossOrigin="anonymous" alt="KidsHub Logo" className="rounded-circle" style={{ width: "80px" }} />
           </div>
           <div style={{ textAlign: "center" }}>
             <h4 className="fw-bolder" >KidsHub Playschool and Learning Center</h4>
