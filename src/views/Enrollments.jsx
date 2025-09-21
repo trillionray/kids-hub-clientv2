@@ -78,6 +78,7 @@ export default function Enrollments() {
         academic_year_id: selectedYear || undefined,
         program_id: selectedProgram || undefined,
         student_name: searchText || undefined,
+        student_id: searchText || undefined, // 🔹 new
       };
 
       const res = await fetch(`${API_URL}/enrollments/search`, {
@@ -102,7 +103,7 @@ export default function Enrollments() {
       );
 
       setEnrollments(sortedData);
-      
+
       // 🔹 Build unique programs list from enrollments
       const uniquePrograms = [];
       const seen = new Set();
@@ -201,7 +202,7 @@ export default function Enrollments() {
                 type="text"
                 className="form-control w-auto"
                 style={{ minWidth: "220px" }}
-                placeholder="Search by student name..."
+                placeholder="Student ID / Student Name"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
               />
