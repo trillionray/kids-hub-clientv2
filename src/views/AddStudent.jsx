@@ -288,7 +288,7 @@ export default function AddStudent() {
   const handleContinue = () => {
     setSelectionDisabled(true);
 
-    if (formData.studentType === "old"){
+    if (formData.studentType === "old") {
       if (isDataChanged()) {
         if (!validateStep1()) return;
         Swal.fire({
@@ -301,12 +301,14 @@ export default function AddStudent() {
         }).then((result) => {
           if (result.isConfirmed) {
             setStep(2);
+            setIsOldStudentSelected(true); // 👈 Hides search bar
           }
         });
       } else {
         setStep(2);
+        setIsOldStudentSelected(true); // 👈 Hides search bar
       }
-    }else{
+    } else {
       if (!validateStep1()) return;
       setStep(2);
     }
@@ -409,59 +411,62 @@ export default function AddStudent() {
           <Card.Body className="card-body m-3">
             <h2 className="mb-4 f-w-400 text-center text-uppercase" style={{ fontWeight: "900" }}>{step === 1 ? "Student Information" : "Contact Information"}</h2>
             <Form onSubmit={handleSubmit}>
-                {/* Student Type */}
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Student Type</Form.Label>
-                      <Form.Select
-                        name="studentType"
-                        value={formData.studentType}
-                        onChange={handleChange}
-                        required
-                        disabled={selectionDisabled}   // ✅ Disable after continue
-                      >
-                        <option value="new">New Student</option>
-                        <option value="old">Old Student</option>
-                      </Form.Select>
-
-                    </Form.Group>
-                  </Col>
-                </Row>
-                {/* Old Student Search */}
-                {formData.studentType === "old" && !isOldStudentSelected && (
-                  <Form.Group className="mb-3">
-                    <Form.Label>Search Old Student</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Type first, middle, or last name..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {oldStudents.length > 0 && (
-                      <div
-                        className="border p-2 mt-1"
-                        style={{ maxHeight: "150px", overflowY: "auto" }}
-                      >
-                        {oldStudents.map((s) => (
-                          <div
-                            key={s._id}
-                            style={{ padding: "4px", cursor: "pointer" }}
-                            onClick={() => handleSelectOldStudent(s)}
-                          >
-                            {(s.first_name || s.firstName) || ""}{" "}
-                            {(s.middle_name || s.middleName) || ""}{" "}
-                            {(s.last_name || s.lastName) || ""}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Form.Group>
-                )}
+  
+                
+                
 
                 {/* STEP 1: Student Core + Address */}
                 {step === 1 && (
                   <>
+                    <Row>
+                       <Col md={6}>
+                         <Form.Group className="mb-3">
+                           <Form.Label>Student Type</Form.Label>
+                           <Form.Select
+                             name="studentType"
+                             value={formData.studentType}
+                             onChange={handleChange}
+                             required
+                           >
+                             <option value="new">New Student</option>
+                             <option value="old">Old Student</option>
+                           </Form.Select>
+                         </Form.Group>
+                       </Col>
+                     </Row>
+
+                     {/* Old Student Search */}
+                     {formData.studentType === "old" && !isOldStudentSelected && (
+                       <Form.Group className="mb-3">
+                         <Form.Label>Search Old Student</Form.Label>
+                         <Form.Control
+                           type="text"
+                           placeholder="Type first, middle, or last name..."
+                           value={searchQuery}
+                           onChange={(e) => setSearchQuery(e.target.value)}
+                         />
+                         {oldStudents.length > 0 && (
+                           <div
+                             className="border p-2 mt-1"
+                             style={{ maxHeight: "150px", overflowY: "auto" }}
+                           >
+                             {oldStudents.map((s) => (
+                               <div
+                                 key={s._id}
+                                 style={{ padding: "4px", cursor: "pointer" }}
+                                 onClick={() => handleSelectOldStudent(s)}
+                               >
+                                 {(s.first_name || s.firstName) || ""}{" "}
+                                 {(s.middle_name || s.middleName) || ""}{" "}
+                                 {(s.last_name || s.lastName) || ""}
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                       </Form.Group>
+                     )}
+
+
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -1020,7 +1025,7 @@ export default function AddStudent() {
                         <FeatherIcon icon="chevron-left" /> Back
                       </Button>
                       <Button type="submit" variant="primary">
-                        Save Student <FeatherIcon icon="check" />
+                        Continue <FeatherIcon icon="check" />
                       </Button>
                     </div>
                   </>
