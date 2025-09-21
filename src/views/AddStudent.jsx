@@ -287,7 +287,7 @@ export default function AddStudent() {
 
   const handleContinue = () => {
     setSelectionDisabled(true);
-    
+
     if (formData.studentType === "old"){
       if (isDataChanged()) {
         if (!validateStep1()) return;
@@ -378,7 +378,13 @@ export default function AddStudent() {
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.student || data.success) {
+
+          if(data.message == "Student updated successfully"){
+            notyf.success(data.message);
+            const studentPayload = data.student || snakeData; // fallback
+            navigate("/enroll", { state: { studentData: studentPayload } });
+          } 
+          else if (data.message == "Student created successfully") {
             notyf.success("Student added successfully!");
             const studentPayload = data.student || snakeData; // fallback
             navigate("/enroll", { state: { studentData: studentPayload } });
