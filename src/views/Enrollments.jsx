@@ -2,135 +2,116 @@ import { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { Button, Modal } from "react-bootstrap";
 import { Notyf } from "notyf";
-import html2pdf from "html2pdf.js";
 
 export default function Enrollments() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
- 
+
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [filterText, setFilterText] = useState("");
+
+  // Filters
+  const [branches, setBranches] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
+  const [programs, setPrograms] = useState([]);
+
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
+    fetchFilters();
     fetchEnrollments();
   }, []);
 
-  const fetchEnrollments = async () => {
-    console.log("fetchEnrollments called");
-    setLoading(true);
+  useEffect(() => {
+    fetchEnrollments();
+  }, [selectedBranch, selectedYear, selectedProgram, searchText]);
 
+  const fetchFilters = async () => {
     try {
-      // 1. Fetch raw enrollments
+      // Fetch branches from enrollments
       const res = await fetch(`${API_URL}/enrollments`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
-      console.log("Raw enrollments:", data);
+
+      if (Array.isArray(data)) {
+        setBranches([...new Set(data.map((e) => e.branch))]);
+      }
+
+      // Fetch academic years separately
+      const yearRes = await fetch(`${API_URL}/academic-years`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const yearsData = await yearRes.json();
+      if (Array.isArray(yearsData)) {
+        const formattedYears = yearsData.map((y) => ({
+          _id: y._id,
+          name: `${new Date(y.startDate).getFullYear()} - ${new Date(y.endDate).getFullYear()}`,
+        }));
+        setAcademicYears(formattedYears);
+      }
+
+      // ✅ Fetch all programs from Program collection
+      const progRes = await fetch(`${API_URL}/programs`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const progData = await progRes.json();
+      if (Array.isArray(progData)) {
+        setPrograms(progData); // store full program objects
+      }
+    } catch (err) {
+      console.error("fetchFilters error:", err);
+    }
+  };
+
+  const fetchEnrollments = async () => {
+    setLoading(true);
+    try {
+      const body = {
+        branch: selectedBranch || undefined,
+        academic_year_id: selectedYear || undefined,
+        program_id: selectedProgram || undefined,
+        student_name: searchText || undefined,
+      };
+
+      const res = await fetch(`${API_URL}/enrollments/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
 
       if (!Array.isArray(data)) {
         notyf.error("Invalid response from server");
         return;
       }
 
-      // 2. Collect unique IDs
-      const studentIds = [...new Set(data.map(e => e.student_id))];
-      const programIds = [...new Set(data.map(e => e.program_id))];
-      const academicIds = [...new Set(data.map(e => e.academic_year_id))];
-      const miscIds = [...new Set(data.map(e => e.miscellaneous_group_id))].filter(Boolean);
+      setEnrollments(data);
 
-      // 3. Fetch students
-      const studentsArray = await Promise.all(
-        studentIds.map(async (sid) => {
-          const res = await fetch(`${API_URL}/summary/findstudent/${sid}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          });
-          const studentData = await res.json();
-          console.log("Student response:", studentData);
-          return { _id: sid, ...studentData };
-        })
-      );
-
-      // 4. Fetch programs
-      const programsArray = await Promise.all(
-        programIds.map(async (pid) => {
-          const res = await fetch(`${API_URL}/summary/findprogram/${pid}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          });
-          const programData = await res.json();
-          console.log(`Program ${pid}:`, programData);
-          return programData;
-        })
-      );
-
-      // 5. Fetch academic years individually
-      const academicYearsArray = await Promise.all(
-        academicIds.map(async (aid) => {
-          const res = await fetch(`${API_URL}/summary/findacademicyear/${aid}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          });
-          const academicData = await res.json();
-          console.log(`AcademicYear ${aid}:`, academicData);
-          return { _id: aid, result: academicData.result || "N/A" };
-        })
-      );
-
-      // 6. Fetch miscellaneous packages
-      const miscPackages = miscIds.length
-        ? await Promise.all(
-            miscIds.map(async (mid) => {
-              const res = await fetch(`${API_URL}/summary/findmisc/miscPackages/${mid}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-              });
-              const miscData = await res.json();
-              console.log(`Misc ${mid}:`, miscData);
-              return { _id: mid, result: miscData.result || "N/A" };
-            })
-          )
-        : [];
-
-      // 7. Build lookup maps
-      const studentMap = {};
-      studentsArray.forEach(s => {
-        if (s && s.success) studentMap[s._id] = s.fullName || "Unknown Student";
+      // 🔹 Build unique programs list from enrollments
+      const uniquePrograms = [];
+      const seen = new Set();
+      data.forEach((e) => {
+        if (e.program && !seen.has(e.program._id)) {
+          uniquePrograms.push(e.program);
+          seen.add(e.program._id);
+        }
       });
-
-      const programMap = {};
-      programsArray.forEach(p => {
-        if (p) programMap[p._id] = p.name || "Unknown Program";
-      });
-
-      const academicMap = {};
-      academicYearsArray.forEach(a => {
-        academicMap[a._id] = a.result || "N/A";
-      });
-
-      const miscMap = {};
-      miscPackages.forEach(m => {
-        // Use package_name instead of the entire object
-        miscMap[m._id] = m.result?.package_name || "N/A";
-      });
-
-
-      // 8. Enrich enrollments
-      const enriched = data.map(e => ({
-        ...e,
-        student_name: studentMap[e.student_id] || e.student_id,
-        program_name: programMap[e.program_id] || e.program_id,
-        academic_year_name: academicMap[e.academic_year_id] || "N/A",
-        misc_package_name: miscMap[e.miscellaneous_group_id] || "N/A",
-      }));
-
-      console.log("Enriched enrollments:", enriched);
-      setEnrollments(enriched);
+      setPrograms(uniquePrograms);
 
     } catch (err) {
       console.error("fetchEnrollments error:", err);
       notyf.error("Failed to fetch enrollments");
     }
-
     setLoading(false);
   };
 
@@ -140,47 +121,22 @@ export default function Enrollments() {
     setShowModal(true);
   };
 
-  const handleDownloadCombined = () => {
-    if (!selectedEnrollment) return;
-
-    const element = document.getElementById("combined-pdf");
-    html2pdf().set({
-      margin: 10,
-      filename: `${selectedEnrollment.student_name}-all.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    }).from(element).save();
-  };
-
-
-  // Columns for DataTable
   const columns = [
+    { name: "ID", selector: (row) => row.student_id, sortable: true },
     {
       name: "Student",
-      selector: (row) => row.student_name || row.student_id,
+      selector: (row) =>
+        row.student ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim() : "N/A",
       sortable: true,
     },
     {
       name: "Program",
-      selector: (row) => row.program_name || row.program_id,
+      selector: (row) => (row.program ? row.program.name : "N/A"),
       sortable: true,
     },
-    {
-      name: "Branch",
-      selector: (row) => row.branch,
-      sortable: true,
-    },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Total (₱)",
-      selector: (row) => row.total,
-      sortable: true,
-    },
+    { name: "Branch", selector: (row) => row.branch, sortable: true },
+    { name: "Status", selector: (row) => row.status, sortable: true },
+    { name: "Total (₱)", selector: (row) => row.total, sortable: true },
     {
       name: "Actions",
       cell: (row) => (
@@ -188,94 +144,67 @@ export default function Enrollments() {
           Show Details
         </Button>
       ),
-      // Only keep column-level props, remove anything invalid
       ignoreRowClick: true,
-      allowOverflow: true, // this is fine if used as a column prop, not on Button
+      allowOverflow: true,
     },
   ];
-
-
-  // Filtering
-  const filteredData = enrollments.filter(
-    (enroll) =>
-      enroll.student_name?.toLowerCase().includes(filterText.toLowerCase()) ||
-      enroll.program_name?.toLowerCase().includes(filterText.toLowerCase()) ||
-      enroll.branch?.toLowerCase().includes(filterText.toLowerCase()) ||
-      enroll.status?.toLowerCase().includes(filterText.toLowerCase())
-  );
-
-
-  const handleDownloadAll = () => {
-    if (!selectedEnrollment) return;
-
-    const studentId = selectedEnrollment.student_id;
-    const programId = selectedEnrollment.program_id;
-    const miscId = selectedEnrollment.miscellaneous_group_id;
-    const branchName = encodeURIComponent(selectedEnrollment.branch);
-
-    let academicYearStart = "";
-    if (selectedEnrollment.academic_year_name) {
-      academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
-    }
-
-    const studentName = encodeURIComponent(selectedEnrollment.student_name);
-    const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
-    const date = encodeURIComponent(new Date().toLocaleDateString());
-
-    // Sequentially open pages with delays to ensure each one loads
-    const openPDF = (url, delay) => {
-      return new Promise((resolve) => {
-        const win = window.open(url, "_blank");
-        setTimeout(() => {
-          win?.close();
-          resolve();
-        }, delay);
-      });
-    };
-
-    (async () => {
-      // Open registration form (wait 4s)
-      await openPDF(
-        `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
-        4000
-      );
-
-      // Open breakdown (wait 4s)
-      await openPDF(
-        `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
-        4000
-      );
-
-      // Open acknowledgement & consent (wait 4s)
-      await openPDF(
-        `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
-        4000
-      );
-    })();
-  };
-
-
-
 
   return (
     <div className="p-4 px-5">
       <h3 className="mb-3">Enrollments</h3>
 
-      {/* Search box */}
-      <div className="mb-3">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search enrollments..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-        />
-      </div>
+      {/* Filters */}
+      <div className="mb-3 d-flex gap-2 flex-wrap">
+              <select
+                className="form-select w-auto"
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+              >
+                <option value="">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+
+              <select
+                className="form-select w-auto"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                <option value="">All Academic Years</option>
+                {academicYears.map((y) => (
+                  <option key={y._id} value={y._id}>{y.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="form-select w-auto"
+                value={selectedProgram}
+                onChange={(e) => setSelectedProgram(e.target.value)}
+              >
+                <option value="">All Programs</option>
+                {programs.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
+
+              <input
+                type="text"
+                className="form-control w-auto"
+                style={{ minWidth: "220px" }}
+                placeholder="Search by student name..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </div>
 
       {/* DataTable */}
       <DataTable
         columns={columns}
-        data={filteredData}
+        data={enrollments}
         progressPending={loading}
         pagination
         highlightOnHover
@@ -287,120 +216,118 @@ export default function Enrollments() {
 
       {/* Details Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        
         <Modal.Header closeButton>
           <Modal.Title>Enrollment Details</Modal.Title>
         </Modal.Header>
+       
         <Modal.Body>
           {selectedEnrollment && (
             <div>
+              <p>
+                <strong>Student:</strong>{" "}
+                {`${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()}
+              </p>
+              <p><strong>Program:</strong> {selectedEnrollment.program?.name || "N/A"}</p>
               <p><strong>Branch:</strong> {selectedEnrollment.branch}</p>
-              <p><strong>Student:</strong> {selectedEnrollment.student_name}</p>
-              <p><strong>Program:</strong> {selectedEnrollment.program_name}</p>
               <p><strong>Number of Sessions:</strong> {selectedEnrollment.num_of_sessions || "N/A"}</p>
               <p><strong>Duration:</strong> {selectedEnrollment.duration}</p>
-              <p><strong>Academic Year:</strong> {selectedEnrollment.academic_year_name || "N/A"}</p>
+              <p><strong>Academic Year:</strong> {selectedEnrollment.academic_year_name}</p>
+
               <p><strong>Miscellaneous Package:</strong> {selectedEnrollment.misc_package_name}</p>
               <p><strong>Status:</strong> {selectedEnrollment.status}</p>
               <p><strong>Total:</strong> ₱{selectedEnrollment.total}</p>
-              <hr />
-              <p><strong>Created By:</strong> {selectedEnrollment.created_by_name}</p>
-              <p><strong>Created Date:</strong> {new Date(selectedEnrollment.creation_date).toLocaleString()}</p>
-              <p><strong>Updated By:</strong> {selectedEnrollment.updated_by_name}</p>
-              <p><strong>Last Modified:</strong> {new Date(selectedEnrollment.last_modified_date).toLocaleString()}</p>
             </div>
           )}
         </Modal.Body>
+
         <Modal.Footer>
+            {selectedEnrollment && (
+              <div className="d-flex w-100 gap-2">
+                <Button
+                  className="flex-fill"
+                  variant="primary"
+                  onClick={() => {
+                    const studentId = selectedEnrollment.student_id;
+                    const programId = selectedEnrollment.program_id;
+                    const branchName = encodeURIComponent(selectedEnrollment.branch);
 
-          
+                    let academicYearStart = "";
+                    if (selectedEnrollment.academic_year_name) {
+                      academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
+                    }
 
+                    window.open(
+                      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  Registration Form
+                </Button>
 
+                <Button
+                  className="flex-fill"
+                  variant="primary"
+                  onClick={() => {
+                    const programId = selectedEnrollment.program_id;
+                    const miscId = selectedEnrollment.miscellaneous_group_id;
 
-          {selectedEnrollment && (
-            <div className="d-flex w-100 gap-2">
-              <Button
-                className="flex-fill"
-                variant="primary"
-                onClick={() => {
-                  const studentId = selectedEnrollment.student_id;
-                  const programId = selectedEnrollment.program_id;
-                  const branchName = encodeURIComponent(selectedEnrollment.branch);
+                    window.open(
+                      `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  Breakdown
+                </Button>
 
-                  let academicYearStart = "";
-                  if (selectedEnrollment.academic_year_name) {
-                    academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
-                  }
+                <Button
+                  className="flex-fill"
+                  variant="primary"
+                  onClick={() => {
+                    const studentName = encodeURIComponent(
+                      `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
+                    );
+                    const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                    const date = encodeURIComponent(new Date().toLocaleDateString());
 
-                  window.open(
-                    `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Registration Form
-              </Button>
+                    window.open(
+                      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  Ack & Consent
+                </Button>
+              </div>
+            )}
 
-              <Button
-                className="flex-fill"
-                variant="primary"
-                onClick={() => {
-                  const programId = selectedEnrollment.program_id;
-                  const miscId = selectedEnrollment.miscellaneous_group_id;
+            <Button
+              variant="success"
+              className="w-100 mt-2"
+              onClick={() => {
+                const studentId = selectedEnrollment.student_id;
+                const programId = selectedEnrollment.program_id;
+                const branchName = encodeURIComponent(selectedEnrollment.branch);
+                const miscId = selectedEnrollment.miscellaneous_group_id;
+                const studentName = encodeURIComponent(
+                  `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
+                );
+                const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                const academicYearStart = selectedEnrollment.academic_year_name?.split(" to ")[0] || "";
+                const date = encodeURIComponent(new Date().toLocaleDateString());
 
-                  window.open(
-                    `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Breakdown
-              </Button>
+                window.open(
+                  `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}`,
+                  "_blank"
+                );
+              }}
+            >
+              All Files
+            </Button>
+          </Modal.Footer>
 
-              <Button
-                className="flex-fill"
-                variant="primary"
-                onClick={() => {
-                  const studentName = encodeURIComponent(selectedEnrollment.student_name);
-                  const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
-                  const date = encodeURIComponent(new Date().toLocaleDateString());
-
-                  window.open(
-                    `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Ack & Consent
-              </Button>
-            </div>
-
-          )}
-
-
-          <Button
-            variant="success"
-            className="w-100"
-            onClick={() => {
-              const studentId = selectedEnrollment.student_id;
-              const programId = selectedEnrollment.program_id;
-              const branchName = encodeURIComponent(selectedEnrollment.branch);
-              const miscId = selectedEnrollment.miscellaneous_group_id;
-              const studentName = encodeURIComponent(selectedEnrollment.student_name);
-              const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
-              const academicYearStart = selectedEnrollment.academic_year_name?.split(" to ")[0] || "";
-              const date = encodeURIComponent(new Date().toLocaleDateString());
-
-              window.open(
-                `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}`,
-                "_blank"
-              );
-            }}
-          >
-            All Files
-          </Button>
-        </Modal.Footer>
-
- 
       </Modal>
     </div>
   );

@@ -11,19 +11,18 @@ export default function Enroll() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get studentData from previous page
   const studentData = location.state?.studentData || null;
 
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
+  const [latestAcademicYear, setLatestAcademicYear] = useState(null);
   const [programRate, setProgramRate] = useState(0);
   const [branches, setBranches] = useState([]);
-  const [programType, setProgramType] = useState(""); // "short" or "long"
-
+  const [programType, setProgramType] = useState("");
 
   const [formData, setFormData] = useState({
     branch: "",
-    student_id: "", // will be set via useEffect
+    student_id: "",
     program_id: "",
     num_of_sessions: "",
     duration: "",
@@ -32,7 +31,7 @@ export default function Enroll() {
     total: 0,
   });
 
-  // Auto-fill student_id if we have an old student
+  // Auto-fill student_id if existing
   useEffect(() => {
     if (studentData?._id) {
       setFormData((prev) => ({ ...prev, student_id: studentData._id }));
@@ -42,8 +41,10 @@ export default function Enroll() {
   useEffect(() => {
     fetchPrograms();
     fetchAcademicYears();
+    fetchBranches();
   }, []);
 
+  // Update total when program changes
   useEffect(() => {
     const program = programs.find((p) => p._id === formData.program_id);
     if (program) {
@@ -57,51 +58,67 @@ export default function Enroll() {
     }
   }, [formData.program_id, programs]);
 
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const res = await fetch(`${API_URL}/branches/all`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        const data = await res.json();
-        if (data.success) {
-          // Only active branches
-          const activeBranches = data.branches.filter((b) => b.is_active);
-          setBranches(activeBranches);
-        } else {
-          notyf.error("Failed to fetch branches");
-        }
-      } catch (err) {
-        console.error(err);
-        notyf.error("Error fetching branches");
-      }
-    };
-    fetchBranches();
-  }, []);
-
-  const fetchPrograms = () => {
-    fetch(`${API_URL}/programs`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setPrograms(data.programs || []))
-      .catch(() => notyf.error("Failed to fetch programs"));
+  // Fetch functions
+  const fetchPrograms = async () => {
+    try {
+      const res = await fetch(`${API_URL}/programs`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      setPrograms(data.programs || []);
+    } catch {
+      notyf.error("Failed to fetch programs");
+    }
   };
 
-  const fetchAcademicYears = () => {
-    fetch(`${API_URL}/academic-year`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setAcademicYears(data || []))
-      .catch(() => notyf.error("Failed to fetch academic years"));
+  const fetchAcademicYears = async () => {
+    try {
+      // Fetch all academic years
+      const res = await fetch(`${API_URL}/academic-year`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      setAcademicYears(data || []);
+
+      // Fetch latest academic year
+      const latestRes = await fetch(`${API_URL}/academic-year/latest`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const latestData = await latestRes.json();
+      if (latestData) {
+        setLatestAcademicYear(latestData);
+        // Default to latest year if none selected
+        setFormData((prev) => ({
+          ...prev,
+          academic_year_id: prev.academic_year_id || latestData._id
+        }));
+      }
+    } catch {
+      notyf.error("Failed to fetch academic years");
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const res = await fetch(`${API_URL}/branches/all`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        const activeBranches = data.branches.filter((b) => b.is_active);
+        setBranches(activeBranches);
+      } else {
+        notyf.error("Failed to fetch branches");
+      }
+    } catch {
+      notyf.error("Error fetching branches");
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "program_type") {
       setProgramType(value);
-      // Reset selected program when type changes
       setFormData((prev) => ({ ...prev, program_id: "" }));
       return;
     }
@@ -110,17 +127,9 @@ export default function Enroll() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log(studentData);
-    // Determine studentId
     let studentId = formData.student_id;
 
-    if(studentData._id == undefined){
-      console.log("Student ID not received")
-    }
-
-
-    // If no _id, create new student first
+    // Create new student if needed
     if (studentData && !studentData._id) {
       try {
         const res = await fetch(`${API_URL}/students`, {
@@ -132,47 +141,34 @@ export default function Enroll() {
           body: JSON.stringify(studentData),
         });
         const data = await res.json();
-        console.log("New student created:", data);
-
         if (!data.student?._id) {
           notyf.error(data.message || "Failed to register student");
           return;
         }
-
         studentId = data.student._id;
         notyf.success("Student registered successfully!");
-      } catch (err) {
-        console.error("Student registration error:", err);
+      } catch {
         notyf.error("Server error during student registration");
         return;
       }
     }
 
-    // Validate required fields
     if (!formData.branch || !studentId || !formData.program_id) {
       notyf.error("Please select branch, student, and program.");
-      console.log("Invalid enrollment form data:", {
-        branch: formData.branch,
-        student_id: studentId,
-        program_id: formData.program_id,
-      });
       return;
     }
 
-    // Prepare payload: only include necessary fields
+    // Include latest academic year if none selected
     const enrollmentData = {
       branch: formData.branch,
       student_id: studentId,
       program_id: formData.program_id,
       num_of_sessions: formData.num_of_sessions || undefined,
       duration: formData.duration || undefined,
-      academic_year_id: formData.academic_year_id || undefined,
+      academic_year_id: formData.academic_year_id || latestAcademicYear?._id,
       status: formData.status || "pending",
     };
 
-    console.log("Sending enrollment data:", enrollmentData);
-
-    // Submit enrollment
     try {
       const res = await fetch(`${API_URL}/enrollments/enroll`, {
         method: "POST",
@@ -182,10 +178,7 @@ export default function Enroll() {
         },
         body: JSON.stringify(enrollmentData),
       });
-
       const data = await res.json();
-      console.log("Enrollment response:", data);
-
       if (data.success) {
         notyf.success(data.message);
         setFormData({
@@ -194,7 +187,7 @@ export default function Enroll() {
           program_id: "",
           num_of_sessions: "",
           duration: "",
-          academic_year_id: "",
+          academic_year_id: latestAcademicYear?._id || "",
           status: "pending",
           total: 0,
         });
@@ -203,8 +196,7 @@ export default function Enroll() {
       } else {
         notyf.error(data.message || "Enrollment failed");
       }
-    } catch (err) {
-      console.error("Enrollment server error:", err);
+    } catch {
       notyf.error("Server error. Please try again.");
     }
   };
@@ -250,7 +242,7 @@ export default function Enroll() {
                   </Form.Group>
                 </Col>
               </Row>
-                
+
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
@@ -289,78 +281,40 @@ export default function Enroll() {
                               {p.name} ( Rate: ₱{rate} + Miscellaneous: ₱{miscTotal} = ₱{combined})
                             </option>
                           );
-                        })
-                      }
+                        })}
                     </Form.Select>
                   </Form.Group>
                 </Col>
               </Row>
 
               {programType === "short" && (
-                <>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup className="mb-3">
-                        <InputGroup.Text># of Sessions Per Week</InputGroup.Text>
-                        <Form.Control
-                          type="number"
-                          name="num_of_sessions"
-                          placeholder="Optional"
-                          value={formData.num_of_sessions}
-                          onChange={handleChange}
-                        />
-                      </InputGroup>
-                    </Col>
-                    <Col md={6}>
-                      <InputGroup className="mb-3">
-                        <InputGroup.Text>Days Per Week</InputGroup.Text>
-                        <Form.Control
-                          type="number"
-                          name="duration"
-                          placeholder="Optional"
-                          value={formData.duration}
-                          onChange={handleChange}
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  
-
-                  
-                </>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup className="mb-3">
+                      <InputGroup.Text># of Sessions Per Week</InputGroup.Text>
+                      <Form.Control
+                        type="number"
+                        name="num_of_sessions"
+                        placeholder="Optional"
+                        value={formData.num_of_sessions}
+                        onChange={handleChange}
+                      />
+                    </InputGroup>
+                  </Col>
+                  <Col md={6}>
+                    <InputGroup className="mb-3">
+                      <InputGroup.Text>Days Per Week</InputGroup.Text>
+                      <Form.Control
+                        type="number"
+                        name="duration"
+                        placeholder="Optional"
+                        value={formData.duration}
+                        onChange={handleChange}
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
               )}
-
-              {/* <Form.Group className="mb-3">
-                <Form.Label>Academic Year (optional)</Form.Label>
-                <Form.Select
-                  name="academic_year_id"
-                  value={formData.academic_year_id}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Academic Year</option>
-                  {academicYears.map((a) => (
-                    <option key={a._id} value={a._id}>
-                      {new Date(a.startDate).toLocaleDateString()} -{" "}
-                      {new Date(a.endDate).toLocaleDateString()}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group> */}
-
-              {/* <Form.Group className="mb-3">
-                <Form.Label>Status</Form.Label>
-                <Form.Select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="enrolled - not fully paid">Enrolled - Not Fully Paid</option>
-                  <option value="enrolled - fully paid">Enrolled - Fully Paid</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </Form.Select>
-              </Form.Group> */}
 
               <div className="mb-3 p-2 border rounded bg-light">
                 <p className="mb-1">

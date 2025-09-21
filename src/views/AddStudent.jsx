@@ -399,7 +399,7 @@ export default function AddStudent() {
   };
 
   
-  const disabled = formData.studentType === "old";
+  const disabled = formData.studentType === "older";
   
   const today = new Date().toISOString().split("T")[0];
   // ---------- RENDER ----------
