@@ -38,6 +38,7 @@ export default function Enrollments() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
+      console.log(data);
 
       if (Array.isArray(data)) {
         setBranches([...new Set(data.map((e) => e.branch))]);
@@ -95,8 +96,13 @@ export default function Enrollments() {
         return;
       }
 
-      setEnrollments(data);
+      // force sort client-side
+      const sortedData = data.sort(
+        (a, b) => new Date(b.last_modified_date) - new Date(a.last_modified_date)
+      );
 
+      setEnrollments(sortedData);
+      
       // 🔹 Build unique programs list from enrollments
       const uniquePrograms = [];
       const seen = new Set();
