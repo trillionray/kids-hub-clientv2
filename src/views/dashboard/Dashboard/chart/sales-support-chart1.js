@@ -9,7 +9,7 @@ export function SalesSupportChartData1() {
         },
         background: 'transparent'
       },
-      colors: ['#7267EF'],
+      colors: ['#89C7E7'],
       plotOptions: {
         bar: {
           columnWidth: '70%'

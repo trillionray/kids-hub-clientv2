@@ -25,9 +25,8 @@ export default function AddStudent() {
   const [selectionDisabled, setSelectionDisabled] = useState(false);
   const notyf = new Notyf();
   const navigate = useNavigate();
-
-  // ---------- FORM STATE ----------
-  const [formData, setFormData] = useState({
+  
+ const initialFormData = {
     firstName: "",
     middleName: "",
     lastName: "",
@@ -35,16 +34,12 @@ export default function AddStudent() {
     gender: "Male",
     birthdate: "",
     studentType: "new",
-
-    // ✅ FIXED student address
     address: {
       blockOrLot: "",
       street: "",
       barangay: "",
       municipalityOrCity: ""
     },
-
-    // parent/guardian blocks (already matching schema)
     mother: {
       firstName: "",
       middleName: "",
@@ -93,7 +88,10 @@ export default function AddStudent() {
         messenger_account: ""
       }
     }
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
 
   const [step, setStep] = useState(1);
 
@@ -123,6 +121,20 @@ export default function AddStudent() {
       setOldStudents([]);
     }
   }, [searchQuery, formData.studentType]);
+  
+
+  // ---------- NEW useEffect: Reset isOldStudentSelected when switching studentType ----------
+  useEffect(() => {
+    setIsOldStudentSelected(false);
+    setSearchQuery("");
+    setOriginalStudentData(null);
+
+    setFormData((prev) => ({
+      ...initialFormData,
+      studentType: prev.studentType // ✅ use prev so it doesn't "fight" with select input
+    }));
+  }, [formData.studentType]);
+
 
   // ---------- HANDLERS ----------
   const handleChange = (e) => {
@@ -380,7 +392,7 @@ export default function AddStudent() {
       })
         .then((res) => res.json())
         .then((data) => {
-
+          console.log(data.message)
           if(data.message == "Student updated successfully"){
             notyf.success(data.message);
             const studentPayload = data.student || snakeData; // fallback
@@ -399,7 +411,7 @@ export default function AddStudent() {
   };
 
   
-  const disabled = formData.studentType === "older";
+  const disabled = formData.studentType === "old";
   
   const today = new Date().toISOString().split("T")[0];
   // ---------- RENDER ----------

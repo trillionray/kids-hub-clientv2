@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Button, Modal, Form } from "react-bootstrap";
+import React, { useEffect, useMemo, useState } from "react";
+import { Button, Modal, Form, Spinner } from "react-bootstrap";
+import DataTable from "react-data-table-component";
 
 export default function ShowBranches() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [branches, setBranches] = useState([]);
+  const [filteredBranches, setFilteredBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [searchText, setSearchText] = useState("");
 
   // Fetch all branches
   const fetchBranches = async () => {
@@ -16,7 +19,10 @@ export default function ShowBranches() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
-      if (data.success) setBranches(data.branches);
+      if (data.success) {
+        setBranches(data.branches);
+        setFilteredBranches(data.branches);
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to fetch branches");
@@ -38,16 +44,14 @@ export default function ShowBranches() {
       if (data.success) {
         setSelectedBranch(data.branch);
         setShowEditModal(true);
-      } else {
-        alert("Branch not found");
-      }
+      } else alert("Branch not found");
     } catch (err) {
       console.error(err);
       alert("Failed to fetch branch");
     }
   };
 
-  // Handle edit form submit
+  // Handle edit submit
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -63,60 +67,138 @@ export default function ShowBranches() {
       if (data.success) {
         fetchBranches();
         setShowEditModal(false);
-      } else {
-        alert("Failed to update branch");
-      }
+      } else alert("Failed to update branch");
     } catch (err) {
       console.error(err);
       alert("Failed to update branch");
     }
   };
 
+  // Search filter
+  const handleSearch = (text) => {
+    setSearchText(text);
+    setFilteredBranches(
+      branches.filter(
+        (b) =>
+          b.branch_name.toLowerCase().includes(text.toLowerCase()) ||
+          (b.address || "").toLowerCase().includes(text.toLowerCase()) ||
+          (b.contact_number || "").toLowerCase().includes(text.toLowerCase()) ||
+          (b.email || "").toLowerCase().includes(text.toLowerCase())
+      )
+    );
+  };
+
+  // Columns
+  const columns = useMemo(() => [
+    { name: "Name", selector: (row) => row.branch_name, sortable: true },
+    { name: "Address", selector: (row) => row.address, sortable: true },
+    { name: "Contact", selector: (row) => row.contact_number, sortable: true },
+    { name: "Email", selector: (row) => row.email, sortable: true },
+    {
+      name: "Active",
+      selector: (row) => (row.is_active ? "Yes" : "No"),
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <Button size="sm" onClick={() => openEditModal(row._id)}>
+          Edit
+        </Button>
+      ),
+    },
+  ], [branches]);
+
   return (
-    <div className="p-4">
-      <h3>Branches</h3>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table className="table table-striped">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Address</th>
-              <th>Contact</th>
-              <th>Email</th>
-              <th>Active</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {branches.map((b) => (
-              <tr
-                   key={b._id}
-                   style={{
-                     color: b.is_active ? "inherit" : "#999", // grey text if inactive
-                     textDecoration: b.is_active ? "none" : "line-through", // strike-through if inactive
-                     backgroundColor: b.is_active ? "inherit" : "#f5f5f5", // optional light grey background
-                   }}
-                 >
-                <td>{b.branch_name}</td>
-                <td>{b.address}</td>
-                <td>{b.contact_number}</td>
-                <td>{b.email}</td>
-                <td>{b.is_active ? "Yes" : "No"}</td>
-                <td>
-                  <Button size="sm" onClick={() => openEditModal(b._id)}>
-                    Edit
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <div className="container border mt-5 p-4 rounded shadow" style={{ backgroundColor: "#fff" }}>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h3>Branches</h3>
+          <Form.Control
+            type="text"
+            placeholder="Search branches..."
+            style={{ maxWidth: "300px" }}
+            value={searchText}
+            onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+          />
+        </div>
+
+        {loading ? (
+          <Spinner animation="border" />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredBranches}
+            pagination
+            highlightOnHover
+            striped
+            dense
+            responsive
+            noDataComponent="No branches found"
+            customStyles={{
+              table: { 
+                style: { 
+                  borderRadius: "10px", 
+                  overflow: "hidden", 
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.1)", 
+                  border: "1px solid #dee2e6" 
+                } 
+              },
+              headRow: { 
+                style: { 
+                  backgroundColor: "#f8f9fa", 
+                  fontSize: "1rem",
+                  fontWeight: "bold", 
+                  textTransform: "uppercase",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "center" 
+                } 
+              },
+              headCells: { 
+                style: {
+                  justifyContent: "center",
+                  textAlign: "center",
+                  paddingTop: "12px",
+                  paddingBottom: "12px",
+                  borderRight: "1px solid #dee2e6",
+                },
+              },
+              rows: {
+                style: {
+                  fontSize: "0.95rem",
+                  paddingTop: "10px",
+                  paddingBottom: "10px",
+                  borderBottom: "1px solid #e9ecef",
+                  textAlign: "center",
+                },
+                highlightOnHoverStyle: {
+                  backgroundColor: "#eaf4fb",
+                  borderBottomColor: "#89C7E7",
+                  outline: "none",
+                },
+              },
+              cells: {
+                style: {
+                  justifyContent: "center",
+                  textAlign: "center",
+                  borderRight: "1px solid #dee2e6",
+                },
+              },
+              pagination: {
+                style: {
+                  borderTop: "1px solid #dee2e6",
+                  paddingTop: "4px",
+                  justifyContent: "center",
+                },
+              },
+            }}
+          />
+        )}
+      </div>
 
       {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Edit Branch</Modal.Title>
         </Modal.Header>
@@ -179,7 +261,10 @@ export default function ShowBranches() {
                 />
               </Form.Group>
 
-              <Button type="submit">Save Changes</Button>
+              <div className="d-flex justify-content-end">
+                <Button variant="secondary" className="me-2" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary">Save Changes</Button>
+              </div>
             </Form>
           )}
         </Modal.Body>

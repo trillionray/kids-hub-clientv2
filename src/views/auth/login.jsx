@@ -72,54 +72,81 @@ export default function Login() {
   }, [userId, password]);
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-content text-center">
-        <Card className="borderless p-0">
-          <Row className="align-items-center text-center">
-            <Col>
-              <Card.Body className="card-body">
-                <h4 className="mb-3 f-w-400">Login</h4>
-                <Form onSubmit={authenticate} className="m-0 p-0">
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text>
-                      <FeatherIcon icon="hash" />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter your ID (e.g. AN202500001)"
-                      value={userId}
-                      onChange={(e) => setUserId(e.target.value)}
-                      required
-                    />
-                  </InputGroup>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text>
-                      <FeatherIcon icon="lock" />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </InputGroup>
-                  <Button
-                    type="submit"
-                    className="btn btn-block btn-primary mb-4"
-                    disabled={!isActive}
-                  >
-                    Sign in
-                  </Button>
-                </Form>
-                <p className="m-0">
-                  Created by <strong>Trillion Ray</strong>
-                </p>
-              </Card.Body>
-            </Col>
-          </Row>
-        </Card>
+    <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100vh" }}>
+      <div className="auth-content w-100" style={{ maxWidth: "800px" }}>
+        <Row className="g-0 shadow rounded overflow-hidden">
+          {/* Left Side - Logo Section */}
+          <Col
+            md={6}
+            className="d-flex justify-content-center align-items-center"
+            style={{ backgroundColor: "#ffffff" }} // White background
+          >
+            <div className="p-5 text-center">
+              <img
+                src="/logo-nobackground.png" // ✅ Remove /public prefix (React automatically serves from /public)
+                alt="Logo"
+                className="img-fluid rounded-circle"
+                style={{ maxWidth: "370px", width: "100%" }}
+              />
+            </div>
+          </Col>
+
+          {/* Right Side - Form Section */}
+          <Col
+            md={6}
+            className="d-flex justify-content-center align-items-center"
+            style={{ backgroundColor: "#89C7E7" }} // Light blue background
+          >
+            <div className="w-75 bg-white p-4 rounded shadow">
+              {/* Put the form inside a white box for better contrast */}
+              <h1 className="mb-3 fw-bold text-center">Login</h1>
+
+              <Form onSubmit={authenticate} className="m-0 p-0">
+                <InputGroup className="mb-3">
+                  <InputGroup.Text>
+                    <FeatherIcon icon="hash" />
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter your ID (e.g. AN202500001)"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    required
+                  />
+                </InputGroup>
+
+                <InputGroup className="mb-3">
+                  <InputGroup.Text>
+                    <FeatherIcon icon="lock" />
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </InputGroup>
+
+                <Button
+                  type="submit"
+                  className="btn btn-block btn-primary mb-4 w-100"
+                  disabled={!isActive}
+                >
+                  Sign in
+                </Button>
+              </Form>
+
+              <p className="m-0 text-center">
+                Created by <strong>Trillion Ray</strong>
+              </p>
+            </div>
+          </Col>
+        </Row>
       </div>
     </div>
   );
+
+
+
 }

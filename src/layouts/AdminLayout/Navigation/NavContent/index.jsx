@@ -59,13 +59,42 @@ export default function NavContent({ navigation, activeNav }) {
   }
 
   const mHeader = (
-    <div className="m-header">
-      <Link to="/dashboard/home" className="b-brand">
-        <img src="../../logo.png" alt="" className="w-25 rounded-circle" />
-        {/*<img src={logo} alt="" className="logo logo-lg" />*/}
+    <div
+      className="m-header d-flex justify-content-center align-items-center"
+      style={{
+        height: "75px", // ✅ control header height so it has room to center
+        backgroundColor: "#2C3E50" // optional: give it a background for better contrast
+      }}
+    >
+      <Link
+        to="/dashboard/home"
+        className="b-brand d-flex align-items-center gap-2"
+        style={{
+          textDecoration: "none",
+        }}
+      >
+        <img
+          src="../../logo-nobackground.png"
+          alt="Kidshub Logo"
+          style={{
+            width: "65px",
+            height: "65px",
+            padding:"0"
+          }}
+        />
+        <span
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            color: "#fff"
+          }}
+        >
+          Kidshub
+        </span>
       </Link>
     </div>
   );
+
 
   let mainContent;
 

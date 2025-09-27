@@ -8,70 +8,64 @@ const menuItems = {
       icon: 'icon-pages',
       children: [
         {
-          id: 'register',
-          title: 'Employee Registration',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'person_add_alt_1',
-          url: '/register',
-          target: true
-        },
-        {
-          id: 'all-users',
-          title: 'Employees',
-          type: 'item',
+          id: 'Accounts',
+          title: 'Employee Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
           iconname: 'group',
-          url: '/all-users'
-        }
+          children: [
+            {
+              id: 'register',
+              title: 'Employee Registration',
+              type: 'item',
+              url: '/register',
+              target: true
+            },
+            {
+              id: 'all-users',
+              title: 'Employees',
+              type: 'item',
+              url: '/all-users'
+            }
+          ]
+        },
+        
       ]
     },
     {
       id: 'students',
-      title: 'Students',
+      title: 'Students & Classes',
       type: 'group',
       icon: 'icon-pages',
       children: [
         {
-          id: 'show-students',
-          title: 'Show Students',
-          type: 'item',
+          id: 'Students',
+          title: 'Student & Class Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
           iconname: 'list_alt',
-          url: '/students'
+          children: [
+            {
+              id: 'show-students',
+              title: 'Show Students',
+              type: 'item',
+              url: '/students'
+            },
+            {
+              id: 'show-classes',
+              title: 'Show Classes',
+              type: 'item',
+              url: '/classes'
+            },
+            {
+              id: 'show-attendance',
+              title: 'Show Attendance',
+              type: 'item',
+              url: '/attendance/class'
+            }
+          ]
         }
-      ]
-    },
-    {
-      id: 'classes',
-      title: 'Classes',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'show-classes',
-          title: 'Show Classes',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/classes'
-        }
-      ]
-    },
-    {
-      id: 'attendance',
-      title: 'Attendance',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'show-attendance',
-          title: 'Show Attendance',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/attendance/class'
-        }
+        
       ]
     },
     {
@@ -81,110 +75,123 @@ const menuItems = {
       icon: 'icon-pages',
       children: [
         {
-          id: 'enroll-student',
-          title: 'Enroll',
-          type: 'item',
+          id: 'Enrollments',
+          title: 'Enrollment Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
           iconname: 'how_to_reg',
-          url: '/students/add'
-        },
-        {
-          id: 'show-enrollments',
-          title: 'Show Enrollments',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/enrollments'
+          children: [
+            {
+              id: 'enroll-student',
+              title: 'Enroll',
+              type: 'item',
+              url: '/students/add'
+            },
+            {
+              id: 'show-enrollments',
+              title: 'Show Enrollments',
+              type: 'item',
+              url: '/enrollments'
+            }
+          ]
         }
+        
       ]
     },
     {
       id: 'academic-year',
-      title: 'Academic Year',
+      title: 'Set School Year',
       type: 'group',
       icon: 'icon-pages',
       children: [
         {
-          id: 'add-academic-year',
-          title: 'Add Academic Year',
-          type: 'item',
+          id: 'Academic-year',
+          title: 'Enrollment Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
-          iconname: 'add_circle',
-          url: '/academic-year/add'
+          iconname: 'settings',
+          children: [
+            {
+              id: 'add-academic-year',
+              title: 'Add Academic Year',
+              type: 'item',
+              url: '/academic-year/add'
+            },
+            {
+              id: 'list-academic-year',
+              title: 'Show Academic Years',
+              type: 'item',
+              url: '/academic-year'
+            }
+          ]
         },
         {
-          id: 'list-academic-year',
-          title: 'Show Academic Years',
-          type: 'item',
+          id: 'Miscellaneous-year',
+          title: 'Miscellaneous Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/academic-year'
-        }
-      ]
-    },
-    {
-      id: 'miscellaneous',
-      title: 'Miscellaneous',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'list-misc',
-          title: 'Miscellaneous',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/miscellaneous'
+          iconname: 'settings',
+          children: [
+            {
+              id: 'list-misc',
+              title: 'Miscellaneous',
+              type: 'item',
+              url: '/miscellaneous'
+            },
+            {
+              id: 'list-misc-package',
+              title: 'Miscellaneous Packages',
+              type: 'item',
+              url: '/miscellaneous-package'
+            }
+          ]
         },
         {
-          id: 'list-misc-package',
-          title: 'Miscellaneous Packages',
-          type: 'item',
+          id: 'Programs-year',
+          title: 'Program Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/miscellaneous-package'
-        }
-      ]
-    },
-    {
-      id: 'programs',
-      title: 'Programs',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'show-programs',
-          title: 'Programs',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/programs/'
+          iconname: 'settings',
+          children: [
+            {
+              id: 'show-programs',
+              title: 'Programs',
+              type: 'item',
+              url: '/programs/'
+            }
+          ]
         }
       ]
     },
     // Branches
     {
       id: 'branches',
-      title: 'Branches',
+      title: 'Set Branch',
       type: 'group',
       icon: 'icon-pages',
       children: [
         {
           id: 'add-branch',
-          title: 'Add Branch',
-          type: 'item',
+          title: 'Branch Modules',
+          type: 'collapse',
           icon: 'material-icons-two-tone',
           iconname: 'add_circle',
-          url: '/branch/add'
-        },
-        {
-          id: 'show-branches',
-          title: 'Show Branches',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          url: '/branches'
+          children: [
+            {
+              id: 'add-branch',
+              title: 'Add Branch',
+              type: 'item',
+              url: '/branch/add'
+            },
+            {
+              id: 'show-branches',
+              title: 'Show Branches',
+              type: 'item',
+              url: '/branches'
+            }
+          ]
         }
+        
       ]
     }
   ]

@@ -20,7 +20,7 @@ export function SalesCustomerSatisfactionChartData() {
         mode: 'light',
         monochrome: {
           enabled: true,
-          color: '#7267EF'
+          color: '#89C7E7'
         }
       },
       responsive: [

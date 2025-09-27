@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DataTable from "react-data-table-component";
-import { Button, Modal, Form } from "react-bootstrap";
+import { Button, Modal, InputGroup, Spinner, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
 import { useNavigate } from "react-router-dom";
 
@@ -10,6 +10,7 @@ export default function Classes() {
   const navigate = useNavigate();
 
   const [classes, setClasses] = useState([]);
+  const [filteredClasses, setFilteredClasses] = useState([]); // ✅ for search
   const [loading, setLoading] = useState(true);
 
   // Modal states
@@ -24,7 +25,6 @@ export default function Classes() {
   const [selectedTeacher, setSelectedTeacher] = useState("");
 
   useEffect(() => {
-    // Load both classes and teachers on mount so names can be shown
     fetchClasses();
     fetchTeachers();
   }, []);
@@ -36,14 +36,15 @@ export default function Classes() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setClasses(data);
-        else notyf.error(data.message || "Error fetching classes");
+        if (Array.isArray(data)) {
+          setClasses(data);
+          setFilteredClasses(data); // ✅ Keep filtered data in sync
+        } else notyf.error(data.message || "Error fetching classes");
       })
       .catch(() => notyf.error("Server error"))
       .finally(() => setLoading(false));
   };
 
-  // Fetch teachers (also used by modal)
   const fetchTeachers = () => {
     fetch(`${API_URL}/users/teachers`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -56,7 +57,6 @@ export default function Classes() {
       .catch(() => notyf.error("Server error"));
   };
 
-  // Build a map: teacherId -> "First Middle Last"
   const teacherMap = useMemo(() => {
     const format = (t) =>
       `${t.firstName || ""} ${t.middleName || ""} ${t.lastName || ""}`
@@ -65,15 +65,20 @@ export default function Classes() {
     return Object.fromEntries(teachers.map((t) => [t._id, format(t)]));
   }, [teachers]);
 
-  // Derive rows with a display name so DataTable shows names (and updates when teachers load)
   const classesWithTeacherName = useMemo(() => {
     return classes.map((c) => ({
       ...c,
-      teacherName: c.teacher_id ? (teacherMap[c.teacher_id] || c.teacher_id) : "Not Assigned",
+      teacherName: c.teacher_id
+        ? teacherMap[c.teacher_id] || c.teacher_id
+        : "Not Assigned",
     }));
   }, [classes, teacherMap]);
 
-  // Add new class
+  useEffect(() => {
+    setFilteredClasses(classesWithTeacherName);
+  }, [classesWithTeacherName]);
+
+
   const handleCreateClass = (e) => {
     e.preventDefault();
     fetch(`${API_URL}/class/`, {
@@ -96,7 +101,6 @@ export default function Classes() {
       .catch(() => notyf.error("Server Error"));
   };
 
-  // Assign teacher (send only teacher_id)
   const handleAssignTeacher = (e) => {
     e.preventDefault();
     if (!selectedTeacher) return notyf.error("Please select a teacher");
@@ -117,13 +121,12 @@ export default function Classes() {
           setSelectedTeacher("");
           setSelectedClassId(null);
           fetchClasses();
-          fetchTeachers(); // refresh names if needed
+          fetchTeachers();
         } else notyf.error(data.message || "Failed to assign teacher");
       })
       .catch(() => notyf.error("Server Error"));
   };
 
-  // Remove teacher
   const handleRemoveTeacher = (classId) => {
     if (!window.confirm("Remove assigned teacher from this class?")) return;
     fetch(`${API_URL}/class/${classId}/teacher`, {
@@ -143,15 +146,11 @@ export default function Classes() {
   const columns = [
     { name: "ID", selector: (row) => row._id, sortable: true, wrap: true },
     { name: "Section Name", selector: (row) => row.sectionName, sortable: true },
-    {
-      name: "Teacher",
-      selector: (row) => row.teacherName, // <-- now uses derived name
-      sortable: true,
-    },
+    { name: "Teacher", selector: (row) => row.teacherName, sortable: true },
     {
       name: "Actions",
       cell: (row) => (
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 justify-content-center">
           <Button
             size="sm"
             variant="info"
@@ -166,7 +165,7 @@ export default function Classes() {
               variant="success"
               onClick={() => {
                 setSelectedClassId(row._id);
-                fetchTeachers(); // ensure latest
+                fetchTeachers();
                 setShowTeacherModal(true);
               }}
             >
@@ -202,24 +201,113 @@ export default function Classes() {
   ];
 
   return (
-    <div className="p-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>All Classes</h3>
-        <Button variant="primary" onClick={() => setShowClassModal(true)}>
-          New Class
-        </Button>
+    <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <div
+        className="container border mt-5 p-4 rounded shadow"
+        style={{ backgroundColor: "#fff" }}
+      >
+        <div className="mt-2">
+          {/* Header with button + search */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <Button variant="primary" onClick={() => setShowClassModal(true)}>
+              New Class
+            </Button>
+
+            <input
+              type="text"
+              className="form-control"
+              style={{ maxWidth: "250px" }}
+              placeholder="Search classes..."
+              onChange={(e) => {
+                const search = e.target.value.toLowerCase();
+                setFilteredClasses(
+                  classesWithTeacherName.filter(
+                    (c) =>
+                      String(c._id).toLowerCase().includes(search) ||
+                      String(c.sectionName).toLowerCase().includes(search) ||
+                      String(c.teacherName).toLowerCase().includes(search)
+                  )
+                );
+              }}
+            />
+            
+          </div>
+
+          {loading ? (
+            <Spinner animation="border" />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredClasses}
+              pagination
+              highlightOnHover
+              striped
+              dense
+              responsive
+              noDataComponent="No classes found"
+              customStyles={{
+                table: {
+                  style: {
+                    borderRadius: "10px",
+                    overflow: "hidden",
+                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                    border: "1px solid #dee2e6",
+                  },
+                },
+                headRow: {
+                  style: {
+                    backgroundColor: "#f8f9fa",
+                    fontSize: "1rem",
+                    fontWeight: "bold",
+                    textTransform: "uppercase",
+                    borderBottom: "2px solid #dee2e6",
+                    textAlign: "center",
+                  },
+                },
+                headCells: {
+                  style: {
+                    justifyContent: "center",
+                    textAlign: "center",
+                    paddingTop: "12px",
+                    paddingBottom: "12px",
+                    borderRight: "1px solid #dee2e6",
+                  },
+                },
+                rows: {
+                  style: {
+                    fontSize: "0.95rem",
+                    paddingTop: "10px",
+                    paddingBottom: "10px",
+                    borderBottom: "1px solid #e9ecef",
+                    textAlign: "center",
+                  },
+                  highlightOnHoverStyle: {
+                    backgroundColor: "#eaf4fb",
+                    borderBottomColor: "#89C7E7",
+                    outline: "none",
+                  },
+                },
+                cells: {
+                  style: {
+                    justifyContent: "center",
+                    textAlign: "center",
+                    borderRight: "1px solid #dee2e6",
+                  },
+                },
+                pagination: {
+                  style: {
+                    borderTop: "1px solid #dee2e6",
+                    paddingTop: "4px",
+                    justifyContent: "center",
+                  },
+                },
+              }}
+            />
+          )}
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={classesWithTeacherName} // <-- derived rows with names
-        progressPending={loading}
-        pagination
-        highlightOnHover
-        responsive
-      />
-
-      {/* Modal for adding new class */}
+      {/* Add Class Modal */}
       <Modal show={showClassModal} onHide={() => setShowClassModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Add New Class</Modal.Title>
@@ -237,7 +325,11 @@ export default function Classes() {
               />
             </Form.Group>
             <div className="d-flex justify-content-end">
-              <Button variant="secondary" onClick={() => setShowClassModal(false)} className="me-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowClassModal(false)}
+                className="me-2"
+              >
                 Cancel
               </Button>
               <Button type="submit" variant="primary">
@@ -248,7 +340,7 @@ export default function Classes() {
         </Modal.Body>
       </Modal>
 
-      {/* Modal for assigning teacher */}
+      {/* Assign Teacher Modal */}
       <Modal show={showTeacherModal} onHide={() => setShowTeacherModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Assign Teacher</Modal.Title>
@@ -271,7 +363,11 @@ export default function Classes() {
               </Form.Select>
             </Form.Group>
             <div className="d-flex justify-content-end">
-              <Button variant="secondary" onClick={() => setShowTeacherModal(false)} className="me-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowTeacherModal(false)}
+                className="me-2"
+              >
                 Cancel
               </Button>
               <Button type="submit" variant="primary">

@@ -27,32 +27,29 @@ export default function ShowPrograms() {
     fetchMiscGroups();
   }, []);
 
+  // Fetch programs
   function fetchPrograms() {
     setLoading(true);
     fetch(`${API_URL}/programs`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setPrograms(data.programs || []);
-      })
+      .then((data) => setPrograms(data.programs || []))
       .catch(() => notyf.error("Failed to fetch programs"))
       .finally(() => setLoading(false));
   }
 
+  // Fetch miscellaneous groups
   function fetchMiscGroups() {
     fetch(`${API_URL}/miscellaneous-package/read`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setMiscGroups(data);
-      })
+      .then((data) => setMiscGroups(data))
       .catch(() => notyf.error("Failed to fetch miscellaneous groups"));
   }
 
+  // Open Misc Package modal
   function openMiscModal(groupId) {
     const group = miscGroups.find((g) => g._id === groupId);
     if (!group) return;
@@ -77,6 +74,7 @@ export default function ShowPrograms() {
       .catch(() => notyf.error("Server error"));
   }
 
+  // Delete program
   function handleDelete(id) {
     if (!window.confirm("Are you sure you want to delete this program?")) return;
 
@@ -96,9 +94,9 @@ export default function ShowPrograms() {
       .catch(() => notyf.error("Server error. Please try again."));
   }
 
+  // Update program
   function handleUpdateSubmit(e) {
     e.preventDefault();
-
     fetch(`${API_URL}/programs/${currentProgram._id}`, {
       method: "PUT",
       headers: {
@@ -110,7 +108,7 @@ export default function ShowPrograms() {
         category: currentProgram.category,
         description: currentProgram.description,
         rate: currentProgram.rate,
-        down_payment: currentProgram.down_payment, // ✅ include down_payment
+        down_payment: currentProgram.down_payment,
         miscellaneous_group_id: currentProgram.miscellaneous_group_id,
         isActive: currentProgram.isActive,
         updated_by: user.id,
@@ -129,6 +127,7 @@ export default function ShowPrograms() {
       .catch(() => notyf.error("Server error. Please try again."));
   }
 
+  // Open edit modal
   function openEditModal(program) {
     setCurrentProgram({ ...program });
     setShowModal(true);
@@ -137,47 +136,26 @@ export default function ShowPrograms() {
   if (loading) return <h4>Loading Programs...</h4>;
 
   const columns = [
-    { name: "No.", selector: (row, index) => index + 1, width: "60px", center: true },
+    { name: "No.", selector: (row, index) => index + 1, width: "80px", center: true, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Category", selector: (row) => row.category, sortable: true },
+    { name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true},
+    { name: "Down Payment", selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"), sortable: true},
     {
-      name: "Rate",
-      selector: (row) => `₱${row.rate}`,
-      sortable: true,
-      style: { textAlign: "right" },
-    },
-    {
-      name: "Down Payment", // ✅ new column
-      selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"),
-      sortable: true,
-      style: { textAlign: "right" },
-    },
-    {
-      name: "Misc Group Amount", // ✅ clickable column
+      name: "Misc Group Amount",
       cell: (row) => {
         const group = row.miscellaneous_group;
         return group ? (
-          <Button
-            variant="link"
-            className="p-0 text-decoration-underline"
-            onClick={() => openMiscModal(group._id)}
-          >
+          <Button variant="link" className="p-0 text-decoration-underline" onClick={() => openMiscModal(group._id)}>
             ₱{group.miscs_total}
           </Button>
         ) : (
           "₱0"
         );
-      },
-      sortable: true,
-      style: { textAlign: "right" },
+      }
     },
     { name: "Description", selector: (row) => row.description },
-    {
-      name: "Total",
-      selector: (row) => `₱${row.total}`,
-      sortable: true,
-      style: { textAlign: "right" },
-    },
+    { name: "Total", selector: (row) => `₱${row.total}`, sortable: true},
     {
       name: "Actions",
       cell: (row) => (
@@ -185,192 +163,245 @@ export default function ShowPrograms() {
           Edit
         </Button>
       ),
+      width: "120px",
+      center: true,
     },
   ];
 
+  const filteredPrograms = programs.filter((item) => {
+    const miscAmount = item.miscellaneous_group?.miscs_total || 0;
+    const total = item.total || 0;
 
+    return (
+      item.name?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.category?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.description?.toLowerCase().includes(filterText.toLowerCase()) ||
+      String(item.rate).includes(filterText) ||
+      String(item.down_payment).includes(filterText) ||
+      String(miscAmount).includes(filterText) ||
+      String(total).includes(filterText)
+    );
+  });
 
-  const filteredPrograms = (programs || []).filter((item) =>
-    item.name?.toLowerCase().includes(filterText.toLowerCase())
-  );
 
   return (
-    <div className="px-5 py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="mb-0">Programs</h3>
-        <Link to="/programs/add">
-          <Button variant="primary" className="rounded-circle p-2 me-3">
-            <FeatherIcon icon="plus" size="16" />
-          </Button>
-        </Link>
-      </div>
+    <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <div className="container border rounded shadow p-4" style={{ backgroundColor: "#ffffff" }}>
+        {/* Header: + button left, search right */}
+        <h3>Programs</h3>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <Link to="/programs/add">
+            <Button variant="primary" className=" p-2 me-2">
+              Add Program
+            </Button>
+          </Link>
+          <Form.Control
+            type="text"
+            style={{ maxWidth: "300px" }}
+            placeholder="Search by name..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.preventDefault(); // prevents form submit / 404
+            }}
+          />
 
-      {/* Search */}
-      <InputGroup className="mb-3">
-        <InputGroup.Text>
-          <FeatherIcon icon="search" />
-        </InputGroup.Text>
-        <Form.Control
-          placeholder="Search by name..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={filteredPrograms}
+          pagination
+          highlightOnHover
+          striped
+          dense
+          responsive
+          noDataComponent="No Programs found"
+          customStyles={{
+            table: { 
+              style: { 
+                borderRadius: "10px", 
+                overflow: "hidden", 
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)", 
+                border: "1px solid #dee2e6" 
+              } 
+            },
+            headRow: { 
+              style: { 
+                backgroundColor: "#f8f9fa",
+                fontSize: "1rem", 
+                fontWeight: "bold", 
+                textTransform: "uppercase", 
+                textAlign: "center", 
+                borderBottom: "2px solid #dee2e6" 
+              } 
+            },
+            headCells: { 
+              style: { 
+                justifyContent: "center", 
+                textAlign: "center", 
+                paddingTop: "12px", 
+                paddingBottom: "12px", 
+                borderRight: "1px solid #dee2e6", 
+              } 
+            },
+            rows: {
+              style: { 
+                fontSize: "0.95rem", 
+                paddingTop: "10px", 
+                paddingBottom: "10px", 
+                borderBottom: "1px solid #e9ecef", 
+                textAlign: "center", 
+              }, 
+              highlightOnHoverStyle: { 
+                backgroundColor: "#eaf4fb", 
+                borderBottomColor: "#89C7E7", 
+                outline: "none", 
+              }, 
+            },
+            cells: { 
+              style: { 
+                justifyContent: "center", 
+                textAlign: "center",
+                borderRight: "1px solid #dee2e6", 
+              } 
+            },
+            pagination: { 
+              style: { 
+                borderTop: "1px solid #dee2e6",
+                paddingTop: "4px", 
+                justifyContent: "center" 
+              } 
+            },
+          }}
         />
-      </InputGroup>
 
-      <DataTable
-        columns={columns}
-        data={filteredPrograms}
-        pagination
-        highlightOnHover
-        striped
-        noDataComponent="No Programs found"
-        responsive
-      />
+        {/* Edit Program Modal */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Program</Modal.Title>
+          </Modal.Header>
+          <Form onSubmit={handleUpdateSubmit}>
+            <Modal.Body>
+              <Form.Group className="mb-3">
+                <Form.Label>Program Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={currentProgram?.name || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Category</Form.Label>
+                <Form.Select
+                  value={currentProgram?.category || "short"}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, category: e.target.value }))}
+                >
+                  <option value="short">Short</option>
+                  <option value="long">Long</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={currentProgram?.description || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Rate (₱)</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  value={currentProgram?.rate || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, rate: e.target.value }))}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Down Payment (₱)</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  value={currentProgram?.down_payment || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, down_payment: e.target.value }))}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Miscellaneous Package</Form.Label>
+                <Form.Select
+                  value={currentProgram?.miscellaneous_group_id || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, miscellaneous_group_id: e.target.value }))}
+                >
+                  <option value="">Select a group</option>
+                  {miscGroups.map((g) => (
+                    <option key={g._id} value={g._id}>
+                      {g.package_name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Check
+                type="checkbox"
+                label="Active"
+                checked={currentProgram?.isActive || false}
+                onChange={(e) => setCurrentProgram((prev) => ({ ...prev, isActive: e.target.checked }))}
+              />
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+              <Button type="submit" variant="primary">Save Changes</Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
 
-      {/* Edit Program Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Program</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleUpdateSubmit}>
+        {/* Misc Package Modal */}
+        <Modal show={showMiscModal} onHide={() => setShowMiscModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Miscellaneous Package Details</Modal.Title>
+          </Modal.Header>
           <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Program Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={currentProgram?.name || ""}
-                onChange={(e) => setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Category</Form.Label>
-              <Form.Select
-                value={currentProgram?.category || "short"}
-                onChange={(e) => setCurrentProgram((prev) => ({ ...prev, category: e.target.value }))}
-              >
-                <option value="short">Short</option>
-                <option value="long">Long</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={currentProgram?.description || ""}
-                onChange={(e) => setCurrentProgram((prev) => ({ ...prev, description: e.target.value }))}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Rate (₱)</Form.Label>
-              <Form.Control
-                type="number"
-                step="0.01"
-                value={currentProgram?.rate || ""}
-                onChange={(e) => setCurrentProgram((prev) => ({ ...prev, rate: e.target.value }))}
-                required
-              />
-            </Form.Group>
-
-            {/* ✅ Down Payment */}
-            <Form.Group className="mb-3">
-              <Form.Label>Down Payment (₱)</Form.Label>
-              <Form.Control
-                type="number"
-                step="0.01"
-                value={currentProgram?.down_payment || ""}
-                onChange={(e) =>
-                  setCurrentProgram((prev) => ({ ...prev, down_payment: e.target.value }))
-                }
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Miscellaneous Package</Form.Label>
-              <Form.Select
-                value={currentProgram?.miscellaneous_group_id || ""}
-                onChange={(e) =>
-                  setCurrentProgram((prev) => ({ ...prev, miscellaneous_group_id: e.target.value }))
-                }
-              >
-                <option value="">Select a group</option>
-                {miscGroups.map((g) => (
-                  <option key={g._id} value={g._id}>
-                    {g.package_name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Check
-              type="checkbox"
-              label="Active"
-              checked={currentProgram?.isActive || false}
-              onChange={(e) => setCurrentProgram((prev) => ({ ...prev, isActive: e.target.checked }))}
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-
-      {/* Misc Package Modal */}
-      <Modal show={showMiscModal} onHide={() => setShowMiscModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Miscellaneous Package Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedGroup ? (
-            <>
-              <h5>{selectedGroup.package_name}</h5>
-              {selectedGroup.miscs && selectedGroup.miscs.length > 0 ? (
-                <Table striped bordered hover>
-                  <thead>
-                    <tr>
-                      <th>No.</th>
-                      <th>Name</th>
-                      <th>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedGroup.miscs.map((item, idx) => (
-                      <tr key={item._id}>
-                        <td>{idx + 1}</td>
-                        <td>{item.name}</td>
-                        <td>₱{item.price}</td>
+            {selectedGroup ? (
+              <>
+                <h5>{selectedGroup.package_name}</h5>
+                {selectedGroup.miscs && selectedGroup.miscs.length > 0 ? (
+                  <Table striped bordered hover>
+                    <thead>
+                      <tr>
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Price</th>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={2} className="text-end"><strong>Total</strong></td>
-                      <td>
-                        <strong>
-                          ₱{selectedGroup.miscs.reduce((sum, item) => sum + Number(item.price), 0)}
-                        </strong>
-                      </td>
-                    </tr>
-                  </tfoot>
-                </Table>
-              ) : (
-                <p>No items found in this package.</p>
-              )}
-            </>
-          ) : (
-            <p>Loading...</p>
-          )}
-        </Modal.Body>
-      </Modal>
+                    </thead>
+                    <tbody>
+                      {selectedGroup.miscs.map((item, idx) => (
+                        <tr key={item._id}>
+                          <td>{idx + 1}</td>
+                          <td>{item.name}</td>
+                          <td>₱{item.price}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} className="text-end"><strong>Total</strong></td>
+                        <td><strong>₱{selectedGroup.miscs.reduce((sum, item) => sum + Number(item.price), 0)}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </Table>
+                ) : (
+                  <p>No items found in this package.</p>
+                )}
+              </>
+            ) : (
+              <p>Loading...</p>
+            )}
+          </Modal.Body>
+        </Modal>
+      </div>
     </div>
   );
 }
