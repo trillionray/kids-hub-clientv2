@@ -74,7 +74,8 @@ export default function ShowStudents() {
       id: "actions",
       name: "Actions",
       cell: (row) => (
-        <div className="text-center">
+        <div className="d-flex justify-content-center gap-2">
+          {/* 👁 View Button */}
           <Button
             size="sm"
             onClick={() => {
@@ -97,6 +98,27 @@ export default function ShowStudents() {
           >
             <FeatherIcon icon="eye" size={14} style={{ color: "#6c757d" }} />
           </Button>
+
+          {/* ✏️ Edit Button */}
+          <Button
+            size="sm"
+            onClick={() => navigate(`/students/edit/${row._id}`)}
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              padding: "0.25rem",
+            }}
+            onMouseEnter={(e) => {
+              const icon = e.currentTarget.querySelector("svg");
+              if (icon) icon.style.color = "#ffc107";
+            }}
+            onMouseLeave={(e) => {
+              const icon = e.currentTarget.querySelector("svg");
+              if (icon) icon.style.color = "#6c757d";
+            }}
+          >
+            <FeatherIcon icon="edit-2" size={14} style={{ color: "#6c757d" }} />
+          </Button>
         </div>
       ),
       ignoreRowClick: true,
@@ -105,6 +127,7 @@ export default function ShowStudents() {
       style: { textAlign: "center" },
     },
   ];
+
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>

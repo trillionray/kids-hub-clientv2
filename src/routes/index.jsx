@@ -48,6 +48,7 @@ const PdfBreakdown = lazy(() => import('../views/PdfBreakdown.jsx'));
 const PdfAcknowledgementConsent = lazy(() => import('../views/PdfAcknowledgementConsent.jsx')); 
 const PdfAll = lazy(() => import('../views/PdfAll.jsx'));
 const EditEnrollment = lazy(() => import('../views/EditEnrollment.jsx'));
+const EditStudent = lazy(() => import('../views/EditStudent.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -84,8 +85,11 @@ const router = createBrowserRouter(
             { path: 'profile', element: <Profile /> },
             { path: 'all-users', element: <ShowAllUsers /> },
             { path: 'logout', element: <Logout /> },
+
             { path: 'students/add', element: <AddStudent /> },
             { path: 'students', element: <ShowStudents /> },
+            { path: 'students/edit/:id', element: <EditStudent /> },
+            
             { path: 'classes/:id/students', element: <ClassStudents /> },
 
             { path: 'enroll', element: <Enroll /> },
