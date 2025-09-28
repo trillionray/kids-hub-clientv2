@@ -32,7 +32,7 @@ export default function Home() {
       {/* Get Started Button */}
       <div className="mt-5 text-center">
         <a
-          href="/enroll"
+          href="/students/add"
           className="px-5 py-3 bg-green-600 text-white text-lg font-medium rounded-lg shadow hover:bg-green-700 transition"
         >
           Get Started
