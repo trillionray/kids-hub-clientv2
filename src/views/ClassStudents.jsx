@@ -113,7 +113,7 @@ export default function ClassStudents() {
     {
       name: "Name",
       selector: (row) =>
-        `${row.firstName || ""} ${row.middleName || ""} ${row.lastName || ""}`.trim(),
+        `${row.first_name || ""} ${row.middle_name || ""} ${row.last_name || ""}`.trim(),
       sortable: true,
     },
     {

@@ -46,7 +46,7 @@ export default function Classes() {
   };
 
   const fetchTeachers = () => {
-    fetch(`${API_URL}/teachers`, {
+    fetch(`${API_URL}/users/teachers`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
@@ -146,9 +146,30 @@ export default function Classes() {
   };
 
   const columns = [
-    { name: "ID", selector: (row) => row._id, sortable: true, wrap: true },
-    { name: "Section Name", selector: (row) => row.sectionName, sortable: true },
-    { name: "Teacher", selector: (row) => row.teacherName, sortable: true },
+    {
+      name: "ID",
+      width: "130px",
+      sortable: true,
+      cell: (row) => (
+        <span title={row._id}>
+          {row._id.length > 12
+            ? `${row._id.slice(0, 8)}...`
+            : row._id}
+        </span>
+      ),
+    },
+    {
+      name: "Section",
+      width: "150px",
+      selector: (row) => row.sectionName,
+      sortable: true,
+    },
+    {
+      name: "Teacher",
+      width: "150px",
+      selector: (row) => row.teacherName,
+      sortable: true,
+    },
     {
       name: "Actions",
       cell: (row) => (
@@ -158,7 +179,7 @@ export default function Classes() {
             variant="info"
             onClick={() => navigate(`/classes/${row._id}/students`)}
           >
-            Show Students
+            Students
           </Button>
 
           {!row.teacher_id && (
@@ -171,7 +192,7 @@ export default function Classes() {
                 setShowTeacherModal(true);
               }}
             >
-              Assign Teacher
+              Teacher
             </Button>
           )}
 
@@ -186,7 +207,7 @@ export default function Classes() {
                   setShowTeacherModal(true);
                 }}
               >
-                Re-Assign Teacher
+                Teacher
               </Button>
               <Button
                 size="sm"
@@ -201,6 +222,7 @@ export default function Classes() {
       ),
     },
   ];
+
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
