@@ -76,6 +76,10 @@ export default function PdfBreakdown() {
         downloadPdf();
       }, 1500); // 👈 give more time in prod for render
 
+      setTimeout(() => {
+        window.close();  // 👈 This will close the tab if it was JS-opened
+      }, 5000);
+
       return () => clearTimeout(timer);
     }
   }, [program]);
