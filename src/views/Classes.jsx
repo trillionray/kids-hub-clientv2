@@ -46,11 +46,12 @@ export default function Classes() {
   };
 
   const fetchTeachers = () => {
-    fetch(`${API_URL}/users/teachers`, {
+    fetch(`${API_URL}/teachers`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data)
         if (Array.isArray(data)) setTeachers(data);
         else notyf.error(data.message || "Error fetching teachers");
       })
@@ -115,6 +116,7 @@ export default function Classes() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data)
         if (data.class) {
           notyf.success("Teacher assigned successfully");
           setShowTeacherModal(false);

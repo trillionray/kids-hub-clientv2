@@ -100,13 +100,13 @@ const menuItems = {
     },
     {
       id: 'academic-year',
-      title: 'Set School Year',
+      title: 'Enrollment Setup',
       type: 'group',
       icon: 'icon-pages',
       children: [
         {
           id: 'Academic-year',
-          title: 'Enrollment Modules',
+          title: 'Academic Year',
           type: 'collapse',
           icon: 'material-icons-two-tone',
           iconname: 'settings',

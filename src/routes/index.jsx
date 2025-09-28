@@ -47,7 +47,7 @@ const PdfRegForm = lazy(() => import('../views/PdfRegForm.jsx'));
 const PdfBreakdown = lazy(() => import('../views/PdfBreakdown.jsx'));
 const PdfAcknowledgementConsent = lazy(() => import('../views/PdfAcknowledgementConsent.jsx')); 
 const PdfAll = lazy(() => import('../views/PdfAll.jsx'));
-
+const EditEnrollment = lazy(() => import('../views/EditEnrollment.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -90,6 +90,9 @@ const router = createBrowserRouter(
 
             { path: 'enroll', element: <Enroll /> },
             { path: 'enrollments', element: <Enrollments /> },
+            // 📝 NEW ROUTE for editing enrollment
+            { path: 'enrollments/update/:enrollmentId', element: <EditEnrollment /> },
+
             { path: 'pdf-reg-form', element: <PdfRegForm /> },
             { path: 'pdf-breakdown', element: <PdfBreakdown /> },  
             { path: 'pdf-acknowledgement-consent', element: <PdfAcknowledgementConsent /> }, 

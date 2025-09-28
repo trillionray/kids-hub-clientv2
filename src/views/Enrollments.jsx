@@ -2,10 +2,14 @@ import { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { Button, Modal } from "react-bootstrap";
 import { Notyf } from "notyf";
+import { useNavigate } from "react-router-dom"; // ✅ added
+import { startTransition } from "react";
 
 export default function Enrollments() {
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const navigate = useNavigate(); // ✅ added
+
 
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +126,11 @@ export default function Enrollments() {
     setLoading(false);
   };
 
+  const handleEdit = (id) => {
+    startTransition(() => {
+      navigate(`/enrollments/update/${id}`);
+    });
+  };
 
   const openDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -129,32 +138,40 @@ export default function Enrollments() {
   };
 
   const columns = [
-    { name: "ID", selector: (row) => row.student_id, sortable: true },
-    {
-      name: "Student",
-      selector: (row) =>
-        row.student ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim() : "N/A",
-      sortable: true,
-    },
-    {
-      name: "Program",
-      selector: (row) => (row.program ? row.program.name : "N/A"),
-      sortable: true,
-    },
-    { name: "Branch", selector: (row) => row.branch, sortable: true },
-    { name: "Status", selector: (row) => row.status, sortable: true },
-    { name: "Total (₱)", selector: (row) => row.total, sortable: true },
-    {
-      name: "Actions",
-      cell: (row) => (
-        <Button size="sm" variant="info" onClick={() => openDetails(row)}>
-          Show Details
-        </Button>
-      ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-    },
-  ];
+      { name: "ID", width: "100px", selector: (row) => row.student_id, sortable: true },
+      {
+        name: "Student",
+        selector: (row) =>
+          row.student
+            ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim()
+            : "N/A",
+        sortable: true,
+      },
+      {
+        name: "Program",
+        selector: (row) => (row.program ? row.program.name : "N/A"),
+        sortable: true,
+      },
+      { name: "Branch", selector: (row) => row.branch, sortable: true },
+      { name: "Status", width: "90px", selector: (row) => row.status, sortable: true },
+      {
+        name: "Actions",
+        width: "180px", // ✅ give it fixed width
+        cell: (row) => (
+          <div className="d-flex gap-1 justify-content-center">
+            <Button size="sm" variant="info" onClick={() => openDetails(row)}>
+              Details
+            </Button>
+            <Button size="sm" variant="warning" onClick={() => handleEdit(row._id)}>
+              Edit
+            </Button>
+          </div>
+        ),
+        ignoreRowClick: true,
+        allowOverflow: true,
+        button: true,
+      }
+    ];
 
   return (
     <div className="p-4 px-5">
