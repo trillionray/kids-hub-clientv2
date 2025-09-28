@@ -1,4 +1,4 @@
-// Menu configuration for default layout
+// 🧭 Menu configuration for default layout
 const menuItems = {
   items: [
     {
@@ -28,8 +28,7 @@ const menuItems = {
               url: '/all-users'
             }
           ]
-        },
-        
+        }
       ]
     },
     {
@@ -56,16 +55,9 @@ const menuItems = {
               title: 'Show Classes',
               type: 'item',
               url: '/classes'
-            },
-            {
-              id: 'show-attendance',
-              title: 'Show Attendance',
-              type: 'item',
-              url: '/attendance/class'
             }
           ]
         }
-        
       ]
     },
     {
@@ -95,11 +87,10 @@ const menuItems = {
             }
           ]
         }
-        
       ]
     },
     {
-      id: 'academic-year',
+      id: 'enrollment-setup',
       title: 'Enrollment Setup',
       type: 'group',
       icon: 'icon-pages',
@@ -160,22 +151,13 @@ const menuItems = {
               url: '/programs/'
             }
           ]
-        }
-      ]
-    },
-    // Branches
-    {
-      id: 'branches',
-      title: 'Set Branch',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
+        },
         {
-          id: 'add-branch',
+          id: 'Branch-year',
           title: 'Branch Modules',
           type: 'collapse',
           icon: 'material-icons-two-tone',
-          iconname: 'add_circle',
+          iconname: 'settings',
           children: [
             {
               id: 'add-branch',
@@ -191,7 +173,6 @@ const menuItems = {
             }
           ]
         }
-        
       ]
     }
   ]

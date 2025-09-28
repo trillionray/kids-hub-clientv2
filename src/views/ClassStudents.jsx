@@ -181,7 +181,13 @@ export default function ClassStudents() {
 
   // 🧭 Table columns
   const columns = [
-    { name: "ID", selector: (row) => row._id, sortable: true, wrap: true },
+    { 
+      name: "ID", 
+      width: "150px", 
+      selector: (row) => row._id, 
+      sortable: true, 
+      wrap: true 
+    },
     {
       name: "Name",
       selector: (row) =>
@@ -189,22 +195,42 @@ export default function ClassStudents() {
       sortable: true,
     },
     {
-      name: "Actions",
+      name: "Attendance",
+      width: "250px",
       cell: (row) => (
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 justify-content-center">
           <Button size="sm" variant="info" onClick={() => handleViewAttendance(row)}>
-            View Attendance
+            View
           </Button>
           <Button size="sm" variant="success" onClick={() => handleAddAttendance(row)}>
-            Add Attendance
-          </Button>
-          <Button size="sm" variant="danger" onClick={() => handleRemoveStudent(row._id)}>
-            Remove Student
+            Add
           </Button>
         </div>
       ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+    {
+      name: "Actions",
+      width: "180px",
+      cell: (row) => (
+        <div className="d-flex gap-2 justify-content-center">
+          <Button 
+            size="sm" 
+            variant="danger" 
+            onClick={() => handleRemoveStudent(row._id)}
+          >
+            Remove
+          </Button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
   ];
+
 
   // 📝 Attendance table columns
   const attendanceColumns = [
