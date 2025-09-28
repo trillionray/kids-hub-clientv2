@@ -82,11 +82,11 @@ export default function PdfBreakdown() {
 
 
   // Auto-download PDF when program data is ready
-  useEffect(() => {
-    if (program) {
-      setTimeout(() => downloadPdf(), 500);
-    }
-  }, [program]);
+  // useEffect(() => {
+  //   if (program) {
+  //     setTimeout(() => downloadPdf(), 500);
+  //   }
+  // }, [program]);
 
   // Show loader while fetching
   if (loading) {
