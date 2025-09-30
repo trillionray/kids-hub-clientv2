@@ -27,6 +27,7 @@ const PdfRegForm = () => {
       });
       if (!res.ok) throw new Error("Student not found or unauthorized");
       const data = await res.json();
+      console.log(data)
       setStudent(data);
 
       const programRes = await fetch(`${import.meta.env.VITE_API_URL}/summary/findprogram/${programId}`, {
@@ -147,7 +148,7 @@ const PdfRegForm = () => {
       pdf.addImage(imgData, "PNG", xOffset, yOffset, copyWidth, copyHeight);
       pdf.rect(xOffset, yOffset, copyWidth, copyHeight);
 
-      pdf.save("Enrollment_Form.pdf");
+      pdf.save(`${query.get("fileName")}_EnrollmentForm.pdf`);
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {

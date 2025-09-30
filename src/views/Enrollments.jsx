@@ -282,7 +282,7 @@ export default function Enrollments() {
                     }
 
                     window.open(
-                      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}`,
+                      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
                       "_blank"
                     );
                   }}
@@ -298,7 +298,7 @@ export default function Enrollments() {
                     const miscId = selectedEnrollment.miscellaneous_group_id;
 
                     window.open(
-                      `/pdf-breakdown?programId=${programId}&miscId=${miscId}`,
+                      `/pdf-breakdown?programId=${programId}&miscId=${miscId}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
                       "_blank"
                     );
                   }}
@@ -317,7 +317,7 @@ export default function Enrollments() {
                     const date = encodeURIComponent(new Date().toLocaleDateString());
 
                     window.open(
-                      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}`,
+                      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
                       "_blank"
                     );
                   }}
@@ -343,7 +343,7 @@ export default function Enrollments() {
                 const date = encodeURIComponent(new Date().toLocaleDateString());
 
                 window.open(
-                  `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}`,
+                  `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
                   "_blank"
                 );
               }}

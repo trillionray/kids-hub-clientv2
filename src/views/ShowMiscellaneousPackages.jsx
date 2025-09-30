@@ -305,6 +305,7 @@ export default function ShowMiscellaneousPackages() {
                         label={`${misc.name} - ₱${Number(misc.price).toLocaleString()}`}
                         checked={selectedMiscs.includes(misc._id)}
                         onChange={() => handleMiscSelection(misc._id)}
+                        disabled
                       />
                     ))
                   )}

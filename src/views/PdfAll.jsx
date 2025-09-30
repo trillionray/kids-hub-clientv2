@@ -1,23 +1,57 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import PdfRegForm from "./PdfRegForm.jsx";
 import PdfBreakdown from "./PdfBreakdown.jsx";
 import PdfAcknowledgementConsent from "./PdfAcknowledgementConsent.jsx";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import Swal from "sweetalert2";
 
 export default function PdfAll() {
   const combinedRef = useRef();
+  const [contentReady, setContentReady] = useState(false);
+
+  // ✅ Mark content as ready after all components have rendered
+  useEffect(() => {
+    // Let the browser finish rendering first
+    const timer = setTimeout(() => {
+      setContentReady(true);
+    }, 300); // small delay ensures children fully render
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ✅ Show Swal only after content is ready
+  useEffect(() => {
+    if (contentReady) {
+      Swal.fire({
+        title: "Downloading",
+        text: "This page will automatically close",
+        icon: "info",
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      }).then((result) => {
+        // if (result.isConfirmed) {
+        //   window.close();
+        // }
+      });
+    }
+
+    setTimeout(() => {
+        window.close();  // 👈 This will close the tab if it was JS-opened
+      }, 10000);
+
+
+  }, [contentReady]);
 
   const downloadPdf = async () => {
     const element = combinedRef.current;
     if (!element) return;
 
     try {
-      // Render the whole div as canvas
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        scrollY: -window.scrollY, // avoid cropping
+        scrollY: -window.scrollY,
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -45,7 +79,10 @@ export default function PdfAll() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div ref={combinedRef} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div
+        ref={combinedRef}
+        style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+      >
         <div style={{ margin: 0, padding: 0 }}>
           <PdfRegForm />
         </div>
@@ -56,26 +93,6 @@ export default function PdfAll() {
           <PdfAcknowledgementConsent />
         </div>
       </div>
-
-
-      {/*<button
-        onClick={downloadPdf}
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          padding: "12px 20px",
-          fontSize: "16px",
-          backgroundColor: "#007bff",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          zIndex: 1000,
-        }}
-      >
-        Download Full PDF
-      </button>*/}
     </div>
   );
 }

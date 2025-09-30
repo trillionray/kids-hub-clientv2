@@ -252,6 +252,7 @@ export default function ShowMiscellaneous() {
                   step="0.01"
                   value={currentMisc?.price || ""}
                   onChange={(e) => setCurrentMisc((prev) => ({ ...prev, price: e.target.value }))}
+                  disabled
                   required
                 />
               </Form.Group>

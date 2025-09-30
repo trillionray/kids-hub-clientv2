@@ -13,12 +13,15 @@ export default function Enroll() {
 
   const studentData = location.state?.studentData || null;
 
+  const [showMiscs, setShowMiscs] = useState(false);
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [latestAcademicYear, setLatestAcademicYear] = useState(null);
   const [programRate, setProgramRate] = useState(0);
   const [branches, setBranches] = useState([]);
   const [programType, setProgramType] = useState("");
+  const [miscellaneousTotal, setMiscellaneousTotal] = useState(0);
+  const [miscs, setMiscs] = useState([]);
 
   const [formData, setFormData] = useState({
     branch: "",
@@ -47,13 +50,19 @@ export default function Enroll() {
   // Update total when program changes
   useEffect(() => {
     const program = programs.find((p) => p._id === formData.program_id);
+    console.log(program)
     if (program) {
+      setMiscs(program.miscellaneous_group.miscs)
+      console.log(program.miscellaneous_group.miscs)
       const rate = program.rate || 0;
       const misc = program.miscellaneous_group?.miscs_total || 0;
+      console.log(misc)
       setProgramRate(rate);
+      setMiscellaneousTotal(misc); // ⬅️ add this
       setFormData((prev) => ({ ...prev, total: rate + misc }));
     } else {
       setProgramRate(0);
+      setMiscellaneousTotal(0); // ⬅️ reset
       setFormData((prev) => ({ ...prev, total: 0 }));
     }
   }, [formData.program_id, programs]);
@@ -65,6 +74,9 @@ export default function Enroll() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
+      console.log(data)
+
+
       setPrograms(data.programs || []);
     } catch {
       notyf.error("Failed to fetch programs");
@@ -278,7 +290,7 @@ export default function Enroll() {
                           const combined = rate + miscTotal;
                           return (
                             <option key={p._id} value={p._id}>
-                              {p.name} ( Rate: ₱{rate} + Miscellaneous: ₱{miscTotal} = ₱{combined})
+                              {p.name} 
                             </option>
                           );
                         })}
@@ -320,6 +332,35 @@ export default function Enroll() {
                 <p className="mb-1">
                   <strong>Program Rate:</strong> ₱{programRate}
                 </p>
+
+                <p className="mb-1">
+                  <strong>Miscellaneous:</strong> ₱{miscellaneousTotal}
+                </p>
+
+                {/* ✅ Show each misc item */}
+                {miscs.length > 0 && (
+                  <div className="mb-2">
+                    <Button
+                      variant="link"
+                      className="p-0 mb-2"
+                      onClick={() => setShowMiscs((prev) => !prev)}
+
+                    >
+                      {showMiscs ? "Hide Miscellaneous Details ▲" : "Show Miscellaneous Details ▼"}
+                    </Button>
+
+                    {showMiscs && (
+                      <ul className="mb-0 ps-3">
+                        {miscs.map((item, index) => (
+                          <li key={index}>
+                            {item.name} — ₱{item.price}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 <hr className="my-2" />
                 <p className="mb-0">
                   <strong>Total:</strong> ₱{formData.total}

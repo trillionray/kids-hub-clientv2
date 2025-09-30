@@ -214,7 +214,7 @@ export default function Classes() {
                 variant="danger"
                 onClick={() => handleRemoveTeacher(row._id)}
               >
-                Remove Teacher
+                Unassign
               </Button>
             </>
           )}

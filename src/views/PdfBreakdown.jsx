@@ -17,6 +17,7 @@ export default function PdfBreakdown() {
 
   // Fetch program & misc package data
   useEffect(() => {
+    console.log(queryParams.get("fileName"))
     const fetchData = async () => {
       try {
         if (!programId) return;
@@ -56,7 +57,7 @@ export default function PdfBreakdown() {
     html2pdf()
       .set({
         margin: [10, 0],
-        filename: "Program_Breakdown.pdf",
+        filename: `${queryParams.get("fileName")}_ProgramBreakdown.pdf`,
         pagebreak: { mode: "avoid-all" },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         html2canvas: {
@@ -76,9 +77,9 @@ export default function PdfBreakdown() {
         downloadPdf();
       }, 1500); // 👈 give more time in prod for render
 
-      setTimeout(() => {
-        window.close();  // 👈 This will close the tab if it was JS-opened
-      }, 5000);
+      // setTimeout(() => {
+      //   window.close();  // 👈 This will close the tab if it was JS-opened
+      // }, 5000);
 
       return () => clearTimeout(timer);
     }

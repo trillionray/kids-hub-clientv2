@@ -3,7 +3,7 @@ import html2pdf from "html2pdf.js";
 
 export default function PdfAcknowledgementConsent() {
   const contentRef = useRef();
-
+  const query = new URLSearchParams(window.location.search);
   // Example dynamic values (can be fetched via API/props later)
   const guardianName = "Juan Dela Cruz";
   const studentName = "Maria Dela Cruz";
@@ -14,7 +14,7 @@ export default function PdfAcknowledgementConsent() {
     html2pdf()
       .set({
         margin: [10, 10, 10, 10], // top, right, bottom, left
-        filename: "Acknowledgement_Consent.pdf",
+        filename: `${query.get("fileName")}_AcknowledgementConsent.pdf`,
         pagebreak: { mode: "avoid-all" },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
