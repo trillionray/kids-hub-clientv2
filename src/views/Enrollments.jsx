@@ -162,9 +162,9 @@ export default function Enrollments() {
             <Button size="sm" variant="info" onClick={() => openDetails(row)}>
               Details
             </Button>
-            <Button size="sm" variant="warning" onClick={() => handleEdit(row._id)}>
+            {/*<Button size="sm" variant="warning" onClick={() => handleEdit(row._id)}>
               Edit
-            </Button>
+            </Button>*/}
           </div>
         ),
         ignoreRowClick: true,
