@@ -623,7 +623,7 @@ export default function AddStudent() {
                     </Row>
 
                     <div className="d-flex justify-content-end mt-3">
-                      <Button variant="secondary" onClick={handleContinue}>
+                      <Button variant="primary" onClick={handleContinue}>
                         Continue <FeatherIcon icon="chevron-right" />
                       </Button>
 
