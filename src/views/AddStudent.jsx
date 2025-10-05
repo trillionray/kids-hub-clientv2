@@ -220,6 +220,7 @@ export default function AddStudent() {
         firstName: student.mother?.first_name || "",
         middleName: student.mother?.middle_name || "",
         lastName: student.mother?.last_name || "",
+        suffix: student.mother?.suffix || "",
         occupation: student.mother?.occupation || "",
         address: {
           blockOrLot: student.mother?.address?.block_or_lot || "",
@@ -236,6 +237,7 @@ export default function AddStudent() {
         firstName: student.father?.first_name || "",
         middleName: student.father?.middle_name || "",
         lastName: student.father?.last_name || "",
+        suffix: student.father?.suffix || "",
         occupation: student.father?.occupation || "",
         address: {
           blockOrLot: student.father?.address?.block_or_lot || "",
@@ -252,6 +254,7 @@ export default function AddStudent() {
         firstName: student.emergency?.first_name || "",
         middleName: student.emergency?.middle_name || "",
         lastName: student.emergency?.last_name || "",
+        suffix: student.emergency?.suffix || "",
         occupation: student.emergency?.occupation || "",
         address: {
           blockOrLot: student.emergency?.address?.block_or_lot || "",
@@ -649,7 +652,7 @@ export default function AddStudent() {
                             name="mother.firstName"
                             value={formData.mother.firstName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.mother.firstName}
                             placeholder="Enter first name"
                           />
                         </Form.Group>
@@ -662,7 +665,7 @@ export default function AddStudent() {
                             name="mother.middleName"
                             value={formData.mother.middleName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.mother.middleName}
                             placeholder="Enter middle name"
                           />
                         </Form.Group>
@@ -675,7 +678,7 @@ export default function AddStudent() {
                             name="mother.lastName"
                             value={formData.mother.lastName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.mother.lastName}
                             placeholder="Enter last name"
                           />
                         </Form.Group>
@@ -690,6 +693,7 @@ export default function AddStudent() {
                             value={formData.mother.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
+                            disabled = {formData.mother.suffix}
                           />
                         </Form.Group>
                       </Col>
@@ -702,7 +706,7 @@ export default function AddStudent() {
                             name="mother.occupation"
                             value={formData.mother.occupation}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.mother.occupation}
                             placeholder="Enter occupation"
                           />
                         </Form.Group>
@@ -711,13 +715,30 @@ export default function AddStudent() {
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
-                          <Form.Control
-                            type="text"
-                            name="mother.contacts.mobile_number"
-                            value={formData.mother.contacts.mobile_number}
-                            onChange={handleChange}
-                            placeholder="Enter mobile number"
-                          />
+                          <div className="input-group">
+                            <Form.Select
+                              name="mother.contacts.country_code"
+                              value={formData.mother.contacts.country_code}
+                              onChange={handleChange}
+                              className="input-group-text border-end-0 bg-light"
+                              style={{ maxWidth: "110px" }}
+                            >
+                              <option value="+63">+63 🇵🇭</option>
+                              <option value="+1">+1 🇺🇸</option>
+                              <option value="+44">+44 🇬🇧</option>
+                              <option value="+82">+82 🇰🇷</option>
+                              {/* Add more country codes as needed */}
+                            </Form.Select>
+
+                            <Form.Control
+                              type="text"
+                              name="mother.contacts.mobile_number"
+                              value={formData.mother.contacts.mobile_number}
+                              onChange={handleChange}
+                              placeholder="9123456789"
+                              className="border-start-0"
+                            />
+                          </div>
                         </Form.Group>
                       </Col>
                       <Col md={8}>
@@ -796,7 +817,7 @@ export default function AddStudent() {
                             name="father.firstName"
                             value={formData.father.firstName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.father.firstName}
                             placeholder="Enter first name"
                           />
                         </Form.Group>
@@ -809,7 +830,7 @@ export default function AddStudent() {
                             name="father.middleName"
                             value={formData.father.middleName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.father.middleName}
                             placeholder="Enter middle name"
                           />
                         </Form.Group>
@@ -822,7 +843,7 @@ export default function AddStudent() {
                             name="father.lastName"
                             value={formData.father.lastName}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.father.lastName}
                             placeholder="Enter last name"
                           />
                         </Form.Group>
@@ -836,6 +857,7 @@ export default function AddStudent() {
                             value={formData.father.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
+                            disabled = {formData.father.suffix}
                           />
                         </Form.Group>
                       </Col>
@@ -847,7 +869,7 @@ export default function AddStudent() {
                             name="father.occupation"
                             value={formData.father.occupation}
                             onChange={handleChange}
-                            disabled={disabled}
+                            disabled={formData.father.occupation}
                             placeholder="Enter occupation"
                           />
                         </Form.Group>
@@ -856,13 +878,30 @@ export default function AddStudent() {
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
-                          <Form.Control
-                            type="text"
-                            name="father.contacts.mobile_number"
-                            value={formData.father.contacts.mobile_number}
-                            onChange={handleChange}
-                            placeholder="Enter mobile number"
-                          />
+                          <div className="input-group">
+                            <Form.Select
+                              name="father.contacts.country_code"
+                              value={formData.father.contacts.country_code}
+                              onChange={handleChange}
+                              className="input-group-text border-end-0 bg-light"
+                              style={{ maxWidth: "110px" }}
+                            >
+                              <option value="+63">+63 🇵🇭</option>
+                              <option value="+1">+1 🇺🇸</option>
+                              <option value="+44">+44 🇬🇧</option>
+                              <option value="+82">+82 🇰🇷</option>
+                              {/* Add more country codes as needed */}
+                            </Form.Select>
+
+                            <Form.Control
+                              type="text"
+                              name="father.contacts.mobile_number"
+                              value={formData.father.contacts.mobile_number}
+                              onChange={handleChange}
+                              placeholder="9123456789"
+                              className="border-start-0"
+                            />
+                          </div>
                         </Form.Group>
                       </Col>
                       <Col md={8}>
@@ -979,6 +1018,7 @@ export default function AddStudent() {
                             value={formData.father.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
+
                           />
                         </Form.Group>
                       </Col>
@@ -998,13 +1038,30 @@ export default function AddStudent() {
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
-                          <Form.Control
-                            type="text"
-                            name="emergency.contacts.mobile_number"
-                            value={formData.emergency.contacts.mobile_number}
-                            onChange={handleChange}
-                            placeholder="Enter mobile number"
-                          />
+                          <div className="input-group">
+                            <Form.Select
+                              name="emergency.contacts.country_code"
+                              value={formData.emergency.contacts.country_code}
+                              onChange={handleChange}
+                              className="input-group-text border-end-0 bg-light"
+                              style={{ maxWidth: "110px" }}
+                            >
+                              <option value="+63">+63 🇵🇭</option>
+                              <option value="+1">+1 🇺🇸</option>
+                              <option value="+44">+44 🇬🇧</option>
+                              <option value="+82">+82 🇰🇷</option>
+                              {/* Add more country codes as needed */}
+                            </Form.Select>
+
+                            <Form.Control
+                              type="text"
+                              name="emergency.contacts.mobile_number"
+                              value={formData.emergency.contacts.mobile_number}
+                              onChange={handleChange}
+                              placeholder="9123456789"
+                              className="border-start-0"
+                            />
+                          </div>
                         </Form.Group>
                       </Col>
                       <Col md={8}>
