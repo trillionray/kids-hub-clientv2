@@ -129,7 +129,7 @@ export default function PdfBreakdown() {
               <tbody>
                 <tr>
                   <td>{program?.name || "-"}</td>
-                  <td className="text-end">{program?.rate || 0}</td>
+                  <td className="text-end">{program?.rate.toLocaleString() || 0}</td>
                 </tr>
               </tbody>
             </Table>
@@ -154,12 +154,12 @@ export default function PdfBreakdown() {
                   {miscPackage.miscs?.map((misc) => (
                     <tr key={misc._id}>
                       <td>{misc.name}</td>
-                      <td className="text-end">{misc.price}</td>
+                      <td className="text-end">{misc.price.toLocaleString()}</td>
                     </tr>
                   ))}
                   <tr className="fw-bold table-light">
                     <td>Misc Total</td>
-                    <td className="text-end">₱{miscPackage.miscs_total}</td>
+                    <td className="text-end">₱{miscPackage.miscs_total.toLocaleString()}</td>
                   </tr>
                 </tbody>
               </Table>
@@ -170,21 +170,21 @@ export default function PdfBreakdown() {
         {/* Grand Total */}
         {grandTotal !== null && (
           <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
-            Grand Total: ₱{grandTotal}
+            Grand Total: ₱{grandTotal.toLocaleString()}
           </Card>
         )}
 
         {/* Down Payment */}
         {program?.down_payment !== undefined && (
           <Card bg="light" className="fs-5 text-end mb-3">
-            Down Payment: ₱{program.down_payment}
+            Down Payment: ₱{program.down_payment.toLocaleString()}
           </Card>
         )}
 
         {/* Monthly Payment */}
         {program?.down_payment !== undefined && grandTotal !== null && (
           <Card bg="light" className="fs-6 text-end">
-            Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toFixed(2)}
+            Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toLocaleString()}
           </Card>
         )}
       </div>

@@ -379,11 +379,11 @@ export default function Enroll() {
 
               <div className="mb-3 p-2 border rounded bg-light">
                 <p className="mb-1">
-                  <strong>Program Rate:</strong> ₱{programRate}
+                  <strong>Program Rate:</strong> ₱{programRate.toLocaleString()}
                 </p>
 
                 <p className="mb-1">
-                  <strong>Miscellaneous:</strong> ₱{miscellaneousTotal}
+                  <strong>Miscellaneous:</strong> ₱{miscellaneousTotal.toLocaleString()}
                 </p>
 
                 {/* ✅ Show each misc item */}
@@ -402,7 +402,7 @@ export default function Enroll() {
                       <ul className="mb-0 ps-3">
                         {miscs.map((item, index) => (
                           <li key={index}>
-                            {item.name} — ₱{item.price}
+                            {item.name} — ₱{item.price.toLocaleString()}
                           </li>
                         ))}
                       </ul>
@@ -412,7 +412,7 @@ export default function Enroll() {
 
                 <hr className="my-2" />
                 <p className="mb-0">
-                  <strong>Total:</strong> ₱{formData.total}
+                  <strong>Total:</strong> ₱{formData.total.toLocaleString()}
                 </p>
               </div>
 
@@ -426,7 +426,7 @@ export default function Enroll() {
                   Program Full
                 </Button>
               )}
-              
+
             </Form>
           </Card.Body>
         </Card>

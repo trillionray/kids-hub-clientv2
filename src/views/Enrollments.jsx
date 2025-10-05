@@ -266,7 +266,7 @@ export default function Enrollments() {
 
               <p><strong>Miscellaneous Package:</strong> {selectedEnrollment.misc_package_name}</p>
               <p><strong>Status:</strong> {selectedEnrollment.status}</p>
-              <p><strong>Total:</strong> ₱{selectedEnrollment.total}</p>
+              <p><strong>Total:</strong> ₱{selectedEnrollment.total.toLocaleString()}</p>
             </div>
           )}
         </Modal.Body>
