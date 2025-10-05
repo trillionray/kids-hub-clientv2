@@ -22,6 +22,8 @@ export default function Enroll() {
   const [programType, setProgramType] = useState("");
   const [miscellaneousTotal, setMiscellaneousTotal] = useState(0);
   const [miscs, setMiscs] = useState([]);
+  const [programCapacity, setProgramCapacity] = useState(null);
+  const [enrollCount, setEnrollCount] = useState(null);
 
   const [formData, setFormData] = useState({
     branch: "",
@@ -45,27 +47,33 @@ export default function Enroll() {
     fetchPrograms();
     fetchAcademicYears();
     fetchBranches();
+    
   }, []);
 
-  // Update total when program changes
+  // Update total and capacity when program changes
   useEffect(() => {
+    fetchEnrollCount(formData.program_id);
+
     const program = programs.find((p) => p._id === formData.program_id);
-    console.log(program)
+
     if (program) {
-      setMiscs(program.miscellaneous_group.miscs)
-      console.log(program.miscellaneous_group.miscs)
+      setMiscs(program.miscellaneous_group.miscs);
       const rate = program.rate || 0;
       const misc = program.miscellaneous_group?.miscs_total || 0;
-      console.log(misc)
       setProgramRate(rate);
-      setMiscellaneousTotal(misc); // ⬅️ add this
+      setMiscellaneousTotal(misc);
       setFormData((prev) => ({ ...prev, total: rate + misc }));
+
+      // ✅ Set capacity
+      setProgramCapacity(program.capacity || 0);
     } else {
       setProgramRate(0);
-      setMiscellaneousTotal(0); // ⬅️ reset
+      setMiscellaneousTotal(0);
       setFormData((prev) => ({ ...prev, total: 0 }));
+      setProgramCapacity(null);
     }
   }, [formData.program_id, programs]);
+
 
   // Fetch functions
   const fetchPrograms = async () => {
@@ -213,6 +221,35 @@ export default function Enroll() {
     }
   };
 
+  const fetchEnrollCount = async (programId) => {
+    console.log("fetching count...")
+    if (!programId) {
+      setEnrollCount(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/enrollments/count/${programId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      if (data.success) {
+        setEnrollCount(data.enrollment_count);
+      } else {
+        setEnrollCount(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch enrollment count", error);
+      setEnrollCount(null);
+    }
+  };
+
+
   return (
     <div className="auth-wrapper py-3 d-flex justify-content-center">
       <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
@@ -284,17 +321,29 @@ export default function Enroll() {
                       <option value="">Select Program</option>
                       {programs
                         .filter((p) => !programType || p.category === programType)
-                        .map((p) => {
-                          const rate = p.rate || 0;
-                          const miscTotal = p.miscellaneous_group?.miscs_total || 0;
-                          const combined = rate + miscTotal;
-                          return (
-                            <option key={p._id} value={p._id}>
-                              {p.name} 
-                            </option>
-                          );
-                        })}
+                        .map((p) => (
+                          <option key={p._id} value={p._id}>
+                            {p.name}
+                          </option>
+                        ))}
                     </Form.Select>
+
+                    {programCapacity !== null && (
+                      <p className="mt-1 mb-0 text-muted">
+                        <strong>Program Capacity:</strong> {programCapacity}
+                      </p>
+                    )}
+
+                    {enrollCount !== null && (
+                      <p className="mb-0 text-muted">
+                        <strong>Current Enrollees:</strong> {enrollCount}
+                      </p>
+                    )}
+
+                    <p className="mt-1 mb-0 text-muted">
+                      <strong>Remaining Slot:</strong> {programCapacity - enrollCount}
+                    </p>
+
                   </Form.Group>
                 </Col>
               </Row>
@@ -367,9 +416,17 @@ export default function Enroll() {
                 </p>
               </div>
 
-              <Button variant="primary" type="submit">
-                Submit Enrollment
-              </Button>
+
+              {enrollCount < programCapacity ? (
+                <Button variant="primary" type="submit">
+                  Submit Enrollment
+                </Button>
+              ) : (
+                <Button variant="secondary" type="button" disabled>
+                  Program Full
+                </Button>
+              )}
+              
             </Form>
           </Card.Body>
         </Card>
