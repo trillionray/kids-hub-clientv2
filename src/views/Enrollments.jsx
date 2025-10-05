@@ -138,40 +138,46 @@ export default function Enrollments() {
   };
 
   const columns = [
-      { name: "ID", width: "100px", selector: (row) => row.student_id, sortable: true },
-      {
-        name: "Student",
-        selector: (row) =>
-          row.student
-            ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim()
-            : "N/A",
-        sortable: true,
-      },
-      {
-        name: "Program",
-        selector: (row) => (row.program ? row.program.name : "N/A"),
-        sortable: true,
-      },
-      { name: "Branch", selector: (row) => row.branch, sortable: true },
-      { name: "Status", width: "90px", selector: (row) => row.status, sortable: true },
-      {
-        name: "Actions",
-        width: "180px", // ✅ give it fixed width
-        cell: (row) => (
-          <div className="d-flex gap-1 justify-content-center">
-            <Button size="sm" variant="info" onClick={() => openDetails(row)}>
-              Details
-            </Button>
-            {/*<Button size="sm" variant="warning" onClick={() => handleEdit(row._id)}>
-              Edit
-            </Button>*/}
-          </div>
-        ),
-        ignoreRowClick: true,
-        allowOverflow: true,
-        button: true,
-      }
-    ];
+    { name: "ID", width: "100px", selector: (row) => row.student_id, sortable: true },
+    {
+      name: "Student",
+      selector: (row) =>
+        row.student
+          ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim()
+          : "N/A",
+      sortable: true,
+    },
+    {
+      name: "Program",
+      selector: (row) => (row.program ? row.program.name : "N/A"),
+      sortable: true,
+    },
+    { name: "Branch", selector: (row) => row.branch, sortable: true },
+    { name: "Status", width: "90px", selector: (row) => row.status, sortable: true },
+    {
+      name: "Actions",
+      width: "230px", // ⬅️ widened a bit to fit the new button
+      cell: (row) => (
+        <div className="d-flex gap-1 justify-content-center">
+          <Button size="sm" variant="info" onClick={() => openDetails(row)}>
+            Files
+          </Button>
+
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => navigate(`/students/edit/${row.student_id}`)} // ⬅️ NEW
+          >
+            Student Info
+          </Button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
 
   return (
     <div className="p-4 px-5">

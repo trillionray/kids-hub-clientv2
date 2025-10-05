@@ -250,19 +250,19 @@ export default function ShowStudents() {
 
                     <hr />
                     <h6>Mother</h6>
-                    <p>{selectedStudent.mother?.first_name} {selectedStudent.mother?.middle_name} {selectedStudent.mother?.last_name}</p>
+                    <p>{selectedStudent.mother?.first_name} {selectedStudent.mother?.middle_name} {selectedStudent.mother?.last_name} {selectedStudent.mother?.suffix}</p>
                     <p><strong>Occupation:</strong> {selectedStudent.mother?.occupation}</p>
                     <p><strong>Mobile:</strong> {selectedStudent.mother?.contacts?.mobile_number}</p>
 
                     <hr />
                     <h6>Father</h6>
-                    <p>{selectedStudent.father?.first_name} {selectedStudent.father?.middle_name} {selectedStudent.father?.last_name}</p>
+                    <p>{selectedStudent.father?.first_name} {selectedStudent.father?.middle_name} {selectedStudent.father?.last_name} {selectedStudent.father?.suffix}</p>
                     <p><strong>Occupation:</strong> {selectedStudent.father?.occupation}</p>
                     <p><strong>Mobile:</strong> {selectedStudent.father?.contacts?.mobile_number}</p>
 
                     <hr />
                     <h6>Emergency Contact</h6>
-                    <p>{selectedStudent.emergency?.first_name} {selectedStudent.emergency?.middle_name} {selectedStudent.emergency?.last_name}</p>
+                    <p>{selectedStudent.emergency?.first_name} {selectedStudent.emergency?.middle_name} {selectedStudent.emergency?.last_name} {selectedStudent.emergency?.suffix}</p>
                     <p><strong>Occupation:</strong> {selectedStudent.emergency?.occupation}</p>
                     <p><strong>Mobile:</strong> {selectedStudent.emergency?.contacts?.mobile_number}</p>
                   </>

@@ -83,13 +83,12 @@ export default function ShowAllUsers() {
       cell: (row) => (
         <div className="text-center">
           <Button
-            size="sm"
+            size="md"
             onClick={() => {
               setSelectedUser(row);
               setShowModal(true);
             }}
             style={{
-              backgroundColor: "transparent",
               border: "none",
               padding: "0.25rem"
             }}
@@ -102,7 +101,7 @@ export default function ShowAllUsers() {
               if (icon) icon.style.color = "#6c757d";
             }}
           >
-            <FeatherIcon icon="eye" size={14} style={{ color: "#6c757d" }} />
+            Details
           </Button>
         </div>
       ),
@@ -145,8 +144,11 @@ export default function ShowAllUsers() {
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
-      <div className="container border mt-5 p-4 rounded shadow" style={{ backgroundColor: "#ffffffff"}}>
+      <h3 className="text-white text-bolder">EMPLOYEES</h3>
+      <div className="container border mt-2 p-4 rounded shadow" style={{ backgroundColor: "#ffffffff"}}>
         {/* Removed inner container, just use a div for spacing */}
+
+
         <div className="mt-2">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <Button

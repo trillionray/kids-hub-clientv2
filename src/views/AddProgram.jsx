@@ -15,6 +15,7 @@ export default function AddProgram() {
   const [description, setDescription] = useState("");
   const [rate, setRate] = useState(0);
   const [downPayment, setDownPayment] = useState(0);
+  const [capacity, setCapacity] = useState(0); // ✅ NEW
   const [isActive, setIsActive] = useState(true);
   const [miscGroupId, setMiscGroupId] = useState("");
   const [miscGroups, setMiscGroups] = useState([]);
@@ -32,6 +33,11 @@ export default function AddProgram() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (capacity <= 0) {
+      notyf.error("Capacity must be greater than 0");
+      return;
+    }
+
     fetch(`${API_URL}/programs`, {
       method: "POST",
       headers: {
@@ -44,6 +50,7 @@ export default function AddProgram() {
         description,
         rate,
         down_payment: downPayment,
+        capacity, // ✅ Added
         isActive,
         miscellaneous_group_id: miscGroupId
       })
@@ -67,7 +74,7 @@ export default function AddProgram() {
         <div className="p-5 bg-white">
           <h3 className="mb-4">Add Program</h3>
           <Form onSubmit={handleSubmit}>
-            
+
             {/* Program Name */}
             <Form.Group className="mb-3" controlId="programName">
               <Form.Label>Program Name</Form.Label>
@@ -127,6 +134,19 @@ export default function AddProgram() {
                 placeholder="Enter down payment"
                 value={downPayment}
                 onChange={(e) => setDownPayment(e.target.value)}
+              />
+            </Form.Group>
+
+            {/* ✅ Capacity */}
+            <Form.Group className="mb-3" controlId="programCapacity">
+              <Form.Label>Capacity (Number of enrollees)</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                placeholder="Enter maximum enrollees"
+                value={capacity}
+                onChange={(e) => setCapacity(Number(e.target.value))}
+                required
               />
             </Form.Group>
 

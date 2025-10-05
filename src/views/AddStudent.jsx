@@ -44,6 +44,7 @@ export default function AddStudent() {
       firstName: "",
       middleName: "",
       lastName: "",
+      suffix: "",         // 👈 ADD THIS
       occupation: "",
       address: {
         blockOrLot: "",
@@ -60,6 +61,7 @@ export default function AddStudent() {
       firstName: "",
       middleName: "",
       lastName: "",
+      suffix: "",         // 👈 ADD THIS
       occupation: "",
       address: {
         blockOrLot: "",
@@ -76,6 +78,7 @@ export default function AddStudent() {
       firstName: "",
       middleName: "",
       lastName: "",
+      suffix: "",         // 👈 ADD THIS
       occupation: "",
       address: {
         blockOrLot: "",
@@ -102,6 +105,7 @@ export default function AddStudent() {
 
   // ---------- OLD STUDENT SEARCH ----------
   useEffect(() => {
+    console.log("Searching student...")
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
       fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
         method: "POST",
@@ -113,7 +117,7 @@ export default function AddStudent() {
       })
         .then((res) => res.json())
         .then((data) => {
-          //console.log(data);
+          console.log(data);
           setOldStudents(data.students || []);
       })
         .catch(() => notyf.error("Failed to fetch old students"));
@@ -676,6 +680,20 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
+
+                      <Col md={3} className="col-3">
+                        <Form.Group className="mb-3">
+                          <Form.Label>Suffix (Optional)</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="mother.suffix"
+                            value={formData.mother.suffix}
+                            onChange={handleChange}
+                            placeholder="e.g. Jr., Sr., II"
+                          />
+                        </Form.Group>
+                      </Col>
+
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Occupation</Form.Label>
@@ -689,8 +707,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                    </Row>
-                    <Row>
+                    
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
@@ -703,7 +720,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                      <Col md={6}>
+                      <Col md={8}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control
@@ -715,8 +732,8 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                    </Row>
-                    <Row>
+                      </Row>
+                      <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Block/Lot</Form.Label>
@@ -766,6 +783,8 @@ export default function AddStudent() {
                         </Form.Group>
                       </Col>
                     </Row>
+
+
                     {/* Father */}
                     <h5 className="mt-4">Father</h5>
                     <Row>
@@ -808,6 +827,18 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
+                      <Col md={3} className="col-3">
+                        <Form.Group className="mb-3">
+                          <Form.Label>Suffix (Optional)</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="father.suffix"
+                            value={formData.father.suffix}
+                            onChange={handleChange}
+                            placeholder="e.g. Jr., Sr., II"
+                          />
+                        </Form.Group>
+                      </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Occupation</Form.Label>
@@ -821,8 +852,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                    </Row>
-                     <Row>
+                    
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
@@ -835,7 +865,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                      <Col md={6}>
+                      <Col md={8}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control
@@ -847,8 +877,8 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                    </Row>
-                    <Row>
+                       </Row>
+                       <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Block/Lot</Form.Label>
@@ -940,6 +970,18 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
+                      <Col md={3} className="col-3">
+                        <Form.Group className="mb-3">
+                          <Form.Label>Suffix (Optional)</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="father.suffix"
+                            value={formData.father.suffix}
+                            onChange={handleChange}
+                            placeholder="e.g. Jr., Sr., II"
+                          />
+                        </Form.Group>
+                      </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Occupation</Form.Label>
@@ -952,8 +994,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                    </Row>
-                    <Row>
+                    
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Mobile Number</Form.Label>
@@ -966,7 +1007,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                      <Col md={6}>
+                      <Col md={8}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control

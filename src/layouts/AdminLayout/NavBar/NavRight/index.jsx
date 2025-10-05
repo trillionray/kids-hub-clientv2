@@ -45,9 +45,9 @@ export default function NavRight() {
     <ListGroup as="ul" bsPrefix=" " className="list-unstyled">
       <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
         <Dropdown>
-          <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0">
+          {/*<Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0">
             <i className="material-icons-two-tone">search</i>
-          </Dropdown.Toggle>
+          </Dropdown.Toggle>*/}
           <Dropdown.Menu className="dropdown-menu-end pc-h-dropdown drp-search">
             <Form className="px-3">
               <div className="form-group mb-0 d-flex align-items-center">

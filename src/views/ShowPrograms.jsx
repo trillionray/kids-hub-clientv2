@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from "react";
-import { Button, Modal, Form, InputGroup, Table } from "react-bootstrap";
+import { Button, Modal, Form, Table } from "react-bootstrap";
 import { Notyf } from "notyf";
-import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
 import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
@@ -97,6 +96,7 @@ export default function ShowPrograms() {
   // Update program
   function handleUpdateSubmit(e) {
     e.preventDefault();
+
     fetch(`${API_URL}/programs/${currentProgram._id}`, {
       method: "PUT",
       headers: {
@@ -109,6 +109,7 @@ export default function ShowPrograms() {
         description: currentProgram.description,
         rate: currentProgram.rate,
         down_payment: currentProgram.down_payment,
+        capacity: currentProgram.capacity, // ✅ Added capacity
         miscellaneous_group_id: currentProgram.miscellaneous_group_id,
         isActive: currentProgram.isActive,
         updated_by: user.id,
@@ -139,8 +140,8 @@ export default function ShowPrograms() {
     { name: "No.", selector: (row, index) => index + 1, width: "80px", center: true, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Category", selector: (row) => row.category, sortable: true },
-    { name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true},
-    { name: "Down Payment", selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"), sortable: true},
+    { name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true },
+    { name: "Down Payment", selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"), sortable: true },
     {
       name: "Misc Group Amount",
       cell: (row) => {
@@ -152,18 +153,24 @@ export default function ShowPrograms() {
         ) : (
           "₱0"
         );
-      }
+      },
     },
+    { name: "Capacity", selector: (row) => row.capacity || 0, sortable: true }, // ✅ NEW column
     { name: "Description", selector: (row) => row.description },
-    { name: "Total", selector: (row) => `₱${row.total}`, sortable: true},
+    { name: "Total", selector: (row) => `₱${row.total}`, sortable: true },
     {
       name: "Actions",
       cell: (row) => (
-        <Button size="sm" variant="warning" className="me-2" onClick={() => openEditModal(row)}>
-          Edit
-        </Button>
+        <>
+          <Button size="sm" variant="warning" className="me-2" onClick={() => openEditModal(row)}>
+            Edit
+          </Button>
+          {/*<Button size="sm" variant="danger" onClick={() => handleDelete(row._id)}>
+            Delete
+          </Button>*/}
+        </>
       ),
-      width: "120px",
+      width: "160px",
       center: true,
     },
   ];
@@ -178,20 +185,19 @@ export default function ShowPrograms() {
       item.description?.toLowerCase().includes(filterText.toLowerCase()) ||
       String(item.rate).includes(filterText) ||
       String(item.down_payment).includes(filterText) ||
+      String(item.capacity).includes(filterText) || // ✅ searchable capacity
       String(miscAmount).includes(filterText) ||
       String(total).includes(filterText)
     );
   });
 
-
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
       <div className="container border rounded shadow p-4" style={{ backgroundColor: "#ffffff" }}>
-        {/* Header: + button left, search right */}
         <h3>Programs</h3>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <Link to="/programs/add">
-            <Button variant="primary" className=" p-2 me-2">
+            <Button variant="primary" className="p-2 me-2">
               Add Program
             </Button>
           </Link>
@@ -202,10 +208,9 @@ export default function ShowPrograms() {
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") e.preventDefault(); // prevents form submit / 404
+              if (e.key === "Enter") e.preventDefault();
             }}
           />
-
         </div>
 
         <DataTable
@@ -217,72 +222,19 @@ export default function ShowPrograms() {
           dense
           responsive
           noDataComponent="No Programs found"
-          customStyles={{
-            table: { 
-              style: { 
-                borderRadius: "10px", 
-                overflow: "hidden", 
-                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)", 
-                border: "1px solid #dee2e6" 
-              } 
-            },
-            headRow: { 
-              style: { 
-                backgroundColor: "#f8f9fa",
-                fontSize: "1rem", 
-                fontWeight: "bold", 
-                textTransform: "uppercase", 
-                textAlign: "center", 
-                borderBottom: "2px solid #dee2e6" 
-              } 
-            },
-            headCells: { 
-              style: { 
-                justifyContent: "center", 
-                textAlign: "center", 
-                paddingTop: "12px", 
-                paddingBottom: "12px", 
-                borderRight: "1px solid #dee2e6", 
-              } 
-            },
-            rows: {
-              style: { 
-                fontSize: "0.95rem", 
-                paddingTop: "10px", 
-                paddingBottom: "10px", 
-                borderBottom: "1px solid #e9ecef", 
-                textAlign: "center", 
-              }, 
-              highlightOnHoverStyle: { 
-                backgroundColor: "#eaf4fb", 
-                borderBottomColor: "#89C7E7", 
-                outline: "none", 
-              }, 
-            },
-            cells: { 
-              style: { 
-                justifyContent: "center", 
-                textAlign: "center",
-                borderRight: "1px solid #dee2e6", 
-              } 
-            },
-            pagination: { 
-              style: { 
-                borderTop: "1px solid #dee2e6",
-                paddingTop: "4px", 
-                justifyContent: "center" 
-              } 
-            },
-          }}
         />
 
         {/* Edit Program Modal */}
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+
           <Modal.Header closeButton>
             <Modal.Title>Edit Program</Modal.Title>
           </Modal.Header>
           <Form onSubmit={handleUpdateSubmit}>
             <Modal.Body>
+              <div className="text-danger mb-3 fw-bold">
+                NOTE: Only capacity and activeness are allowed to edit to not effect other enrollment data
+              </div>
               <Form.Group className="mb-3">
                 <Form.Label>Program Name</Form.Label>
                 <Form.Control
@@ -290,18 +242,22 @@ export default function ShowPrograms() {
                   value={currentProgram?.name || ""}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, name: e.target.value }))}
                   required
+                  disabled
                 />
               </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Category</Form.Label>
                 <Form.Select
                   value={currentProgram?.category || "short"}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, category: e.target.value }))}
+                  disabled
                 >
                   <option value="short">Short</option>
                   <option value="long">Long</option>
                 </Form.Select>
               </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Description</Form.Label>
                 <Form.Control
@@ -309,8 +265,10 @@ export default function ShowPrograms() {
                   rows={3}
                   value={currentProgram?.description || ""}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, description: e.target.value }))}
+                  disabled                
                 />
               </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Rate (₱)</Form.Label>
                 <Form.Control
@@ -319,8 +277,10 @@ export default function ShowPrograms() {
                   value={currentProgram?.rate || ""}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, rate: e.target.value }))}
                   required
+                  disabled
                 />
               </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Down Payment (₱)</Form.Label>
                 <Form.Control
@@ -328,13 +288,28 @@ export default function ShowPrograms() {
                   step="0.01"
                   value={currentProgram?.down_payment || ""}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, down_payment: e.target.value }))}
+                  disabled
                 />
               </Form.Group>
+
+              {/* ✅ Capacity Field */}
+              <Form.Group className="mb-3">
+                <Form.Label>Capacity (Max Enrollees)</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  value={currentProgram?.capacity || ""}
+                  onChange={(e) => setCurrentProgram((prev) => ({ ...prev, capacity: Number(e.target.value) }))}
+                  required
+                />
+              </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Miscellaneous Package</Form.Label>
                 <Form.Select
                   value={currentProgram?.miscellaneous_group_id || ""}
                   onChange={(e) => setCurrentProgram((prev) => ({ ...prev, miscellaneous_group_id: e.target.value }))}
+                  disabled
                 >
                   <option value="">Select a group</option>
                   {miscGroups.map((g) => (
@@ -344,6 +319,7 @@ export default function ShowPrograms() {
                   ))}
                 </Form.Select>
               </Form.Group>
+
               <Form.Check
                 type="checkbox"
                 label="Active"
@@ -352,8 +328,12 @@ export default function ShowPrograms() {
               />
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button type="submit" variant="primary">Save Changes</Button>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">
+                Save Changes
+              </Button>
             </Modal.Footer>
           </Form>
         </Modal>
@@ -387,8 +367,14 @@ export default function ShowPrograms() {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan={2} className="text-end"><strong>Total</strong></td>
-                        <td><strong>₱{selectedGroup.miscs.reduce((sum, item) => sum + Number(item.price), 0)}</strong></td>
+                        <td colSpan={2} className="text-end">
+                          <strong>Total</strong>
+                        </td>
+                        <td>
+                          <strong>
+                            ₱{selectedGroup.miscs.reduce((sum, item) => sum + Number(item.price), 0)}
+                          </strong>
+                        </td>
                       </tr>
                     </tfoot>
                   </Table>

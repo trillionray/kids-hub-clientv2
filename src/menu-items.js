@@ -31,35 +31,7 @@ const menuItems = {
         }
       ]
     },
-    {
-      id: 'students',
-      title: 'Students & Classes',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'Students',
-          title: 'Student & Class Modules',
-          type: 'collapse',
-          icon: 'material-icons-two-tone',
-          iconname: 'list_alt',
-          children: [
-            {
-              id: 'show-students',
-              title: 'Show Students',
-              type: 'item',
-              url: '/students'
-            },
-            {
-              id: 'show-classes',
-              title: 'Show Classes',
-              type: 'item',
-              url: '/classes'
-            }
-          ]
-        }
-      ]
-    },
+    
     {
       id: 'enrollments',
       title: 'Enrollments',
@@ -84,6 +56,29 @@ const menuItems = {
               title: 'Show Enrollments',
               type: 'item',
               url: '/enrollments'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'Class',
+      title: 'Class',
+      type: 'group',
+      icon: 'icon-pages',
+      children: [
+        {
+          id: 'Class',
+          title: 'Class Modules',
+          type: 'collapse',
+          icon: 'material-icons-two-tone',
+          iconname: 'list_alt',
+          children: [
+            {
+              id: 'show-classes',
+              title: 'Show Classes',
+              type: 'item',
+              url: '/classes'
             }
           ]
         }
