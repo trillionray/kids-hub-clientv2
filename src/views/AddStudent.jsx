@@ -731,7 +731,7 @@ export default function AddStudent() {
                             </Form.Select>
 
                             <Form.Control
-                              type="text"
+                              type="number"
                               name="mother.contacts.mobile_number"
                               value={formData.mother.contacts.mobile_number}
                               onChange={handleChange}
@@ -894,7 +894,7 @@ export default function AddStudent() {
                             </Form.Select>
 
                             <Form.Control
-                              type="text"
+                              type="number"
                               name="father.contacts.mobile_number"
                               value={formData.father.contacts.mobile_number}
                               onChange={handleChange}
@@ -1054,7 +1054,7 @@ export default function AddStudent() {
                             </Form.Select>
 
                             <Form.Control
-                              type="text"
+                              type="number"
                               name="emergency.contacts.mobile_number"
                               value={formData.emergency.contacts.mobile_number}
                               onChange={handleChange}
