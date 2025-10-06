@@ -42,7 +42,7 @@ export default function Enrollments() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
-      console.log(data);
+      // console.log(data);
 
       if (Array.isArray(data)) {
         setBranches([...new Set(data.map((e) => e.branch))]);
@@ -52,12 +52,16 @@ export default function Enrollments() {
       const yearRes = await fetch(`${API_URL}/academic-years`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+
+      console.log(yearRes)
       const yearsData = await yearRes.json();
+      console.log(yearsData)
       if (Array.isArray(yearsData)) {
         const formattedYears = yearsData.map((y) => ({
           _id: y._id,
           name: `${new Date(y.startDate).getFullYear()} - ${new Date(y.endDate).getFullYear()}`,
         }));
+        console.log(formattedYears);
         setAcademicYears(formattedYears);
       }
 
@@ -138,9 +142,10 @@ export default function Enrollments() {
   };
 
   const columns = [
-    { name: "ID", width: "100px", selector: (row) => row.student_id, sortable: true },
+    { name: "ID", width: "130px", selector: (row) => row.student_id, sortable: true },
     {
       name: "Student",
+      width: "200px",
       selector: (row) =>
         row.student
           ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim()
