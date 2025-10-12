@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { Button, Modal, Form, Spinner } from "react-bootstrap";
 import { Notyf } from "notyf";
@@ -13,6 +13,15 @@ export default function ClassStudents() {
   const notyf = new Notyf();
   const navigate = useNavigate();
   const { id: classId } = useParams(); // class ID
+
+  const location = useLocation();
+
+  const queryParams = new URLSearchParams(location.search);
+  const programId = queryParams.get("program");
+  const academicYearId = queryParams.get("academicYear");
+  const sectionName = queryParams.get("section");
+  const programName = queryParams.get("programName");
+
 
   const { user } = useContext(UserContext);
 
@@ -60,19 +69,28 @@ export default function ClassStudents() {
   };
 
   // Fetch all students (for Add Student modal)
+  // Fetch all students (for Add Student modal)
   const fetchAllStudents = () => {
-    fetch(`${API_URL}/students`, {
+    fetch(`${API_URL}/enrollments/by-program/${programId}/year/${academicYearId}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
-        if (Array.isArray(data)) setAllStudents(data);
-        else if (Array.isArray(data.students)) setAllStudents(data.students);
-        else notyf.error(data.message || "Error fetching all students");
+        if (data && Array.isArray(data.enrollments)) {
+          const enrollees = data.enrollments;
+
+          // push full student object
+          const students = enrollees.map(enrollee => enrollee.student_id);
+
+          setAllStudents(students);
+        } else {
+          notyf.error(data.message || "Error fetching all students");
+        }
       })
       .catch(() => notyf.error("Server error"));
   };
+
+
 
   // Assign student to class
   const handleAssignStudent = (student) => {
@@ -251,6 +269,66 @@ export default function ClassStudents() {
     return fullName.includes(search.toLowerCase());
   });
 
+
+  // implement - select student checkbox
+  // State to track selected students
+  const [selectedStudents, setSelectedStudents] = useState([]);
+
+  // Toggle a single student
+  const handleToggleStudent = (studentId) => {
+    setSelectedStudents((prev) =>
+      prev.includes(studentId)
+        ? prev.filter((id) => id !== studentId)
+        : [...prev, studentId]
+    );
+  };
+
+  // Toggle all students
+  const handleSelectAll = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredStudents.map((s) => s._id));
+    }
+  };
+
+  // Assign selected students to class
+  const handleAssignSelectedStudents = async () => {
+    if (selectedStudents.length === 0) {
+      return notyf.error("Please select at least one student");
+    }
+
+    // Loop through each selected student and send a request
+    for (const studentId of selectedStudents) {
+      try {
+        const res = await fetch(`${API_URL}/class/${classId}/students`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ students: [studentId] }),
+        });
+
+        const data = await res.json();
+
+        if (!data.class) {
+          notyf.error(data.message || `Failed to add student ${studentId}`);
+        }
+      } catch (err) {
+        console.error(err);
+        notyf.error(`Server error adding student ${studentId}`);
+      }
+    }
+
+    notyf.success("Selected students added successfully");
+    fetchStudents();
+    setShowModal(false);
+    setSelectedStudents([]);
+  };
+
+
+
   return (
     <div className="p-4">
       {/* Top bar */}
@@ -258,7 +336,7 @@ export default function ClassStudents() {
         <Button variant="secondary" onClick={() => navigate("/classes")}>
           ← Back
         </Button>
-        <h3 className="mb-0">Students in Class</h3>
+        <h3 className="mb-0">{sectionName} - {programName}</h3>
         <Button
           variant="primary"
           onClick={() => {
@@ -283,9 +361,11 @@ export default function ClassStudents() {
       {/* Add Student Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>Select Student</Modal.Title>
+          <Modal.Title>Select Student ({programName} - AY {queryParams.get("startDate")} {queryParams.get("endDate")})</Modal.Title>
+
         </Modal.Header>
         <Modal.Body>
+          <p>Students enrolled in same program and academic year</p>
           <Form.Group className="mb-3">
             <Form.Control
               type="text"
@@ -296,27 +376,45 @@ export default function ClassStudents() {
           </Form.Group>
           <DataTable
             columns={[
+              {
+                name: (
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedStudents.length === filteredStudents.length && filteredStudents.length > 0}
+                    onChange={handleSelectAll}
+                  />
+                ),
+                width: "50px",
+                cell: (row) => (
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedStudents.includes(row._id)}
+                    onChange={() => handleToggleStudent(row._id)}
+                  />
+                ),
+              },
               { name: "ID", selector: (row) => row._id, sortable: true },
               {
                 name: "Name",
                 selector: (row) =>
-                  `${row.first_name || ""} ${row.middle_name || ""} ${row.last_name || ""}`.trim(),
+                  `${row.firstName || row.first_name || ""} ${row.middleName || row.middle_name || ""} ${row.lastName || row.last_name || ""}`.trim(),
                 sortable: true,
-              },
-              {
-                name: "Actions",
-                cell: (row) => (
-                  <Button size="sm" variant="success" onClick={() => handleAssignStudent(row)}>
-                    Add
-                  </Button>
-                ),
-              },
+              }
+
             ]}
             data={filteredStudents}
             pagination
             highlightOnHover
             responsive
           />
+          <Button
+            variant="success"
+            className="mt-3"
+            onClick={handleAssignSelectedStudents}
+          >
+            ✅ Add Selected
+          </Button>
+
         </Modal.Body>
       </Modal>
 

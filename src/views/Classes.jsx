@@ -3,6 +3,8 @@ import DataTable from "react-data-table-component";
 import { Button, Modal, InputGroup, Spinner, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
 import { useNavigate } from "react-router-dom";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Tooltip from "react-bootstrap/Tooltip";
 
 export default function Classes() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -56,6 +58,7 @@ export default function Classes() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data)
         if (Array.isArray(data)) {
           setClasses(data);
           setFilteredClasses(data); // 
@@ -243,6 +246,29 @@ export default function Classes() {
   }, [filterProgramName, filterProgramType, classesWithTeacherName]);
   const columns = [
     {
+      name: "Academic Year",
+      selector: (row) => {
+        const start = row.school_year_id?.startDate
+          ? new Date(row.school_year_id.startDate).toLocaleDateString("en-US", {
+              month: "numeric",
+              year: "numeric",
+            })
+          : "N/A";
+
+        const end = row.school_year_id?.endDate
+          ? new Date(row.school_year_id.endDate).toLocaleDateString("en-US", {
+              month: "numeric",
+              year: "numeric",
+            })
+          : "N/A";
+
+        return `${start} - ${end}`;
+      },
+      sortable: true,
+      width: "20%",
+      center: true,
+    },
+    {
       name: "Section",
       selector: (row) => row.sectionName,
       sortable: true,
@@ -251,11 +277,53 @@ export default function Classes() {
       name: "Teacher",
       selector: (row) => row.teacherName,
       sortable: true,
+      cell: (row) => (
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id={`tooltip-${row._id}`}>{row.teacherName}</Tooltip>}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              maxWidth: "150px",      // 👈 adjust to your table width
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+            }}
+          >
+            {row.teacherName}
+          </span>
+        </OverlayTrigger>
+      ),
+      width: "20%",
+      center: true,
     },
     {
       name: "Program",
       selector: (row) => row.program_id.name,
       sortable: true,
+      cell: (row) => (
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id={`tooltip-program-${row._id}`}>{row.program_id?.name}</Tooltip>}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              maxWidth: "150px",      // 👈 adjust width as needed
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+            }}
+          >
+            {row.program_id?.name || "—"}
+          </span>
+        </OverlayTrigger>
+      ),
+      width: "15%",
+      center: true,
     },
     {
       name: "Type",
@@ -276,10 +344,34 @@ export default function Classes() {
           <Button
             size="sm"
             variant="info"
-            onClick={() => navigate(`/classes/${row._id}/students`)}
+            onClick={() => {
+              const start = row.school_year_id?.startDate
+                ? new Date(row.school_year_id.startDate).toLocaleDateString("en-US", {
+                    month: "numeric",
+                    year: "numeric",
+                  })
+                : "";
+
+              const end = row.school_year_id?.endDate
+                ? new Date(row.school_year_id.endDate).toLocaleDateString("en-US", {
+                    month: "numeric",
+                    year: "numeric",
+                  })
+                : "";
+
+              navigate(
+                `/classes/${row._id}/students?program=${row.program_id?._id}` +
+                `&academicYear=${row.school_year_id?._id}` +
+                `&section=${encodeURIComponent(row.sectionName)}` +
+                `&programName=${encodeURIComponent(row.program_id?.name)}` +
+                `&startDate=${encodeURIComponent(start)}` +
+                `&endDate=${encodeURIComponent(end)}`
+              );
+            }}
           >
-            View
+            Students
           </Button>
+
 
           <Button
                 size="sm"
@@ -316,7 +408,7 @@ export default function Classes() {
           )} */}
         </div>
       ),
-      width: "20%",       // ✅ fixed column width
+      width: "22%",       // ✅ fixed column width
       center: true,        // ✅ centers the number
     },
   ];

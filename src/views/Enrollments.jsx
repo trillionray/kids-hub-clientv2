@@ -42,6 +42,7 @@ export default function Enrollments() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
+      console.log(data)
       // console.log(data);
 
       if (Array.isArray(data)) {
