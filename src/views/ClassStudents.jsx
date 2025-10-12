@@ -48,6 +48,7 @@ export default function ClassStudents() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         if (Array.isArray(data)) {
           setStudents(data);
         } else {
@@ -65,6 +66,7 @@ export default function ClassStudents() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data)
         if (Array.isArray(data)) setAllStudents(data);
         else if (Array.isArray(data.students)) setAllStudents(data.students);
         else notyf.error(data.message || "Error fetching all students");
@@ -74,6 +76,9 @@ export default function ClassStudents() {
 
   // Assign student to class
   const handleAssignStudent = (student) => {
+    console.log("classId:", classId);
+
+    console.log(API_URL)
     fetch(`${API_URL}/class/${classId}/students`, {
       method: "PUT",
       headers: {
@@ -84,13 +89,16 @@ export default function ClassStudents() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         if (data.class) {
           notyf.success("Student added successfully");
           fetchStudents();
           setShowModal(false);
         } else notyf.error(data.message || "Failed to add student");
       })
-      .catch(() => notyf.error("Server error"));
+      .catch((err) => {
+        console.log(err);
+        notyf.error("Server error")});
   };
 
   // Remove student from class
@@ -191,7 +199,7 @@ export default function ClassStudents() {
     {
       name: "Name",
       selector: (row) =>
-        `${row.firstName || row.first_name || ""} ${row.middleName || row.middle_name || ""} ${row.lastName || row.last_name || ""}`.trim(),
+        `${row.first_name || ""} ${row.middle_name || ""} ${row.last_name || ""}`.trim(),
       sortable: true,
     },
     {
@@ -292,7 +300,7 @@ export default function ClassStudents() {
               {
                 name: "Name",
                 selector: (row) =>
-                  `${row.firstName || ""} ${row.middleName || ""} ${row.lastName || ""}`.trim(),
+                  `${row.first_name || ""} ${row.middle_name || ""} ${row.last_name || ""}`.trim(),
                 sortable: true,
               },
               {

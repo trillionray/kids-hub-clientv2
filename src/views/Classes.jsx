@@ -24,10 +24,30 @@ export default function Classes() {
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
 
+  // Program List
+  const [programs, setPrograms] = useState([]);
+  const [SelectedProgram, setSelectedProgram] = useState("");
+
+  //Update Modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+
+  //Filtering columns
+  const [filterProgramName, setFilterProgramName] = useState("");
+  const [filterProgramType, setFilterProgramType] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     fetchClasses();
     fetchTeachers();
+    fetchPrograms();
   }, []);
+
+
+
+  
+
+
 
   const fetchClasses = () => {
     setLoading(true);
@@ -38,25 +58,39 @@ export default function Classes() {
       .then((data) => {
         if (Array.isArray(data)) {
           setClasses(data);
-          setFilteredClasses(data); // ✅ Keep filtered data in sync
+          setFilteredClasses(data); // 
         } else notyf.error(data.message || "Error fetching classes");
       })
       .catch(() => notyf.error("Server error"))
       .finally(() => setLoading(false));
   };
 
+  //Fetch teachers
   const fetchTeachers = () => {
     fetch(`${API_URL}/users/teachers`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
         if (Array.isArray(data)) setTeachers(data);
         else notyf.error(data.message || "Error fetching teachers");
       })
       .catch(() => notyf.error("Server error"));
   };
+
+  //Fetch Programs
+  const fetchPrograms = () => {
+    fetch(`${API_URL}/programs/getPrgrams`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setPrograms(data);
+        else notyf.error(data.message || "Error fetching programs");
+      })
+      .catch(() => notyf.error("Server error"));
+  };
+
 
   const teacherMap = useMemo(() => {
     const format = (t) =>
@@ -81,26 +115,68 @@ export default function Classes() {
 
 
   const handleCreateClass = (e) => {
-    e.preventDefault();
+     e.preventDefault();
     fetch(`${API_URL}/class/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({ sectionName: newClassName }),
+      body: JSON.stringify({ 
+        sectionName: newClassName,
+        teacher_id: selectedTeacher,
+        program_id: SelectedProgram
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.class) {
           notyf.success("Class created successfully");
           setShowClassModal(false);
-          setNewClassName("");
+          setNewClassName("");   
+          setSelectedTeacher(""); 
+          setSelectedProgram("");
           fetchClasses();
         } else notyf.error(data.message || "Failed to create class");
       })
       .catch(() => notyf.error("Server Error"));
   };
+
+  const handleUpdateClass = (e) => {
+    e.preventDefault();
+
+    if (!selectedClass || !selectedClass._id) {
+      notyf.error("No class selected to update");
+      return;
+    }
+
+    fetch(`${API_URL}/class/${selectedClass._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        sectionName: selectedClass.sectionName,
+        teacher_id: selectedClass.teacher_id?._id || selectedClass.teacher_id,
+        program_id: selectedClass.program_id?._id || selectedClass.program_id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.class) {
+          notyf.success("Class updated successfully");
+          setShowUpdateModal(false);
+          setSelectedClass(null);
+          fetchClasses();
+        } else {
+          notyf.error(data.message || "Failed to update class");
+        }
+      })
+      .catch(() => notyf.error("Server Error"));
+  };
+
+
 
   const handleAssignTeacher = (e) => {
     e.preventDefault();
@@ -116,7 +192,7 @@ export default function Classes() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
+        //console.log(data)
         if (data.class) {
           notyf.success("Teacher assigned successfully");
           setShowTeacherModal(false);
@@ -145,32 +221,55 @@ export default function Classes() {
       .catch((err) => notyf.error(err?.message || "Server Error"));
   };
 
+
+  useEffect(() => {
+    let filtered = classesWithTeacherName;
+
+    // Filter by Program Name dropdown
+    if (filterProgramName) {
+      filtered = filtered.filter(
+        (c) => c.program_id?.name === filterProgramName
+      );
+    }
+
+    // Filter by Program Type dropdown
+    if (filterProgramType) {
+      filtered = filtered.filter(
+        (c) => c.program_id?.category === filterProgramType
+      );
+    }
+
+    setFilteredClasses(filtered);
+  }, [filterProgramName, filterProgramType, classesWithTeacherName]);
   const columns = [
     {
-      name: "ID",
-      width: "130px",
-      sortable: true,
-      cell: (row) => (
-        <span title={row._id}>
-          {row._id.length > 12
-            ? `${row._id.slice(0, 8)}...`
-            : row._id}
-        </span>
-      ),
-    },
-    {
       name: "Section",
-      width: "150px",
       selector: (row) => row.sectionName,
       sortable: true,
     },
     {
       name: "Teacher",
-      width: "150px",
       selector: (row) => row.teacherName,
       sortable: true,
     },
     {
+      name: "Program",
+      selector: (row) => row.program_id.name,
+      sortable: true,
+    },
+    {
+      name: "Type",
+      selector: (row) => row.program_id.category,
+      sortable: true,
+    },
+    {
+      name: "Students",
+      selector: (row) => row.studentCount,
+      sortable: true,
+      width: "10%",       // ✅ fixed column width
+      center: true,        // ✅ centers the number
+    },
+    { 
       name: "Actions",
       cell: (row) => (
         <div className="d-flex gap-2 justify-content-center">
@@ -179,24 +278,21 @@ export default function Classes() {
             variant="info"
             onClick={() => navigate(`/classes/${row._id}/students`)}
           >
-            Students
+            View
           </Button>
 
-          {!row.teacher_id && (
-            <Button
-              size="sm"
-              variant="success"
-              onClick={() => {
-                setSelectedClassId(row._id);
-                fetchTeachers();
-                setShowTeacherModal(true);
-              }}
-            >
-              Teacher
-            </Button>
-          )}
+          <Button
+                size="sm"
+                variant="warning"
+                onClick={() => {
+                  setSelectedClass({ ...row });
+                  setShowUpdateModal(true);  
+                }}
+              >
+                Update
+          </Button>
 
-          {row.teacher_id && (
+          {/* {row.teacher_id && (
             <>
               <Button
                 size="sm"
@@ -217,9 +313,11 @@ export default function Classes() {
                 Unassign
               </Button>
             </>
-          )}
+          )} */}
         </div>
       ),
+      width: "20%",       // ✅ fixed column width
+      center: true,        // ✅ centers the number
     },
   ];
 
@@ -233,27 +331,57 @@ export default function Classes() {
         <div className="mt-2">
           {/* Header with button + search */}
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <Button variant="primary" onClick={() => setShowClassModal(true)}>
+            <Button variant="primary" onClick={() => setShowClassModal(true)} className="w-25">
               New Class
             </Button>
+            {/* 🧩 Program Name Filter */}
+            <div  style={{ width: "23%" }}></div>
+            
+            <div className="d-flex align-items-center gap-3">
+              <Form.Select
+                value={filterProgramName}
+                onChange={(e) => setFilterProgramName(e.target.value)}
+                style={{ width: "200px" }}
+              >
+                <option value="">All Programs</option>
+                {Array.from(new Set(programs.map((p) => p.name))).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Form.Select>
 
-            <input
-              type="text"
-              className="form-control"
-              style={{ maxWidth: "250px" }}
-              placeholder="Search classes..."
-              onChange={(e) => {
-                const search = e.target.value.toLowerCase();
-                setFilteredClasses(
-                  classesWithTeacherName.filter(
-                    (c) =>
-                      String(c._id).toLowerCase().includes(search) ||
-                      String(c.sectionName).toLowerCase().includes(search) ||
-                      String(c.teacherName).toLowerCase().includes(search)
-                  )
-                );
-              }}
-            />
+              <Form.Select
+                value={filterProgramType}
+                onChange={(e) => setFilterProgramType(e.target.value)}
+                style={{ width: "200px" }}
+              >
+                <option value="">All Types</option>
+                {Array.from(new Set(programs.map((p) => p.category))).map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </Form.Select>
+
+              <input
+                type="text"
+                className="form-control"
+                style={{ maxWidth: "250px" }}
+                placeholder="Search classes..."
+                onChange={(e) => {
+                  const search = e.target.value.toLowerCase();
+                  setFilteredClasses(
+                    classesWithTeacherName.filter(
+                      (c) =>
+                        String(c._id).toLowerCase().includes(search) ||
+                        String(c.sectionName).toLowerCase().includes(search) ||
+                        String(c.teacherName).toLowerCase().includes(search)
+                    )
+                  );
+                }}
+              />
+            </div>
             
           </div>
 
@@ -337,18 +465,48 @@ export default function Classes() {
           <Modal.Title>Add New Class</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleCreateClass}>
-            <Form.Group className="mb-3">
-              <Form.Label>Section Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter section name"
-                value={newClassName}
-                onChange={(e) => setNewClassName(e.target.value)}
+          <Form onSubmit={handleCreateClass} >
+            <div className="d-flex flex-column gap-3">
+              <Form.Group>
+                <Form.Label>Section Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter section name"
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Label>Select Teacher</Form.Label>
+              <Form.Select
+                value={selectedTeacher}
+                onChange={(e) => setSelectedTeacher(e.target.value)}
                 required
-              />
-            </Form.Group>
-            <div className="d-flex justify-content-end">
+              >
+                <option value="">-- Select Teacher --</option>
+                {teachers.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.firstName} {t.middleName || ""} {t.lastName} ({t.username})
+                  </option>
+                ))}
+              </Form.Select>
+
+              <Form.Label>Select Program</Form.Label>
+              <Form.Select
+                value={SelectedProgram}
+                onChange={(e) => setSelectedProgram(e.target.value)}
+                required
+              >
+                <option value="">-- Select Program --</option>
+                {programs.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.name} 
+                  </option>
+                ))}
+              </Form.Select>
+            </div>
+            <div className="d-flex justify-content-end mt-4">
               <Button
                 variant="secondary"
                 onClick={() => setShowClassModal(false)}
@@ -364,43 +522,107 @@ export default function Classes() {
         </Modal.Body>
       </Modal>
 
-      {/* Assign Teacher Modal */}
-      <Modal show={showTeacherModal} onHide={() => setShowTeacherModal(false)} centered>
+      {/* ✅ Safe Update Modal */}
+      <Modal
+        show={showUpdateModal}
+        onHide={() => {
+          setShowUpdateModal(false);
+          setSelectedClass(null); // reset after closing
+        }}
+        centered
+      >
         <Modal.Header closeButton>
-          <Modal.Title>Assign Teacher</Modal.Title>
+          <Modal.Title>Update Class</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleAssignTeacher}>
-            <Form.Group className="mb-3">
-              <Form.Label>Select Teacher</Form.Label>
-              <Form.Select
-                value={selectedTeacher}
-                onChange={(e) => setSelectedTeacher(e.target.value)}
-                required
-              >
-                <option value="">-- Select Teacher --</option>
-                {teachers.map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.firstName} {t.middleName || ""} {t.lastName} ({t.username})
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <div className="d-flex justify-content-end">
-              <Button
-                variant="secondary"
-                onClick={() => setShowTeacherModal(false)}
-                className="me-2"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary">
-                Assign
-              </Button>
-            </div>
-          </Form>
+          {selectedClass ? (
+            <Form onSubmit={handleUpdateClass}>
+              <Form.Group className="mb-3">
+                <Form.Label>Section Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={selectedClass.sectionName || ""}
+                  onChange={(e) =>
+                    setSelectedClass((prev) => ({
+                      ...prev,
+                      sectionName: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Teacher</Form.Label>
+                <Form.Select
+                  value={
+                    selectedClass.teacher_id?._id ||
+                    selectedClass.teacher_id ||
+                    ""
+                  }
+                  onChange={(e) =>
+                    setSelectedClass((prev) => ({
+                      ...prev,
+                      teacher_id: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">-- Select Teacher --</option>
+                  {teachers.map((t) => (
+                    <option key={t._id} value={t._id}>
+                      {t.firstName} {t.lastName}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Program</Form.Label>
+                <Form.Select
+                  value={
+                    selectedClass.program_id?._id ||
+                    selectedClass.program_id ||
+                    ""
+                  }
+                  onChange={(e) =>
+                    setSelectedClass((prev) => ({
+                      ...prev,
+                      program_id: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">-- Select Program --</option>
+                  {programs.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <div className="d-flex justify-content-end mt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowUpdateModal(false);
+                    setSelectedClass(null);
+                  }}
+                  className="me-2"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary">
+                  Save Changes
+                </Button>
+              </div>
+            </Form>
+          ) : (
+            <p className="text-center text-muted">Loading class details...</p>
+          )}
         </Modal.Body>
       </Modal>
+
+
     </div>
   );
 }
