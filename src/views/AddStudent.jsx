@@ -417,10 +417,23 @@ export default function AddStudent() {
     });
   };
 
+
+
   
   const disabled = formData.studentType === "old";
   
   const today = new Date().toISOString().split("T")[0];
+
+  const hasRegisteredContact = (person) => {
+    return (
+      person.firstName.trim() &&
+      person.lastName.trim() &&
+      person.suffix.trim() &&
+      person.occupation.trim()
+    );
+  };
+
+
   // ---------- RENDER ----------
   return (
 
@@ -577,7 +590,7 @@ export default function AddStudent() {
                       </Col>
                     </Row>
 
-                    <h5 className="mt-3">Address</h5>
+                    <h6 className="mt-3">Address</h6>
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -652,7 +665,10 @@ export default function AddStudent() {
                             name="mother.firstName"
                             value={formData.mother.firstName}
                             onChange={handleChange}
-                            disabled={formData.mother.firstName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter first name"
                           />
                         </Form.Group>
@@ -665,7 +681,10 @@ export default function AddStudent() {
                             name="mother.middleName"
                             value={formData.mother.middleName}
                             onChange={handleChange}
-                            disabled={formData.mother.middleName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter middle name"
                           />
                         </Form.Group>
@@ -678,13 +697,16 @@ export default function AddStudent() {
                             name="mother.lastName"
                             value={formData.mother.lastName}
                             onChange={handleChange}
-                            disabled={formData.mother.lastName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter last name"
                           />
                         </Form.Group>
                       </Col>
 
-                      <Col md={3} className="col-3">
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Suffix (Optional)</Form.Label>
                           <Form.Control
@@ -693,7 +715,10 @@ export default function AddStudent() {
                             value={formData.mother.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
-                            disabled = {formData.mother.suffix}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                           />
                         </Form.Group>
                       </Col>
@@ -706,7 +731,10 @@ export default function AddStudent() {
                             name="mother.occupation"
                             value={formData.mother.occupation}
                             onChange={handleChange}
-                            disabled={formData.mother.occupation}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter occupation"
                           />
                         </Form.Group>
@@ -718,7 +746,7 @@ export default function AddStudent() {
                           <div className="input-group">
                             <Form.Select
                               name="mother.contacts.country_code"
-                              value={formData.mother.contacts.country_code}
+                              disabled={disabled}
                               onChange={handleChange}
                               className="input-group-text border-end-0 bg-light"
                               style={{ maxWidth: "110px" }}
@@ -741,7 +769,7 @@ export default function AddStudent() {
                           </div>
                         </Form.Group>
                       </Col>
-                      <Col md={8}>
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control
@@ -754,6 +782,8 @@ export default function AddStudent() {
                         </Form.Group>
                       </Col>
                       </Row>
+
+                      <h6 className="mt-3">Address</h6>
                       <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -805,7 +835,7 @@ export default function AddStudent() {
                       </Col>
                     </Row>
 
-
+                    <hr/>
                     {/* Father */}
                     <h5 className="mt-4">Father</h5>
                     <Row>
@@ -817,7 +847,10 @@ export default function AddStudent() {
                             name="father.firstName"
                             value={formData.father.firstName}
                             onChange={handleChange}
-                            disabled={formData.father.firstName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter first name"
                           />
                         </Form.Group>
@@ -830,7 +863,10 @@ export default function AddStudent() {
                             name="father.middleName"
                             value={formData.father.middleName}
                             onChange={handleChange}
-                            disabled={formData.father.middleName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter middle name"
                           />
                         </Form.Group>
@@ -843,12 +879,15 @@ export default function AddStudent() {
                             name="father.lastName"
                             value={formData.father.lastName}
                             onChange={handleChange}
-                            disabled={formData.father.lastName}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter last name"
                           />
                         </Form.Group>
                       </Col>
-                      <Col md={3} className="col-3">
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Suffix (Optional)</Form.Label>
                           <Form.Control
@@ -857,7 +896,10 @@ export default function AddStudent() {
                             value={formData.father.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
-                            disabled = {formData.father.suffix}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                           />
                         </Form.Group>
                       </Col>
@@ -869,7 +911,10 @@ export default function AddStudent() {
                             name="father.occupation"
                             value={formData.father.occupation}
                             onChange={handleChange}
-                            disabled={formData.father.occupation}
+                            disabled={
+                                formData.studentType === "old" &&
+                                hasRegisteredContact(formData.mother)
+                              }
                             placeholder="Enter occupation"
                           />
                         </Form.Group>
@@ -904,7 +949,7 @@ export default function AddStudent() {
                           </div>
                         </Form.Group>
                       </Col>
-                      <Col md={8}>
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control
@@ -917,6 +962,9 @@ export default function AddStudent() {
                         </Form.Group>
                       </Col>
                        </Row>
+
+                       <h5 className="mt-3">Address</h5>
+
                        <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -968,7 +1016,7 @@ export default function AddStudent() {
                       </Col>
                     </Row>
 
-                   
+                   <hr />
 
                     {/* Emergency Contact */}
                     <h5 className="mt-4">Emergency Contact</h5>
@@ -1009,7 +1057,7 @@ export default function AddStudent() {
                           />
                         </Form.Group>
                       </Col>
-                      <Col md={3} className="col-3">
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Suffix (Optional)</Form.Label>
                           <Form.Control
@@ -1064,7 +1112,7 @@ export default function AddStudent() {
                           </div>
                         </Form.Group>
                       </Col>
-                      <Col md={8}>
+                      <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Messenger Account</Form.Label>
                           <Form.Control
@@ -1077,6 +1125,9 @@ export default function AddStudent() {
                         </Form.Group>
                       </Col>
                     </Row>
+
+
+                    <h6 className="mt-3">Address</h6>
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
