@@ -218,7 +218,7 @@ export default function PdfAcknowledgementConsent() {
       </div>
 
       {/* Floating Download Button */}
-      <button
+      {/*<button
         onClick={downloadPdf}
         style={{
           position: "fixed",
@@ -235,7 +235,7 @@ export default function PdfAcknowledgementConsent() {
         }}
       >
         Download PDF
-      </button>
+      </button>*/}
     </div>
   );
 }

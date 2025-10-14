@@ -485,7 +485,7 @@ const PdfRegForm = () => {
       </div>
 
       {/* DOWNLOAD BUTTON */}
-      <button
+      {/*<button
         id="download-btn"
         onClick={downloadPdf}
         style={{
@@ -503,7 +503,7 @@ const PdfRegForm = () => {
         }}
       >
         Download PDF
-      </button>
+      </button>*/}
     </div>
   );
 };

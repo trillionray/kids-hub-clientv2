@@ -190,7 +190,7 @@ export default function PdfBreakdown() {
       </div>
 
       {/* Floating Download Button */}
-      <button
+      {/*<button
         onClick={downloadPdf}
         style={{
           position: "fixed",
@@ -207,7 +207,7 @@ export default function PdfBreakdown() {
         }}
       >
         Download PDF
-      </button>
+      </button>*/}
     </div>
   );
 }
