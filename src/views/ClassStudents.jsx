@@ -312,6 +312,12 @@ export default function ClassStudents() {
 
         const data = await res.json();
 
+        if (data.message && data.message.includes("already added")) {
+           notyf.error("Student already exists in the class.");
+           setShowModal(false);
+           return;
+        }
+
         if (!data.class) {
           notyf.error(data.message || `Failed to add student ${studentId}`);
         }

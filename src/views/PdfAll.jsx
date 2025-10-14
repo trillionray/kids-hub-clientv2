@@ -25,7 +25,7 @@ export default function PdfAll() {
     if (contentReady) {
       Swal.fire({
         title: "Downloading",
-        text: "This page will automatically close",
+        text: "",
         icon: "info",
         confirmButtonText: "OK",
         allowOutsideClick: false,
@@ -36,9 +36,9 @@ export default function PdfAll() {
       });
     }
 
-    setTimeout(() => {
-        window.close();  // 👈 This will close the tab if it was JS-opened
-      }, 10000);
+    // setTimeout(() => {
+    //     window.close();  // 👈 This will close the tab if it was JS-opened
+    //   }, 10000);
 
 
   }, [contentReady]);
