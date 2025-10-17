@@ -161,10 +161,10 @@ export default function ShowAcademicYears() {
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
-      <div className="container border mt-5 p-4 rounded shadow" style={{ backgroundColor: "#ffffff" }}>
+      <h3 className="text-white text-bolder">ACADEMIC YEAR'S</h3>
+      <div className="container border p-4 rounded shadow" style={{ backgroundColor: "#ffffff" }}>
         {/* Header and Search */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3 className="mb-0">Academic Years</h3>
+        <div className="d-flex justify-content-end align-items-center mb-3">
           <Form.Control
             type="text"
             placeholder="Search..."
@@ -173,6 +173,7 @@ export default function ShowAcademicYears() {
             onChange={(e) => setFilterText(e.target.value)}
           />
         </div>
+
 
         {/* Table */}
         {loading ? (

@@ -119,9 +119,10 @@ export default function ShowMiscellaneous() {
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <h3 className="text-white text-bolder">MISCELLANEOUS LIST</h3>
       <div className="container border rounded shadow p-4" style={{ backgroundColor: "#ffffff" }}>
         {/* Header */}
-        <h3>Miscellaneous List</h3>
+        
         <div className="d-flex justify-content-between align-items-center mb-3">
           
           <Link to="/miscellaneous/add">

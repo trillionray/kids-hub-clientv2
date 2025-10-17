@@ -88,7 +88,9 @@ export default function Classes() {
     })
       .then((res) => res.json())
       .then((data) => {
+        
         if (Array.isArray(data)) setPrograms(data);
+        
         else notyf.error(data.message || "Error fetching programs");
       })
       .catch(() => notyf.error("Server error"));
@@ -248,6 +250,7 @@ export default function Classes() {
     {
       name: "Academic Year",
       selector: (row) => {
+        console.log(row)
         const start = row.school_year_id?.startDate
           ? new Date(row.school_year_id.startDate).toLocaleDateString("en-US", {
               month: "numeric",
@@ -327,8 +330,15 @@ export default function Classes() {
     },
     {
       name: "Type",
-      selector: (row) => row.program_id.category,
+      selector: (row) => {
+        const type = row.program_id?.category;
+        if (type === "short") return "Short Program";
+        if (type === "long") return "Full Program";
+        return "N/A";
+      },
       sortable: true,
+      width: "15%",
+      center: true,
     },
     {
       name: "Students",
@@ -408,16 +418,16 @@ export default function Classes() {
           )} */}
         </div>
       ),
-      width: "22%",       // ✅ fixed column width
+      width: "13%",       // ✅ fixed column width
       center: true,        // ✅ centers the number
     },
   ];
 
-
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <h3 className="text-white text-bolder">CLASSES</h3>
       <div
-        className="container border mt-5 p-4 rounded shadow"
+        className="container border p-4 rounded shadow"
         style={{ backgroundColor: "#fff" }}
       >
         <div className="mt-2">
@@ -449,12 +459,20 @@ export default function Classes() {
                 style={{ width: "200px" }}
               >
                 <option value="">All Types</option>
-                {Array.from(new Set(programs.map((p) => p.category))).map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
+                {Array.from(new Set(programs.map((p) => p.category))).map((type) => {
+                  let label = type;
+
+                  if (type === "long") label = "Full Program";
+                  else if (type === "short") label = "Short Program";
+
+                  return (
+                    <option key={type} value={type}>
+                      {label}
+                    </option>
+                  );
+                })}
               </Form.Select>
+
 
               <input
                 type="text"

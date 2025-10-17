@@ -143,10 +143,15 @@ export default function Enrollments() {
   };
 
   const columns = [
-    { name: "ID", width: "130px", selector: (row) => row.student_id, sortable: true },
+    { 
+      name: "ID", 
+      width: "10%", 
+      selector: (row) => row.student_id, 
+      sortable: true 
+    },
     {
       name: "Student",
-      width: "200px",
+      width: "20%", 
       selector: (row) =>
         row.student
           ? `${row.student.first_name} ${row.student.middle_name || ""} ${row.student.last_name}`.trim()
@@ -155,14 +160,25 @@ export default function Enrollments() {
     },
     {
       name: "Program",
+      width: "20%", 
       selector: (row) => (row.program ? row.program.name : "N/A"),
       sortable: true,
     },
-    { name: "Branch", selector: (row) => row.branch, sortable: true },
-    { name: "Status", width: "90px", selector: (row) => row.status, sortable: true },
+    { 
+      name: "Branch", 
+      width: "15%", 
+      selector: (row) => row.branch, 
+      sortable: true 
+    },
+    { 
+      name: "Status", 
+      width: "15%", 
+      selector: (row) => row.status, 
+      sortable: true 
+    },
     {
       name: "Actions",
-      width: "230px", // ⬅️ widened a bit to fit the new button
+      width: "20%",  // ⬅️ widened a bit to fit the new button
       cell: (row) => (
         <div className="d-flex gap-1 justify-content-center">
           <Button size="sm" variant="info" onClick={() => openDetails(row)}>
@@ -186,185 +202,245 @@ export default function Enrollments() {
 
 
   return (
-    <div className="p-4 px-5">
-      <h3 className="mb-3">Enrollments</h3>
+    <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <h3 className="text-white text-bolder">ENROLLMENTS</h3>
+      <div className="container border mt-2 p-4 rounded shadow" style={{ backgroundColor: "#fff" }}>
+      
+        {/* Filters */}
+        <div className="mb-3 d-flex justify-content-end gap-2 flex-wrap">
+          <div className="d-flex align-items-center gap-3 flex-wrap">
+            <select
+              className="form-select w-auto"
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+            >
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
 
-      {/* Filters */}
-      <div className="mb-3 d-flex gap-2 flex-wrap">
-              <select
-                className="form-select w-auto"
-                value={selectedBranch}
-                onChange={(e) => setSelectedBranch(e.target.value)}
-              >
-                <option value="">All Branches</option>
-                {branches.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
+            <select
+              className="form-select w-auto"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              <option value="">All Academic Years</option>
+              {academicYears.map((y) => (
+                <option key={y._id} value={y._id}>{y.name}</option>
+              ))}
+            </select>
 
-              <select
-                className="form-select w-auto"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-              >
-                <option value="">All Academic Years</option>
-                {academicYears.map((y) => (
-                  <option key={y._id} value={y._id}>{y.name}</option>
-                ))}
-              </select>
+            <select
+              className="form-select w-auto"
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+            >
+              <option value="">All Programs</option>
+              {programs.map((p) => (
+                <option key={p._id} value={p._id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
 
-              <select
-                className="form-select w-auto"
-                value={selectedProgram}
-                onChange={(e) => setSelectedProgram(e.target.value)}
-              >
-                <option value="">All Programs</option>
-                {programs.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+            <input
+              type="text"
+              className="form-control w-auto"
+              style={{ minWidth: "220px" }}
+              placeholder="Student ID / Student Name"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+        </div>
 
+        {/* DataTable */}
+        <DataTable
+          columns={columns}
+          data={enrollments}
+          pagination
+          highlightOnHover
+          striped
+          dense
+          responsive
+          noDataComponent="No users found"
+          customStyles={{
+            table: {
+              style: {
+                borderRadius: "10px",
+                overflow: "hidden",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                border: "1px solid #dee2e6",
+              },
+            },
+            headRow: {
+              style: {
+                backgroundColor: "#f8f9fa",
+                fontSize: "1rem",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                borderBottom: "2px solid #dee2e6",
+                textAlign: "center", // ✅ Ensures header row centers its content
+              },
+            },
+            headCells: {
+              style: {
+                justifyContent: "center", // ✅ Centers header text
+                textAlign: "center",
+                paddingTop: "12px",
+                paddingBottom: "12px",
+                borderRight: "1px solid #dee2e6",
+              },
+            },
+            rows: {
+              style: {
+                fontSize: "0.95rem",
+                paddingTop: "10px",
+                paddingBottom: "10px",
+                borderBottom: "1px solid #e9ecef",
+                textAlign: "center", // ✅ Ensures row cells are centered
+              },
+              highlightOnHoverStyle: {
+                backgroundColor: "#eaf4fb",
+                borderBottomColor: "#89C7E7",
+                outline: "none",
+              },
+            },
+            cells: {
+              style: {
+                justifyContent: "center", // ✅ Centers cell content
+                textAlign: "center",
+                borderRight: "1px solid #dee2e6",
+              },
+            },
+            pagination: {
+              style: {
+                borderTop: "1px solid #dee2e6",
+                paddingTop: "4px",
+                justifyContent: "center",
+              },
+            },
+          }}
+        />
 
-              <input
-                type="text"
-                className="form-control w-auto"
-                style={{ minWidth: "220px" }}
-                placeholder="Student ID / Student Name"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-            </div>
-
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={enrollments}
-        progressPending={loading}
-        pagination
-        highlightOnHover
-        striped
-        dense
-        responsive
-        noDataComponent="No enrollments found"
-      />
-
-      {/* Details Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        {/* Details Modal */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+          
+          <Modal.Header closeButton>
+            <Modal.Title>Enrollment Details</Modal.Title>
+          </Modal.Header>
         
-        <Modal.Header closeButton>
-          <Modal.Title>Enrollment Details</Modal.Title>
-        </Modal.Header>
-       
-        <Modal.Body>
-          {selectedEnrollment && (
-            <div>
-              <p>
-                <strong>Student:</strong>{" "}
-                {`${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()}
-              </p>
-              <p><strong>Program:</strong> {selectedEnrollment.program?.name || "N/A"}</p>
-              <p><strong>Branch:</strong> {selectedEnrollment.branch}</p>
-              <p><strong>Number of Sessions:</strong> {selectedEnrollment.num_of_sessions || "N/A"}</p>
-              <p><strong>Duration:</strong> {selectedEnrollment.duration}</p>
-              <p><strong>Academic Year:</strong> {selectedEnrollment.academic_year_name}</p>
-
-              <p><strong>Miscellaneous Package:</strong> {selectedEnrollment.misc_package_name}</p>
-              <p><strong>Status:</strong> {selectedEnrollment.status}</p>
-              <p><strong>Total:</strong> ₱{selectedEnrollment.total.toLocaleString()}</p>
-            </div>
-          )}
-        </Modal.Body>
-
-        <Modal.Footer>
+          <Modal.Body>
             {selectedEnrollment && (
-              <div className="d-flex w-100 gap-2">
-                <Button
-                  className="flex-fill"
-                  variant="primary"
-                  onClick={() => {
-                    const studentId = selectedEnrollment.student_id;
-                    const programId = selectedEnrollment.program_id;
-                    const branchName = encodeURIComponent(selectedEnrollment.branch);
+              <div>
+                <p>
+                  <strong>Student:</strong>{" "}
+                  {`${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()}
+                </p>
+                <p><strong>Program:</strong> {selectedEnrollment.program?.name || "N/A"}</p>
+                <p><strong>Branch:</strong> {selectedEnrollment.branch}</p>
+                <p><strong>Number of Sessions:</strong> {selectedEnrollment.num_of_sessions || "N/A"}</p>
+                <p><strong>Duration:</strong> {selectedEnrollment.duration}</p>
+                <p><strong>Academic Year:</strong> {selectedEnrollment.academic_year_name}</p>
 
-                    let academicYearStart = "";
-                    if (selectedEnrollment.academic_year_name) {
-                      academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
-                    }
-
-                    window.open(
-                      `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  Registration Form
-                </Button>
-
-                <Button
-                  className="flex-fill"
-                  variant="primary"
-                  onClick={() => {
-                    const programId = selectedEnrollment.program_id;
-                    const miscId = selectedEnrollment.miscellaneous_group_id;
-
-                    window.open(
-                      `/pdf-breakdown?programId=${programId}&miscId=${miscId}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  Breakdown
-                </Button>
-
-                <Button
-                  className="flex-fill"
-                  variant="primary"
-                  onClick={() => {
-                    const studentName = encodeURIComponent(
-                      `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
-                    );
-                    const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
-                    const date = encodeURIComponent(new Date().toLocaleDateString());
-
-                    window.open(
-                      `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  Ack & Consent
-                </Button>
+                <p><strong>Miscellaneous Package:</strong> {selectedEnrollment.misc_package_name}</p>
+                <p><strong>Status:</strong> {selectedEnrollment.status}</p>
+                <p><strong>Total:</strong> ₱{selectedEnrollment.total.toLocaleString()}</p>
               </div>
             )}
+          </Modal.Body>
 
-            <Button
-              variant="success"
-              className="w-100 mt-2"
-              onClick={() => {
-                const studentId = selectedEnrollment.student_id;
-                const programId = selectedEnrollment.program_id;
-                const branchName = encodeURIComponent(selectedEnrollment.branch);
-                const miscId = selectedEnrollment.miscellaneous_group_id;
-                const studentName = encodeURIComponent(
-                  `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
-                );
-                const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
-                const academicYearStart = selectedEnrollment.academic_year_name?.split(" to ")[0] || "";
-                const date = encodeURIComponent(new Date().toLocaleDateString());
+          <Modal.Footer>
+              {selectedEnrollment && (
+                <div className="d-flex w-100 gap-2">
+                  <Button
+                    className="flex-fill"
+                    variant="primary"
+                    onClick={() => {
+                      const studentId = selectedEnrollment.student_id;
+                      const programId = selectedEnrollment.program_id;
+                      const branchName = encodeURIComponent(selectedEnrollment.branch);
 
-                window.open(
-                  `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
-                  "_blank"
-                );
-              }}
-            >
-              All Files
-            </Button>
-          </Modal.Footer>
+                      let academicYearStart = "";
+                      if (selectedEnrollment.academic_year_name) {
+                        academicYearStart = selectedEnrollment.academic_year_name.split(" to ")[0];
+                      }
 
-      </Modal>
+                      window.open(
+                        `/pdf-reg-form?studentId=${studentId}&programId=${programId}&branch=${branchName}&academicYearStart=${encodeURIComponent(academicYearStart)}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
+                        "_blank"
+                      );
+                    }}
+                  >
+                    Registration Form
+                  </Button>
+
+                  <Button
+                    className="flex-fill"
+                    variant="primary"
+                    onClick={() => {
+                      const programId = selectedEnrollment.program_id;
+                      const miscId = selectedEnrollment.miscellaneous_group_id;
+
+                      window.open(
+                        `/pdf-breakdown?programId=${programId}&miscId=${miscId}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
+                        "_blank"
+                      );
+                    }}
+                  >
+                    Breakdown
+                  </Button>
+
+                  <Button
+                    className="flex-fill"
+                    variant="primary"
+                    onClick={() => {
+                      const studentName = encodeURIComponent(
+                        `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
+                      );
+                      const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                      const date = encodeURIComponent(new Date().toLocaleDateString());
+
+                      window.open(
+                        `/pdf-acknowledgement-consent?studentName=${studentName}&guardianName=${guardianName}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
+                        "_blank"
+                      );
+                    }}
+                  >
+                    Ack & Consent
+                  </Button>
+                </div>
+              )}
+
+              <Button
+                variant="success"
+                className="w-100 mt-2"
+                onClick={() => {
+                  const studentId = selectedEnrollment.student_id;
+                  const programId = selectedEnrollment.program_id;
+                  const branchName = encodeURIComponent(selectedEnrollment.branch);
+                  const miscId = selectedEnrollment.miscellaneous_group_id;
+                  const studentName = encodeURIComponent(
+                    `${selectedEnrollment.student.first_name} ${selectedEnrollment.student.middle_name || ""} ${selectedEnrollment.student.last_name}`.trim()
+                  );
+                  const guardianName = encodeURIComponent(selectedEnrollment.guardian_name || "Guardian");
+                  const academicYearStart = selectedEnrollment.academic_year_name?.split(" to ")[0] || "";
+                  const date = encodeURIComponent(new Date().toLocaleDateString());
+
+                  window.open(
+                    `/pdf-all?studentId=${studentId}&programId=${programId}&branch=${branchName}&miscId=${miscId}&studentName=${studentName}&guardianName=${guardianName}&academicYearStart=${encodeURIComponent(academicYearStart)}&date=${date}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
+                    "_blank"
+                  );
+                }}
+              >
+                All Files
+              </Button>
+            </Modal.Footer>
+
+        </Modal>
+      </div>
     </div>
+    
   );
 }

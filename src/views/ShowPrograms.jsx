@@ -139,24 +139,29 @@ export default function ShowPrograms() {
   const columns = [
     { name: "No.", selector: (row, index) => index + 1, width: "80px", center: true, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
-    { name: "Category", selector: (row) => row.category, sortable: true },
-    { name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true },
-    { name: "Down Payment", selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"), sortable: true },
-    {
-      name: "Misc Group Amount",
-      cell: (row) => {
-        const group = row.miscellaneous_group;
-        return group ? (
-          <Button variant="link" className="p-0 text-decoration-underline" onClick={() => openMiscModal(group._id)}>
-            ₱{group.miscs_total}
-          </Button>
-        ) : (
-          "₱0"
-        );
-      },
-    },
+    { name: "Category", selector: (row) => {
+      const type = row.category;
+      if (type === "short") return "Short Program";
+      if (type === "long") return "Full Program"; 
+    }, 
+    sortable: true },
+    //{ name: "Rate", selector: (row) => `₱${row.rate}`, sortable: true },
+    //{ name: "Down Payment", selector: (row) => (row.down_payment ? `₱${row.down_payment}` : "₱0"), sortable: true },
+    // {
+    //   name: "Misc Group Amount",
+    //   cell: (row) => {
+    //     const group = row.miscellaneous_group;
+    //     return group ? (
+    //       <Button variant="link" className="p-0 text-decoration-underline" onClick={() => openMiscModal(group._id)}>
+    //         ₱{group.miscs_total}
+    //       </Button>
+    //     ) : (
+    //       "₱0"
+    //     );
+    //   },
+    // },
     { name: "Capacity", selector: (row) => row.capacity || 0, sortable: true }, // ✅ NEW column
-    { name: "Description", selector: (row) => row.description },
+    //{ name: "Description", selector: (row) => row.description },
     { name: "Total", selector: (row) => `₱${row.total}`, sortable: true },
     {
       name: "Actions",
@@ -193,8 +198,9 @@ export default function ShowPrograms() {
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <h3 className="text-white text-bolder">PROGRAMS</h3>
       <div className="container border rounded shadow p-4" style={{ backgroundColor: "#ffffff" }}>
-        <h3>Programs</h3>
+        
         <div className="d-flex justify-content-between align-items-center mb-3">
           <Link to="/programs/add">
             <Button variant="primary" className="p-2 me-2">
@@ -221,7 +227,64 @@ export default function ShowPrograms() {
           striped
           dense
           responsive
-          noDataComponent="No Programs found"
+          noDataComponent="No classes found"
+          customStyles={{
+            table: {
+              style: {
+                borderRadius: "10px",
+                overflow: "hidden",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                border: "1px solid #dee2e6",
+              },
+            },
+            headRow: {
+              style: {
+                backgroundColor: "#f8f9fa",
+                fontSize: "1rem",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                borderBottom: "2px solid #dee2e6",
+                textAlign: "center",
+              },
+            },
+            headCells: {
+              style: {
+                justifyContent: "center",
+                textAlign: "center",
+                paddingTop: "12px",
+                paddingBottom: "12px",
+                borderRight: "1px solid #dee2e6",
+              },
+            },
+            rows: {
+              style: {
+                fontSize: "0.95rem",
+                paddingTop: "10px",
+                paddingBottom: "10px",
+                borderBottom: "1px solid #e9ecef",
+                textAlign: "center",
+              },
+              highlightOnHoverStyle: {
+                backgroundColor: "#eaf4fb",
+                borderBottomColor: "#89C7E7",
+                outline: "none",
+              },
+            },
+            cells: {
+              style: {
+                justifyContent: "center",
+                textAlign: "center",
+                borderRight: "1px solid #dee2e6",
+              },
+            },
+            pagination: {
+              style: {
+                borderTop: "1px solid #dee2e6",
+                paddingTop: "4px",
+                justifyContent: "center",
+              },
+            },
+          }}
         />
 
         {/* Edit Program Modal */}

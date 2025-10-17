@@ -217,8 +217,9 @@ export default function ShowMiscellaneousPackages() {
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
-      <div className="container border mt-5 p-4 rounded shadow" style={{ backgroundColor: "#ffffff" }}>
-        <h3>Miscellaneous Packages</h3>
+      <h3 className="text-white text-bolder">MISCELLANEOUS PACKAGES</h3>
+      <div className="container border p-4 rounded shadow" style={{ backgroundColor: "#ffffff" }}>
+        
         <div className="d-flex justify-content-between align-items-center mb-3">
           <Link to="/miscellaneous-package/add">
             <Button variant="primary" className="p-2">
