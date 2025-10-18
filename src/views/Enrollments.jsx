@@ -25,6 +25,13 @@ export default function Enrollments() {
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
   const [searchText, setSearchText] = useState("");
+  // Automatically select the latest academic year
+    useEffect(() => {
+      if (academicYears.length > 0) {
+        setSelectedYear(academicYears[0]._id); // 👈 select the latest automatically
+      }
+    }, [academicYears]);
+
 
   useEffect(() => {
     fetchFilters();
@@ -225,7 +232,9 @@ export default function Enrollments() {
             >
               <option value="">All Academic Years</option>
               {academicYears.map((y) => (
-                <option key={y._id} value={y._id}>{y.name}</option>
+                <option key={y._id} value={y._id}>
+                  {y.name}
+                </option>
               ))}
             </select>
 
