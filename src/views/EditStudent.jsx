@@ -121,13 +121,15 @@ export default function EditStudent() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3>Student Information</h3>
           <div className="d-flex align-items-center gap-2 mb-3">
-            <Form.Check
-              type="switch"
-              id="edit-switch"
-              label={isEditing ? "Editing Mode" : "View Mode"}
-              checked={isEditing}
-              onChange={() => setIsEditing(!isEditing)}
-            />
+            {isEditing ? (
+              <Button variant="secondary" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+            ) : (
+              <Button variant="primary" onClick={() => setIsEditing(true)}>
+                Edit
+              </Button>
+            )}
           </div>
         </div>
         <Form onSubmit={handleSubmit}>
