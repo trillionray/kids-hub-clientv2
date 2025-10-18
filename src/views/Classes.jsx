@@ -247,37 +247,39 @@ export default function Classes() {
     setFilteredClasses(filtered);
   }, [filterProgramName, filterProgramType, classesWithTeacherName]);
   const columns = [
-    {
-      name: "Academic Year",
-      selector: (row) => {
-        console.log(row)
-        const start = row.school_year_id?.startDate
-          ? new Date(row.school_year_id.startDate).toLocaleDateString("en-US", {
-              month: "numeric",
-              year: "numeric",
-            })
-          : "N/A";
+    // {
+    //   name: "Academic Year",
+    //   selector: (row) => {
+    //     console.log(row)
+    //     const start = row.school_year_id?.startDate
+    //       ? new Date(row.school_year_id.startDate).toLocaleDateString("en-US", {
+    //           month: "numeric",
+    //           year: "numeric",
+    //         })
+    //       : "N/A";
 
-        const end = row.school_year_id?.endDate
-          ? new Date(row.school_year_id.endDate).toLocaleDateString("en-US", {
-              month: "numeric",
-              year: "numeric",
-            })
-          : "N/A";
+    //     const end = row.school_year_id?.endDate
+    //       ? new Date(row.school_year_id.endDate).toLocaleDateString("en-US", {
+    //           month: "numeric",
+    //           year: "numeric",
+    //         })
+    //       : "N/A";
 
-        return `${start} - ${end}`;
-      },
-      sortable: true,
-      width: "20%",
-      center: true,
-    },
+    //     return `${start} - ${end}`;
+    //   },
+    //   sortable: true,
+    //   width: "20%",
+    //   center: true,
+    // },
     {
       name: "Section",
+      width: "25%",
       selector: (row) => row.sectionName,
       sortable: true,
     },
     {
       name: "Teacher",
+      width: "20%",
       selector: (row) => row.teacherName,
       sortable: true,
       cell: (row) => (
@@ -299,11 +301,12 @@ export default function Classes() {
           </span>
         </OverlayTrigger>
       ),
-      width: "20%",
+      
       center: true,
     },
     {
       name: "Program",
+      width: "20%",
       selector: (row) => row.program_id.name,
       sortable: true,
       cell: (row) => (
@@ -325,30 +328,32 @@ export default function Classes() {
           </span>
         </OverlayTrigger>
       ),
-      width: "15%",
+      
       center: true,
     },
+    // {
+    //   name: "Type",
+    //   selector: (row) => {
+    //     const type = row.program_id?.category;
+    //     if (type === "short") return "Short Program";
+    //     if (type === "long") return "Full Program";
+    //     return "N/A";
+    //   },
+    //   sortable: true,
+    //   width: "15%",
+    //   center: true,
+    // },
     {
-      name: "Type",
-      selector: (row) => {
-        const type = row.program_id?.category;
-        if (type === "short") return "Short Program";
-        if (type === "long") return "Full Program";
-        return "N/A";
-      },
-      sortable: true,
-      width: "15%",
-      center: true,
-    },
-    {
-      name: "Students",
+      name: "Students No.",
+      width: "15%",       // ✅ fixed column width
       selector: (row) => row.studentCount,
       sortable: true,
-      width: "10%",       // ✅ fixed column width
+      
       center: true,        // ✅ centers the number
     },
     { 
       name: "Actions",
+      width: "20%",
       cell: (row) => (
         <div className="d-flex gap-2 justify-content-center">
           <Button
@@ -418,7 +423,7 @@ export default function Classes() {
           )} */}
         </div>
       ),
-      width: "13%",       // ✅ fixed column width
+             // ✅ fixed column width
       center: true,        // ✅ centers the number
     },
   ];
