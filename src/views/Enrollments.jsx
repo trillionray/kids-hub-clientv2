@@ -54,9 +54,7 @@ export default function Enrollments() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
-      console.log(yearRes)
       const yearsData = await yearRes.json();
-      console.log(yearsData)
       if (Array.isArray(yearsData)) {
         const formattedYears = yearsData.map((y) => ({
           _id: y._id,
