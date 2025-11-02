@@ -12,12 +12,17 @@ export default function AddMiscellaneous() {
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  
   const [isActive, setIsActive] = useState(true);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Validate fields
   const [isActiveForm, setIsActiveForm] = useState(false);
+  //Get the list of academic year
+  const [academicyear, setAcademicYear] = useState([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
+
   useEffect(() => {
     if (name && price) {
       setIsActiveForm(true);
@@ -26,9 +31,28 @@ export default function AddMiscellaneous() {
     }
   }, [name, price]);
 
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+
+  const fetchAcademicYears = () => {
+    fetch(`${API_URL}/academic-year`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        
+        if (Array.isArray(data)) setAcademicYear(data);
+        
+        else notyf.error(data.message || "Error fetching programs");
+      })
+      .catch(() => notyf.error("Server error"));
+  };
+
   function handleSubmit(e) {
     e.preventDefault();
-
+    
     fetch(`${API_URL}/miscellaneous`, {
       method: "POST",
       headers: {
@@ -37,6 +61,7 @@ export default function AddMiscellaneous() {
       },
       body: JSON.stringify({
         name,
+        school_year_id: selectedAcademicYear,
         price,
         is_active: true,
         created_by: user.id,
@@ -77,6 +102,20 @@ export default function AddMiscellaneous() {
                       required
                     />
                   </InputGroup>
+
+                 <Form.Select
+                  value={selectedAcademicYear}
+                  onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                  className="mb-3"
+                >
+                  <option value="">Select Academic Year</option>
+                  {academicyear.map((y) => (
+                    <option key={y._id} value={y._id}>
+                      {new Date(y.startDate).getFullYear()} - {new Date(y.endDate).getFullYear()}
+                    </option>
+                  ))}
+                </Form.Select>
+
 
                   {/* Price */}
                   <InputGroup className="mb-3">

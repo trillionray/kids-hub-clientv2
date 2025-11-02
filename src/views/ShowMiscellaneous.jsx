@@ -14,12 +14,14 @@ export default function ShowMiscellaneous() {
   const [miscList, setMiscList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [academicYears, setAcademicYears] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [currentMisc, setCurrentMisc] = useState(null);
 
   useEffect(() => {
     fetchMiscellaneous();
+    fetchAcademicYears();
   }, []);
 
   function fetchMiscellaneous() {
@@ -37,6 +39,19 @@ export default function ShowMiscellaneous() {
         setLoading(false);
       });
   }
+
+  const fetchAcademicYears = () => {
+    fetch(`${API_URL}/academic-year`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setAcademicYears(data);
+        else notyf.error(data.message || "Error fetching academic years");
+      })
+      .catch(() => notyf.error("Server error while loading academic years"));
+  };
+
 
   function handleDelete(id) {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
@@ -57,35 +72,83 @@ export default function ShowMiscellaneous() {
       .catch(() => notyf.error("Server error. Please try again."));
   }
 
-  function handleUpdateSubmit(e) {
-    e.preventDefault();
+async function handleUpdateSubmit(e) {
+  e.preventDefault();
 
-    fetch(`${API_URL}/miscellaneous/${currentMisc._id}`, {
+  // Safety check: currentMisc must exist
+  if (!currentMisc?._id) {
+    notyf.info("No Miscellaneous item selected for update.");
+    return;
+  }
+
+  const payload = {
+    name: currentMisc.name,
+    price: currentMisc.price,
+    school_year_id: currentMisc.school_year_id?._id || currentMisc.school_year_id,
+    is_active: currentMisc.is_active,
+    created_by: currentMisc.created_by,
+    last_updated_by: user?.username || "system",
+  };
+
+  try {
+    // Step 1: Check if misc is used in any package
+    const usageRes = await fetch(`${API_URL}/miscellaneous/check-usage/${currentMisc._id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+
+    if (!usageRes.ok) {
+      throw new Error(`Usage check failed with status ${usageRes.status}`);
+    }
+
+    const usageData = await usageRes.json();
+
+    if (usageData.used && Array.isArray(usageData.packages) && usageData.packages.length > 0) {
+      const packageList = usageData.packages.join(", ");
+      const confirmUpdate = window.confirm(
+        `⚠️ This Miscellaneous item is part of the following package(s):\n\n${packageList}\n\n` +
+        `Changing this will affect all enrollment computations using these packages.\n\nDo you still want to proceed?`
+      );
+
+      if (!confirmUpdate) {
+        notyf.info("Update cancelled by user.");
+        return; // stop here safely
+      }
+    }
+
+    // Step 2: Proceed with actual update
+    const res = await fetch(`${API_URL}/miscellaneous/${currentMisc._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({
-        name: currentMisc.name,
-        price: currentMisc.price,
-        is_active: currentMisc.is_active,
-        created_by: currentMisc.created_by,
-        last_updated_by: user?.username || "system",
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success !== false) {
-          notyf.success(data.message || "Updated successfully");
-          setShowModal(false);
-          fetchMiscellaneous();
-        } else {
-          notyf.error(data.message || "Update failed");
-        }
-      })
-      .catch(() => notyf.error("Server error. Please try again."));
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Update failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data.success !== false) {
+      notyf.success(data.message || "Updated successfully");
+      setShowModal(false);
+      fetchMiscellaneous();
+    } else {
+      notyf.error(data.message || "Update failed");
+    }
+  } catch (err) {
+    console.error("Update error:", err);
+    // Only show server error if it really failed, not on user cancel
+    if (err.message !== "User cancelled update") {
+      notyf.error("Server error. Please try again.");
+    }
   }
+}
+
+
+
 
   function openEditModal(misc) {
     setCurrentMisc({ ...misc });
@@ -95,10 +158,36 @@ export default function ShowMiscellaneous() {
   if (loading) return <h4>Loading Miscellaneous...</h4>;
 
   const columns = [
-    { name: "No.", selector: (row, i) => i + 1, width: "80px", center: true, sortable: true  },
-    { name: "Name", selector: (row) => row.name, sortable: true },
-    { name: "Price", selector: (row) => `₱${Number(row.price).toLocaleString()}`, sortable: true},
-    { name: "Status", selector: (row) => (row.is_active ? "Active" : "Inactive"), sortable: true, center: true },
+    { 
+      name: "No.", 
+      selector: (row, i) => i + 1, 
+      width: "80px", 
+      center: true, 
+      sortable: true 
+    },
+    { 
+      name: "Name", 
+      selector: (row) => row.name, 
+      sortable: true 
+    },
+    { 
+      name: "Academic Year", 
+      selector: (row) => row.academicYear || "N/A", 
+      sortable: true, 
+      center: true 
+    },
+
+    { 
+      name: "Price", 
+      selector: (row) => `₱${Number(row.price).toLocaleString()}`, 
+      sortable: true 
+    },
+    { 
+      name: "Status", 
+      selector: (row) => (row.is_active ? "Active" : "Inactive"), 
+      sortable: true, 
+      center: true 
+    },
     {
       name: "Actions",
       cell: (row) => (
@@ -110,6 +199,7 @@ export default function ShowMiscellaneous() {
       center: true,
     },
   ];
+
 
   const filteredData = miscList.filter(
     (item) =>
@@ -246,6 +336,31 @@ export default function ShowMiscellaneous() {
                   required
                 />
               </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Academic Year</Form.Label>
+                <Form.Select
+                  value={
+                    currentMisc?.school_year_id?._id ||
+                    currentMisc?.school_year_id ||
+                    ""
+                  }
+                  onChange={(e) =>
+                    setCurrentMisc((prev) => ({
+                      ...prev,
+                      school_year_id: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="">Select Academic Year</option>
+                  {academicYears.map((year) => (
+                    <option key={year._id} value={year._id}>
+                      {new Date(year.startDate).getFullYear()} - {new Date(year.endDate).getFullYear()}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Price (₱)</Form.Label>
                 <Form.Control
