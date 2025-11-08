@@ -13,10 +13,10 @@ export default function AddProgram() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState(""); // ✅ Default blank
   const [description, setDescription] = useState("");
-  const [rate, setRate] = useState(0);
-  const [downPayment, setDownPayment] = useState(0);
-  const [capacity, setCapacity] = useState(0);
-  const [initialEvaluationPrice, setInitialEvaluationPrice] = useState(0); // ✅ new field
+  const [rate, setRate] = useState();
+  const [downPayment, setDownPayment] = useState();
+  const [capacity, setCapacity] = useState();
+  const [initialEvaluationPrice, setInitialEvaluationPrice] = useState(); // ✅ new field
   const [isActive, setIsActive] = useState(true);
   const [miscGroupId, setMiscGroupId] = useState("");
   const [miscGroups, setMiscGroups] = useState([]);
@@ -188,7 +188,7 @@ export default function AddProgram() {
                       value={miscGroupId}
                       onChange={(e) => setMiscGroupId(e.target.value)}
                       required
-                      disabled={!selectMiscGroup} // probably you meant to disable when false
+                      disabled={!selectMiscGroup}
                     >
                       <option value="">-- Select Group --</option>
                       {miscGroups.map((group) => (
@@ -199,7 +199,9 @@ export default function AddProgram() {
                     </Form.Select>
                   </Form.Group>
                 )}
+              </>
             )}
+
 
             {category === "short" && (
               <Form.Group className="mb-3" controlId="initialEvaluation">
