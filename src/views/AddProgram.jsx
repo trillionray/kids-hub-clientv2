@@ -21,6 +21,8 @@ export default function AddProgram() {
   const [miscGroupId, setMiscGroupId] = useState("");
   const [miscGroups, setMiscGroups] = useState([]);
 
+  const [selectMiscGroup, setSelectMiscGroup] = useState(true);
+
   // ✅ Fetch Miscellaneous Groups
   useEffect(() => {
     fetch(`${API_URL}/miscellaneous-package/read`, {
@@ -30,6 +32,14 @@ export default function AddProgram() {
       .then((data) => setMiscGroups(data))
       .catch(() => notyf.error("Failed to load miscellaneous groups"));
   }, []);
+
+  useEffect(()=>{
+    if(category == "short"){
+      setSelectMiscGroup(false)
+    }else{
+      setSelectMiscGroup(true)
+    }
+  }, [category])
 
   // ✅ Submit handler
   const handleSubmit = (e) => {
@@ -171,22 +181,24 @@ export default function AddProgram() {
                 </Form.Group>
 
                 {/* Miscellaneous Group */}
-                <Form.Group className="mb-3" controlId="miscGroup">
-                  <Form.Label>Miscellaneous Group</Form.Label>
-                  <Form.Select
-                    value={miscGroupId}
-                    onChange={(e) => setMiscGroupId(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Select Group --</option>
-                    {miscGroups.map((group) => (
-                      <option key={group._id} value={group._id}>
-                        {group.package_name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </>
+                {selectMiscGroup && (
+                  <Form.Group className="mb-3" controlId="miscGroup">
+                    <Form.Label>Miscellaneous Group</Form.Label>
+                    <Form.Select
+                      value={miscGroupId}
+                      onChange={(e) => setMiscGroupId(e.target.value)}
+                      required
+                      disabled={!selectMiscGroup} // probably you meant to disable when false
+                    >
+                      <option value="">-- Select Group --</option>
+                      {miscGroups.map((group) => (
+                        <option key={group._id} value={group._id}>
+                          {group.package_name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                )}
             )}
 
             {category === "short" && (

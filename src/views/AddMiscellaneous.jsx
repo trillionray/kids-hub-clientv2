@@ -103,7 +103,7 @@ export default function AddMiscellaneous() {
                     />
                   </InputGroup>
 
-                 <Form.Select
+                 {/*<Form.Select
                   value={selectedAcademicYear}
                   onChange={(e) => setSelectedAcademicYear(e.target.value)}
                   className="mb-3"
@@ -114,7 +114,7 @@ export default function AddMiscellaneous() {
                       {new Date(y.startDate).getFullYear()} - {new Date(y.endDate).getFullYear()}
                     </option>
                   ))}
-                </Form.Select>
+                </Form.Select>*/}
 
 
                   {/* Price */}
