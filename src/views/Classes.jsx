@@ -26,6 +26,10 @@ export default function Classes() {
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
 
+  //School year list
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
+
   // Program List
   const [programs, setPrograms] = useState([]);
   const [SelectedProgram, setSelectedProgram] = useState("");
@@ -43,13 +47,51 @@ export default function Classes() {
     fetchClasses();
     fetchTeachers();
     fetchPrograms();
+    fetchSchoolYear();
   }, []);
 
 
+  const fetchSchoolYear = () => {
+    setLoading(true);
+    fetch(`${API_URL}/academic-years`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          // Format each academic year for easy display
+          const formatted = data.map((y) => {
+            const start = new Date(y.startDate);
+            const end = new Date(y.endDate);
+            return {
+              _id: y._id,
+              name: `${start.getFullYear()} - ${end.getFullYear()}`,
+              startDate: y.startDate,
+              endDate: y.endDate,
+            };
+          });
 
-  
+          // Sort so the most recent or current year appears first
+          const today = new Date();
+          formatted.sort((a, b) => {
+            const isCurrentA = today >= new Date(a.startDate) && today <= new Date(a.endDate);
+            const isCurrentB = today >= new Date(b.startDate) && today <= new Date(b.endDate);
+            if (isCurrentA && !isCurrentB) return -1;
+            if (!isCurrentA && isCurrentB) return 1;
+            return new Date(b.startDate) - new Date(a.startDate);
+          });
 
+          setAcademicYears(formatted);
 
+          // Auto-select the current or latest year
+          if (formatted.length > 0) setSelectedYear(formatted[0]._id);
+        } else {
+          notyf.error(data.message || "Error fetching academic years");
+        }
+      })
+      .catch(() => notyf.error("Server error while fetching academic years"))
+      .finally(() => setLoading(false));
+  };
 
   const fetchClasses = () => {
     setLoading(true);
@@ -244,8 +286,15 @@ export default function Classes() {
       );
     }
 
+    // Filter by School Year dropdown
+    if (selectedYear) {
+      filtered = filtered.filter(
+        (c) => c.school_year_id?._id === selectedYear
+      );
+    }
+
     setFilteredClasses(filtered);
-  }, [filterProgramName, filterProgramType, classesWithTeacherName]);
+  }, [filterProgramName, filterProgramType, selectedYear, classesWithTeacherName]);
   const columns = [
     // {
     //   name: "Academic Year",
@@ -454,6 +503,19 @@ export default function Classes() {
                 {Array.from(new Set(programs.map((p) => p.name))).map((name) => (
                   <option key={name} value={name}>
                     {name}
+                  </option>
+                ))}
+              </Form.Select>
+
+              <Form.Select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                style={{ width: "200px" }}
+              >
+                <option value="">All Academic Years</option>
+                {academicYears.map((year) => (
+                  <option key={year._id} value={year._id}>
+                    {year.name}
                   </option>
                 ))}
               </Form.Select>

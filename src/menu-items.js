@@ -52,6 +52,12 @@ const menuItems = {
               url: '/students/add'
             },
             {
+              id: 'show-studentss',
+              title: 'Students',
+              type: 'item',
+              url: '/students'
+            },
+            {
               id: 'show-enrollments',
               title: 'Show Enrollments',
               type: 'item',

@@ -11,57 +11,72 @@ export default function AddProgram() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("short");
+  const [category, setCategory] = useState(""); // ✅ Default blank
   const [description, setDescription] = useState("");
   const [rate, setRate] = useState(0);
   const [downPayment, setDownPayment] = useState(0);
-  const [capacity, setCapacity] = useState(0); // ✅ NEW
+  const [capacity, setCapacity] = useState(0);
+  const [initialEvaluationPrice, setInitialEvaluationPrice] = useState(0); // ✅ new field
   const [isActive, setIsActive] = useState(true);
   const [miscGroupId, setMiscGroupId] = useState("");
   const [miscGroups, setMiscGroups] = useState([]);
 
-  // Fetch Miscellaneous Groups
+  // ✅ Fetch Miscellaneous Groups
   useEffect(() => {
     fetch(`${API_URL}/miscellaneous-package/read`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => setMiscGroups(data))
       .catch(() => notyf.error("Failed to load miscellaneous groups"));
   }, []);
 
+  // ✅ Submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (capacity <= 0) {
+    if (category === "") {
+      notyf.error("Please select a category");
+      return;
+    }
+
+    if (category === "long" && capacity <= 0) {
       notyf.error("Capacity must be greater than 0");
       return;
     }
 
+    // ✅ Build body dynamically
+    const body = {
+      name,
+      category,
+      description,
+      rate,
+      down_payment: downPayment,
+      isActive,
+    };
+
+    if (category === "short") {
+      body.initial_evaluation_price = initialEvaluationPrice;
+    } else {
+      body.capacity = capacity;
+      body.miscellaneous_group_id = miscGroupId;
+    }
+    console.log(body);
     fetch(`${API_URL}/programs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({
-        name,
-        category,
-        description,
-        rate,
-        down_payment: downPayment,
-        capacity, // ✅ Added
-        isActive,
-        miscellaneous_group_id: miscGroupId
-      })
+      body: JSON.stringify(body),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         if (data.success) {
           notyf.success("Program added successfully!");
           navigate("/programs");
         } else {
+          console.log(data)
           notyf.error(data.message || "Failed to add program");
         }
       })
@@ -74,7 +89,6 @@ export default function AddProgram() {
         <div className="p-5 bg-white">
           <h3 className="mb-4">Add Program</h3>
           <Form onSubmit={handleSubmit}>
-
             {/* Program Name */}
             <Form.Group className="mb-3" controlId="programName">
               <Form.Label>Program Name</Form.Label>
@@ -95,8 +109,9 @@ export default function AddProgram() {
                 onChange={(e) => setCategory(e.target.value)}
                 required
               >
-                <option value="short">Short</option>
-                <option value="long">Long</option>
+                <option value="">-- Select Category --</option>
+                <option value="short">Short Program</option>
+                <option value="long">Full Program</option>
               </Form.Select>
             </Form.Group>
 
@@ -118,6 +133,7 @@ export default function AddProgram() {
               <Form.Control
                 type="number"
                 step="0.01"
+                min = "0"
                 placeholder="Enter rate"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
@@ -131,41 +147,62 @@ export default function AddProgram() {
               <Form.Control
                 type="number"
                 step="0.01"
+                min = "0"
                 placeholder="Enter down payment"
                 value={downPayment}
                 onChange={(e) => setDownPayment(e.target.value)}
               />
             </Form.Group>
 
-            {/* ✅ Capacity */}
-            <Form.Group className="mb-3" controlId="programCapacity">
-              <Form.Label>Capacity (Number of enrollees)</Form.Label>
-              <Form.Control
-                type="number"
-                min="1"
-                placeholder="Enter maximum enrollees"
-                value={capacity}
-                onChange={(e) => setCapacity(Number(e.target.value))}
-                required
-              />
-            </Form.Group>
+            {/* ✅ Conditional Rendering */}
+            {category === "long" && (
+              <>
+                {/* Capacity */}
+                <Form.Group className="mb-3" controlId="programCapacity">
+                  <Form.Label>Capacity (Number of Enrollees)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    placeholder="Enter maximum enrollees"
+                    value={capacity}
+                    onChange={(e) => setCapacity(Number(e.target.value))}
+                    required
+                  />
+                </Form.Group>
 
-            {/* Miscellaneous Group Selection */}
-            <Form.Group className="mb-3" controlId="miscGroup">
-              <Form.Label>Miscellaneous Group</Form.Label>
-              <Form.Select
-                value={miscGroupId}
-                onChange={(e) => setMiscGroupId(e.target.value)}
-                required
-              >
-                <option value="">-- Select Group --</option>
-                {miscGroups.map((group) => (
-                  <option key={group._id} value={group._id}>
-                    {group.package_name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+                {/* Miscellaneous Group */}
+                <Form.Group className="mb-3" controlId="miscGroup">
+                  <Form.Label>Miscellaneous Group</Form.Label>
+                  <Form.Select
+                    value={miscGroupId}
+                    onChange={(e) => setMiscGroupId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Select Group --</option>
+                    {miscGroups.map((group) => (
+                      <option key={group._id} value={group._id}>
+                        {group.package_name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </>
+            )}
+
+            {category === "short" && (
+              <Form.Group className="mb-3" controlId="initialEvaluation">
+                <Form.Label>Initial Evaluation Price (₱)</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="0"
+                  step="0"
+                  placeholder="Enter evaluation price"
+                  value={initialEvaluationPrice}
+                  onChange={(e) => setInitialEvaluationPrice(Number(e.target.value))}
+                  required
+                />
+              </Form.Group>
+            )}
 
             {/* Save Button */}
             <Button variant="primary" type="submit" className="w-100">

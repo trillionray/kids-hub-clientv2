@@ -14,14 +14,17 @@ export default function ShowMiscellaneous() {
   const [miscList, setMiscList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [academicYears, setAcademicYears] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [currentMisc, setCurrentMisc] = useState(null);
 
+  //Filter for academic year 
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
+
   useEffect(() => {
     fetchMiscellaneous();
-    fetchAcademicYears();
+    fetchSchoolYear();
   }, []);
 
   function fetchMiscellaneous() {
@@ -40,16 +43,46 @@ export default function ShowMiscellaneous() {
       });
   }
 
-  const fetchAcademicYears = () => {
-    fetch(`${API_URL}/academic-year`, {
+  const fetchSchoolYear = () => {
+    setLoading(true);
+    fetch(`${API_URL}/academic-years`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setAcademicYears(data);
-        else notyf.error(data.message || "Error fetching academic years");
+        if (Array.isArray(data)) {
+          // Format each academic year for easy display
+          const formatted = data.map((y) => {
+            const start = new Date(y.startDate);
+            const end = new Date(y.endDate);
+            return {
+              _id: y._id,
+              name: `${start.getFullYear()} - ${end.getFullYear()}`,
+              startDate: y.startDate,
+              endDate: y.endDate,
+            };
+          });
+
+          // Sort so the most recent or current year appears first
+          const today = new Date();
+          formatted.sort((a, b) => {
+            const isCurrentA = today >= new Date(a.startDate) && today <= new Date(a.endDate);
+            const isCurrentB = today >= new Date(b.startDate) && today <= new Date(b.endDate);
+            if (isCurrentA && !isCurrentB) return -1;
+            if (!isCurrentA && isCurrentB) return 1;
+            return new Date(b.startDate) - new Date(a.startDate);
+          });
+
+          setAcademicYears(formatted);
+
+          // Auto-select the current or latest year
+          if (formatted.length > 0) setSelectedYear(formatted[0]._id);
+        } else {
+          notyf.error(data.message || "Error fetching academic years");
+        }
       })
-      .catch(() => notyf.error("Server error while loading academic years"));
+      .catch(() => notyf.error("Server error while fetching academic years"))
+      .finally(() => setLoading(false));
   };
 
 
@@ -72,83 +105,80 @@ export default function ShowMiscellaneous() {
       .catch(() => notyf.error("Server error. Please try again."));
   }
 
-async function handleUpdateSubmit(e) {
-  e.preventDefault();
+  async function handleUpdateSubmit(e) {
+    e.preventDefault();
 
-  // Safety check: currentMisc must exist
-  if (!currentMisc?._id) {
-    notyf.info("No Miscellaneous item selected for update.");
-    return;
-  }
-
-  const payload = {
-    name: currentMisc.name,
-    price: currentMisc.price,
-    school_year_id: currentMisc.school_year_id?._id || currentMisc.school_year_id,
-    is_active: currentMisc.is_active,
-    created_by: currentMisc.created_by,
-    last_updated_by: user?.username || "system",
-  };
-
-  try {
-    // Step 1: Check if misc is used in any package
-    const usageRes = await fetch(`${API_URL}/miscellaneous/check-usage/${currentMisc._id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    });
-
-    if (!usageRes.ok) {
-      throw new Error(`Usage check failed with status ${usageRes.status}`);
+    // Safety check: currentMisc must exist
+    if (!currentMisc?._id) {
+      notyf.info("No Miscellaneous item selected for update.");
+      return;
     }
 
-    const usageData = await usageRes.json();
+    const payload = {
+      name: currentMisc.name,
+      price: currentMisc.price,
+      school_year_id: currentMisc.school_year_id?._id || currentMisc.school_year_id,
+      is_active: currentMisc.is_active,
+      created_by: currentMisc.created_by,
+      last_updated_by: user?.username || "system",
+    };
 
-    if (usageData.used && Array.isArray(usageData.packages) && usageData.packages.length > 0) {
-      const packageList = usageData.packages.join(", ");
-      const confirmUpdate = window.confirm(
-        `⚠️ This Miscellaneous item is part of the following package(s):\n\n${packageList}\n\n` +
-        `Changing this will affect all enrollment computations using these packages.\n\nDo you still want to proceed?`
-      );
+    try {
+      // Step 1: Check if misc is used in any package
+      const usageRes = await fetch(`${API_URL}/miscellaneous/check-usage/${currentMisc._id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
 
-      if (!confirmUpdate) {
-        notyf.info("Update cancelled by user.");
-        return; // stop here safely
+      if (!usageRes.ok) {
+        throw new Error(`Usage check failed with status ${usageRes.status}`);
+      }
+
+      const usageData = await usageRes.json();
+
+      if (usageData.used && Array.isArray(usageData.packages) && usageData.packages.length > 0) {
+        const packageList = usageData.packages.join(", ");
+        const confirmUpdate = window.confirm(
+          `⚠️ This Miscellaneous item is part of the following package(s):\n\n${packageList}\n\n` +
+          `Changing this will affect all enrollment computations using these packages.\n\nDo you still want to proceed?`
+        );
+
+        if (!confirmUpdate) {
+          notyf.info("Update cancelled by user.");
+          return; // stop here safely
+        }
+      }
+
+      // Step 2: Proceed with actual update
+      const res = await fetch(`${API_URL}/miscellaneous/${currentMisc._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Update failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (data.success !== false) {
+        notyf.success(data.message || "Updated successfully");
+        setShowModal(false);
+        fetchMiscellaneous();
+      } else {
+        notyf.error(data.message || "Update failed");
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      // Only show server error if it really failed, not on user cancel
+      if (err.message !== "User cancelled update") {
+        notyf.error("Server error. Please try again.");
       }
     }
-
-    // Step 2: Proceed with actual update
-    const res = await fetch(`${API_URL}/miscellaneous/${currentMisc._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Update failed with status ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    if (data.success !== false) {
-      notyf.success(data.message || "Updated successfully");
-      setShowModal(false);
-      fetchMiscellaneous();
-    } else {
-      notyf.error(data.message || "Update failed");
-    }
-  } catch (err) {
-    console.error("Update error:", err);
-    // Only show server error if it really failed, not on user cancel
-    if (err.message !== "User cancelled update") {
-      notyf.error("Server error. Please try again.");
-    }
   }
-}
-
-
-
 
   function openEditModal(misc) {
     setCurrentMisc({ ...misc });
@@ -201,11 +231,21 @@ async function handleUpdateSubmit(e) {
   ];
 
 
-  const filteredData = miscList.filter(
-    (item) =>
+  const filteredData = miscList.filter((item) => {
+    // ✅ Search filter
+    const matchesSearch =
       item.name.toLowerCase().includes(search.toLowerCase()) ||
-      String(item.price).includes(search)
-  );
+      String(item.price).includes(search);
+
+    // ✅ Academic year filter
+    const matchesYear =
+      !selectedYear || // show all if no year selected
+      item.school_year_id?._id === selectedYear || // when populated object
+      item.school_year_id === selectedYear; // when plain string ID
+
+    return matchesSearch && matchesYear;
+  });
+
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
@@ -220,28 +260,44 @@ async function handleUpdateSubmit(e) {
               Add Miscellaneous
             </Button>
           </Link>
+          
+          <div className="d-flex align-items-center gap-3">
+            <Form.Select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              style={{ width: "200px" }}
+            >
+              <option value="">All Academic Years</option>
+              {academicYears.map((year) => (
+                <option key={year._id} value={year._id}>
+                  {year.name}
+                </option>
+              ))}
+            </Form.Select>
 
-          <Form.Control
-            type="text"
-            style={{ maxWidth: "250px" }}
-            placeholder="Search classes..."
-            value={search}
-            onChange={(e) => {
-              const val = e.target.value.toLowerCase();
-              setSearch(val);
-              setFilteredClasses(
-                classesWithTeacherName.filter(
-                  (c) =>
-                    String(c._id).toLowerCase().includes(val) ||
-                    String(c.sectionName).toLowerCase().includes(val) ||
-                    String(c.teacherName).toLowerCase().includes(val)
-                )
-              );
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") e.preventDefault(); // Prevents page refresh / 404
-            }}
-          />
+            <Form.Control
+              type="text"
+              style={{ maxWidth: "250px" }}
+              placeholder="Search classes..."
+              value={search}
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase();
+                setSearch(val);
+                setFilteredClasses(
+                  classesWithTeacherName.filter(
+                    (c) =>
+                      String(c._id).toLowerCase().includes(val) ||
+                      String(c.sectionName).toLowerCase().includes(val) ||
+                      String(c.teacherName).toLowerCase().includes(val)
+                  )
+                );
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.preventDefault(); // Prevents page refresh / 404
+              }}
+            />
+          </div>
+          
 
         </div>
 
