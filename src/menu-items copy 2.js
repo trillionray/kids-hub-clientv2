@@ -1,7 +1,6 @@
-// Menu configuration for default layout
+// 🧭 Menu configuration for default layout
 const menuItems = {
   items: [
-    //Employee module
     {
       id: 'accounts',
       title: 'Accounts',
@@ -33,7 +32,6 @@ const menuItems = {
       ]
     },
     
-    //Enrollment module
     {
       id: 'enrollments',
       title: 'Enrollments',
@@ -69,39 +67,6 @@ const menuItems = {
         }
       ]
     },
-
-    //Transaction module
-    {
-      id: 'transaction',
-      title: 'Transaction',
-      type: 'group',
-      icon: 'icon-pages',
-      children: [
-        {
-          id: 'Transaction',
-          title: 'Transaction Module',
-          type: 'collapse',
-          icon: 'material-icons-two-tone',
-          iconname: 'how_to_reg',
-          children: [
-            {
-              id: 'transction-records',
-              title: 'Transactions',
-              type: 'item',
-              url: '/transaction'
-            },
-            {
-              id: 'show-transaction',
-              title: 'Student Fees',
-              type: 'item',
-              url: '/showtransaction'
-            }
-          ]
-        }
-      ]
-    },
-
-    //Class module
     {
       id: 'Class',
       title: 'Class',
@@ -125,8 +90,6 @@ const menuItems = {
         }
       ]
     },
-
-    //Academic year , Miscellaneous, program, braanch module
     {
       id: 'enrollment-setup',
       title: 'Enrollment Setup',

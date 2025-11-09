@@ -33,6 +33,10 @@ const Enrollments = lazy(() => import('../views/Enrollments.jsx'));
 const Classes = lazy(() => import('../views/Classes.jsx'));
 const ClassStudents = lazy(() => import('../views/ClassStudents.jsx')); // ✅ new page
 
+const Transaction = lazy(() => import('../views/Transaction.jsx'));
+const AddTransaction = lazy(() => import('../views/AddTransaction.jsx'));
+const ShowTransaction = lazy(() => import('../views/ShowTransaction.jsx'));
+
 const AttendanceClasses = lazy(() => import('../views/AttendanceClasses.jsx'));
 const AttendanceStudents = lazy(() => import('../views/AttendanceStudents'));
 
@@ -96,6 +100,10 @@ const router = createBrowserRouter(
             { path: 'enrollments', element: <Enrollments /> },
             // 📝 NEW ROUTE for editing enrollment
             { path: 'enrollments/update/:enrollmentId', element: <EditEnrollment /> },
+
+            { path: 'showtransaction', element: <ShowTransaction /> },
+            { path: 'transaction', element: <Transaction /> },
+            { path: 'addtransaction', element: <AddTransaction /> },
 
             { path: 'pdf-reg-form', element: <PdfRegForm /> },
             { path: 'pdf-breakdown', element: <PdfBreakdown /> },  
