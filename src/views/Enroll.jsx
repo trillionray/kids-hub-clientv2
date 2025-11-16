@@ -57,21 +57,26 @@ export default function Enroll() {
     const program = programs.find((p) => p._id === formData.program_id);
 
     if (program) {
-      setMiscs(program.miscellaneous_group.miscs);
+      setMiscs(program.miscellaneous_group?.miscs || []);
+
       const rate = program.rate || 0;
       const misc = program.miscellaneous_group?.miscs_total || 0;
+
       setProgramRate(rate);
       setMiscellaneousTotal(misc);
+
       setFormData((prev) => ({ ...prev, total: rate + misc }));
 
-      // ✅ Set capacity
       setProgramCapacity(program.capacity || 0);
     } else {
+      setMiscs([]);
       setProgramRate(0);
       setMiscellaneousTotal(0);
       setFormData((prev) => ({ ...prev, total: 0 }));
       setProgramCapacity(null);
     }
+
+    
   }, [formData.program_id, programs]);
 
 
