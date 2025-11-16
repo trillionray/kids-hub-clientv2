@@ -105,9 +105,8 @@ export default function AddStudent() {
 
   // ---------- OLD STUDENT SEARCH ----------
   useEffect(() => {
-    console.log("Searching student...")
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
-      fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
+      fetch(`${import.meta.env.VITE_API_URL}/students/search-oldstudent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,15 +116,20 @@ export default function AddStudent() {
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           setOldStudents(data.students || []);
+          
+          const pendingStudent = data.students.find(s => s.hasPendingEnrollment);
+          if (pendingStudent) {
+            notyf.warning(`${pendingStudent.first_name} ${pendingStudent.last_name} has a pending enrollment!`);
+          }
       })
         .catch(() => notyf.error("Failed to fetch old students"));
     } else {
       setOldStudents([]);
     }
+    
   }, [searchQuery, formData.studentType]);
-  
+  console.log(searchQuery)
 
   // ---------- NEW useEffect: Reset isOldStudentSelected when switching studentType ----------
   useEffect(() => {
@@ -202,6 +206,15 @@ export default function AddStudent() {
   //vince
   const [originalStudentData, setOriginalStudentData] = useState(null);
   const handleSelectOldStudent = (student) => {
+    if (student.hasPendingEnrollment) {
+      Swal.fire({
+        title: "Pending Enrollment",
+        text: `${student.first_name} ${student.last_name} has a pending balance!\nNeed to settle first before continuing.`,
+        icon: "warning",
+        confirmButtonText: "OK"
+      });
+    }
+
     const mapped = {
       _id: student._id,
       firstName: student.first_name || "",
@@ -270,7 +283,11 @@ export default function AddStudent() {
     };
 
     setFormData((prev) => ({ ...prev, ...mapped, studentType: "old" }));
-    setOriginalStudentData(mapped);
+    setOriginalStudentData({
+      ...mapped,
+      hasPendingEnrollment: student.hasPendingEnrollment
+    });
+
     setOldStudents([]);
     setSearchQuery("");
     // localStorage.setItem("selectedStudentId", student._id);
@@ -643,10 +660,16 @@ export default function AddStudent() {
                     </Row>
 
                     <div className="d-flex justify-content-end mt-3">
-                      <Button variant="primary" onClick={handleContinue}>
-                        Continue <FeatherIcon icon="chevron-right" />
+                      <Button
+                        variant={formData.studentType === "old" && originalStudentData?.hasPendingEnrollment ? "danger" : "primary"}
+                        onClick={handleContinue}
+                        disabled={formData.studentType === "old" && originalStudentData?.hasPendingEnrollment}
+                      >
+                        {formData.studentType === "old" && originalStudentData?.hasPendingEnrollment
+                          ? "Go to Cashier"
+                          : "Continue"}{" "}
+                        <FeatherIcon icon="chevron-right" />
                       </Button>
-
                     </div>
                   </>
                 )}

@@ -1,15 +1,21 @@
 // Top imports (unchanged)
 import { useState, useEffect} from 'react';
+import Select from "react-select";
 import { Card, Row, Col, Button, InputGroup, Form } from 'react-bootstrap';
 
-
 export default function Register() {
-    const [student, setStudent] = useState(""); 
+    
     const [referenceNumber, setReferenceNumber] = useState("");
     const [receiptDate, setReceiptDate] = useState("");
     const [amount, setAmount] = useState(""); 
     const [transactionType, setTransactionType] = useState("");
     const [modeOfPayment, setModeOfPayment] = useState("");
+    const [students, setStudents] = useState([]);
+    const [student, setStudent] = useState(null);
+    const [programCategory, setProgramCategory] = useState("");
+    const [programType, setProgramType] = useState("");
+    const [programOptions, setProgramOptions] = useState([]);
+
 
     const submitPayment = (e) => {
         e.preventDefault();
@@ -24,6 +30,51 @@ export default function Register() {
         comment,
         });
     };
+    
+
+    const handleStudentSelect = (selected) => {
+        setStudent(selected);
+        console.log("Selected student data:", selected);
+
+        if (selected.programOptions && selected.programOptions.length > 0) {
+            
+            // use the backend-prepared programOptions
+            setProgramOptions(selected.programOptions);
+        } else {
+            setProgramOptions([]);
+        }
+        setProgramType(""); // reset program type
+    };
+
+    const handleProgramSelect = (e) => {
+        const selectedEnrollmentId = e.target.value; // this is the value of the selected <option>
+        setProgramType(selectedEnrollmentId);
+
+        // Optional: you can also find the full program object if needed
+        const program = programOptions.find(opt => opt.value === selectedEnrollmentId);
+    };
+
+
+
+
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/students/search-paystudent`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: "" })  // load all
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log("API Response:", data);
+                const formattedOptions = data.students.map(s => ({
+                    value: s._id,
+                    label: `${s.first_name} ${s.last_name}`,
+                    ...s
+                }));
+                setStudents(formattedOptions);
+            });
+    }, []);
 
 
     return (
@@ -36,29 +87,55 @@ export default function Register() {
                             <Row>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Student</Form.Label>
-                                    <Form.Select
-                                    value={student}
-                                    onChange={(e) => setStudent(e.target.value)}
-                                    required
-                                    >
-                                    <option value="teacher">Teacher</option>
-                                    <option value="cashier">Cashier</option>
-                                    </Form.Select>
+                                    <Select
+                                        value={student}
+                                        onChange={handleStudentSelect}
+                                        options={students}
+                                        placeholder="Select a student..."
+                                        isSearchable
+                                    />
                                 </Form.Group>
                             </Row>
                             <Row>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Transaction Type</Form.Label>
-                                    <Form.Select
-                                    value={transactionType}
-                                    onChange={(e) => setTransactionType(e.target.value)}
-                                    required
-                                    >
-                                    <option selected>--Select Transaction Type--</option>
-                                    <option value="online">Online</option>
-                                    <option value="offline">Offline</option>
-                                    </Form.Select>
-                                </Form.Group>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Program Type</Form.Label>
+
+                                        <Form.Select
+                                            value={programType}
+                                            onChange={handleProgramSelect}
+                                            disabled={!student}
+                                            required
+                                        >
+                                            <option value="">-- Select Program Type --</option>
+                                            {programOptions.map((opt) => (
+                                                <option key={opt.value} value={opt.value}>
+                                                    {opt.label} {/* Full Program - Nursery */}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+
+
+
+
+                                    </Form.Group>
+
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Transaction Type</Form.Label>
+                                        <Form.Select
+                                            value={transactionType}
+                                            onChange={(e) => setTransactionType(e.target.value)}
+                                            required
+                                            >
+                                            <option selected>--Select Transaction Type--</option>
+                                            <option value="Monthly">Monthly</option>
+                                            <option value="Downpayment">Downpayment</option>
+                                            <option value="ProgramRate">Program Rate</option>
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Col>
                             </Row>
 
                             <Row>
@@ -84,7 +161,8 @@ export default function Register() {
                                     >
                                     <option selected >--Select Payment--</option>
                                     <option value="gcash">Gcash</option>
-                                    <option value="bank">Bank</option>
+                                    <option value="bpi">BPI</option>
+                                    <option value="metrobank">MetroBank</option>
                                     <option value="cash">Cash</option>
                                     </Form.Select>
                                 </Form.Group>
@@ -94,7 +172,7 @@ export default function Register() {
                             <Row>
                                 <Col md={6}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Reference Number<span className="text-danger">*</span></Form.Label>
+                                    <Form.Label>Reference Number</Form.Label>
                                     <Form.Control
                                     type="text"
                                     placeholder="Enter reference number"
