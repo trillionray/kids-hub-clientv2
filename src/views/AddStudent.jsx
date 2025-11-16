@@ -106,7 +106,7 @@ export default function AddStudent() {
   // ---------- OLD STUDENT SEARCH ----------
   useEffect(() => {
     if (formData.studentType === "old" && searchQuery.trim().length > 0) {
-      fetch(`${import.meta.env.VITE_API_URL}/students/search-oldstudent`, {
+      fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
