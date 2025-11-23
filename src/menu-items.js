@@ -94,7 +94,7 @@ const menuItems = {
               id: 'show-transaction',
               title: 'Student Fees',
               type: 'item',
-              url: '/showtransaction'
+              url: '/fees'
             }
           ]
         }
