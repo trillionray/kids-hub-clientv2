@@ -35,7 +35,7 @@ export default function AddPenalty() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data._id) {
+        if (data.message == "Penalty added successfully") {
           notyf.success("Penalty added successfully!");
 
           setPenaltyName("");
@@ -78,8 +78,9 @@ export default function AddPenalty() {
                       <FeatherIcon icon="clipboard" />
                     </InputGroup.Text>
                     <Form.Control
-                      type="text"
-                      placeholder="Penalty Description"
+                      as="textarea"
+                      rows={3}
+                      placeholder="Penalty Description (optional)"
                       value={penalty_description}
                       onChange={(e) => setPenaltyDescription(e.target.value)}
                     />

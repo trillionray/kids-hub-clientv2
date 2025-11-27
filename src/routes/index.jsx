@@ -55,7 +55,11 @@ const PdfAcknowledgementConsent = lazy(() => import('../views/PdfAcknowledgement
 const PdfAll = lazy(() => import('../views/PdfAll.jsx'));
 const EditEnrollment = lazy(() => import('../views/EditEnrollment.jsx'));
 const EditStudent = lazy(() => import('../views/EditStudent.jsx'));
+
+
 const TuitionFees = lazy(() => import('../views/TuitionFees.jsx'));
+const AddPenalty = lazy(() => import('../views/AddPenalty.jsx'));
+const Penalties = lazy(() => import('../views/Penalties.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -102,10 +106,16 @@ const router = createBrowserRouter(
 
             { path: 'enroll', element: <Enroll /> },
             { path: 'enrollments', element: <Enrollments /> },
-            { path: 'fees', element: <TuitionFees /> },
+
+            
 
             // 📝 NEW ROUTE for editing enrollment
             { path: 'enrollments/update/:enrollmentId', element: <EditEnrollment /> },
+
+            { path: 'fees', element: <TuitionFees /> },
+
+            { path: 'penalties', element: <Penalties /> },
+            { path: 'penalty/add', element: <AddPenalty /> },
 
             { path: 'showtransaction', element: <ShowTransaction /> },
             { path: 'transaction', element: <Transaction /> },
