@@ -60,6 +60,8 @@ const EditStudent = lazy(() => import('../views/EditStudent.jsx'));
 const TuitionFees = lazy(() => import('../views/TuitionFees.jsx'));
 const AddPenalty = lazy(() => import('../views/AddPenalty.jsx'));
 const Penalties = lazy(() => import('../views/Penalties.jsx'));
+const AddDiscount = lazy(() => import('../views/AddDiscount.jsx'));
+const Discounts = lazy(() => import('../views/Discounts.jsx'));
 
 const router = createBrowserRouter(
   [
@@ -114,8 +116,12 @@ const router = createBrowserRouter(
 
             { path: 'fees', element: <TuitionFees /> },
 
+            { path: 'discounts/add', element: <AddDiscount /> },
+            { path: 'discounts', element: <Discounts
+             /> },
+
             { path: 'penalties', element: <Penalties /> },
-            { path: 'penalty/add', element: <AddPenalty /> },
+            { path: 'penalties/add', element: <AddPenalty /> },
 
             { path: 'showtransaction', element: <ShowTransaction /> },
             { path: 'transaction', element: <Transaction /> },

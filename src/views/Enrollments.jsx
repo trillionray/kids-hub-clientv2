@@ -389,15 +389,17 @@ export default function Enrollments() {
                     onClick={() => {
                       const programId = selectedEnrollment.program_id;
                       const miscId = selectedEnrollment.miscellaneous_group_id;
+                      const discountId = selectedEnrollment.discount_id || ""; // ✔️ ADD THIS
 
                       window.open(
-                        `/pdf-breakdown?programId=${programId}&miscId=${miscId}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
+                        `/pdf-breakdown?programId=${programId}&miscId=${miscId}&discountId=${discountId}&fileName=${selectedEnrollment.student.last_name}_${selectedEnrollment.student.first_name}`,
                         "_blank"
                       );
                     }}
                   >
                     Breakdown
                   </Button>
+
 
                   <Button
                     className="flex-fill"

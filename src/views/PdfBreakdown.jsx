@@ -9,15 +9,15 @@ export default function PdfBreakdown() {
 
   const [program, setProgram] = useState(null);
   const [miscPackage, setMiscPackage] = useState(null);
+  const [discount, setDiscount] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const queryParams = new URLSearchParams(location.search);
   const programId = queryParams.get("programId");
   const miscId = queryParams.get("miscId");
+  const discountId = queryParams.get("discountId"); // NEW
 
-  // Fetch program & misc package data
   useEffect(() => {
-    console.log(queryParams.get("fileName"))
     const fetchData = async () => {
       try {
         if (!programId) return;
@@ -35,6 +35,16 @@ export default function PdfBreakdown() {
           const dataMisc = await resMisc.json();
           setMiscPackage(dataMisc);
         }
+
+        if (discountId) {
+          const resDiscount = await fetch(`${API_URL}/discounts/${discountId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          const dataDiscount = await resDiscount.json();
+          console.log(dataDiscount)
+          setDiscount(dataDiscount.data);
+        }
+
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
@@ -43,12 +53,17 @@ export default function PdfBreakdown() {
     };
 
     fetchData();
-  }, [API_URL, programId, miscId]);
+  }, [API_URL, programId, miscId, discountId]);
 
-  const grandTotal =
+  // Compute base total
+  const baseTotal =
     program?.rate && miscPackage?.miscs_total
       ? program.rate + miscPackage.miscs_total
-      : program?.rate || null;
+      : program?.rate || 0;
+
+  // Apply discount if present
+  const discountedAmount = discount ? (baseTotal * (discount.percentage / 100)) : 0;
+  const grandTotal = baseTotal - discountedAmount;
 
   const downloadPdf = () => {
     const element = document.getElementById("pdf-breakdown-content");
@@ -62,38 +77,23 @@ export default function PdfBreakdown() {
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         html2canvas: {
           scale: 2,
-          useCORS: true,            // 👈 allow cross-origin
-          allowTaint: true,         // 👈 handle images without CORS headers
+          useCORS: true,
+          allowTaint: true,
         },
       })
       .from(element)
       .save();
   };
 
-  // Auto-download when data is ready AND DOM has rendered
   useEffect(() => {
     if (program) {
       const timer = setTimeout(() => {
         downloadPdf();
-      }, 1500); // 👈 give more time in prod for render
-
-      // setTimeout(() => {
-      //   window.close();  // 👈 This will close the tab if it was JS-opened
-      // }, 5000);
-
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [program]);
 
-
-  // Auto-download PDF when program data is ready
-  // useEffect(() => {
-  //   if (program) {
-  //     setTimeout(() => downloadPdf(), 500);
-  //   }
-  // }, [program]);
-
-  // Show loader while fetching
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -121,15 +121,15 @@ export default function PdfBreakdown() {
             <h5 className="mb-3">Program</h5>
             <Table striped bordered hover size="sm">
               <thead>
-                <tr>
+                {/*<tr>
                   <th>Item</th>
                   <th className="text-end">Price (₱)</th>
-                </tr>
+                </tr>*/}
               </thead>
               <tbody>
                 <tr>
                   <td>{program?.name || "-"}</td>
-                  <td className="text-end">{program?.rate.toLocaleString() || 0}</td>
+                  <td className="text-end">{program?.rate.toLocaleString()}</td>
                 </tr>
               </tbody>
             </Table>
@@ -140,15 +140,13 @@ export default function PdfBreakdown() {
         {miscPackage && (
           <Card className="mb-4">
             <Card.Body>
-              <h5 className="mb-3">
-                Miscellaneous
-              </h5>
+              <h5 className="mb-3">Miscellaneous</h5>
               <Table striped bordered hover size="sm">
                 <thead>
-                  <tr>
+                  {/*<tr>
                     <th>Item</th>
                     <th className="text-end">Price (₱)</th>
-                  </tr>
+                  </tr>*/}
                 </thead>
                 <tbody>
                   {miscPackage.miscs?.map((misc) => (
@@ -167,12 +165,30 @@ export default function PdfBreakdown() {
           </Card>
         )}
 
-        {/* Grand Total */}
-        {grandTotal !== null && (
-          <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
-            Grand Total: ₱{grandTotal.toLocaleString()}
+        {/* Discount Section */}
+        {discount && (
+
+          <Card className="mb-4">
+            <Card.Body>
+              <h5 className="mb-3">Discount</h5>
+
+              <Table striped bordered hover size="sm">
+                <tbody>
+                  <tr>
+                    <td>{discount.discount_name} ({discount.percentage}%)</td>
+                    <td className="text-end">-₱{discountedAmount.toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Card.Body>
           </Card>
+
         )}
+
+        {/* Grand Total */}
+        <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
+          Grand Total: ₱{grandTotal.toLocaleString()}
+        </Card>
 
         {/* Down Payment */}
         {program?.down_payment !== undefined && (
@@ -182,32 +198,12 @@ export default function PdfBreakdown() {
         )}
 
         {/* Monthly Payment */}
-        {program?.down_payment !== undefined && grandTotal !== null && (
+        {program?.down_payment !== undefined && (
           <Card bg="light" className="fs-6 text-end">
             Monthly Payment (10 mos): ₱{((grandTotal - program.down_payment) / 10).toLocaleString()}
           </Card>
         )}
       </div>
-
-      {/* Floating Download Button */}
-      {/*<button
-        onClick={downloadPdf}
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          padding: "12px 20px",
-          fontSize: "16px",
-          backgroundColor: "#007bff",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          zIndex: 1000,
-        }}
-      >
-        Download PDF
-      </button>*/}
     </div>
   );
 }

@@ -24,6 +24,8 @@ export default function Enroll() {
   const [miscs, setMiscs] = useState([]);
   const [programCapacity, setProgramCapacity] = useState(null);
   const [enrollCount, setEnrollCount] = useState(null);
+  const [discounts, setDiscounts] = useState([]);
+  const [discountPercentage, setDiscountPercentage] = useState([]);
 
   const [formData, setFormData] = useState({
     branch: "",
@@ -34,9 +36,9 @@ export default function Enroll() {
     academic_year_id: "",
     status: "pending",
     total: 0,
+    discount_id: "", // ✅ New field
   });
 
-  // Auto-fill student_id if existing
   useEffect(() => {
     if (studentData?._id) {
       setFormData((prev) => ({ ...prev, student_id: studentData._id }));
@@ -47,49 +49,50 @@ export default function Enroll() {
     fetchPrograms();
     fetchAcademicYears();
     fetchBranches();
-    
+    fetchDiscounts(); // ✅ fetch discounts
   }, []);
 
-  // Update total and capacity when program changes
+  // Update total when program or discount changes
   useEffect(() => {
-    fetchEnrollCount(formData.program_id);
-
     const program = programs.find((p) => p._id === formData.program_id);
-
     if (program) {
-      setMiscs(program.miscellaneous_group?.miscs || []);
-
       const rate = program.rate || 0;
       const misc = program.miscellaneous_group?.miscs_total || 0;
-
       setProgramRate(rate);
       setMiscellaneousTotal(misc);
-
-      setFormData((prev) => ({ ...prev, total: rate + misc }));
-
+      setMiscs(program.miscellaneous_group?.miscs || []);
       setProgramCapacity(program.capacity || 0);
+      fetchEnrollCount(program._id);
+
+      let total = rate + misc;
+
+      // Apply discount
+      if (formData.discount_id) {
+        const selectedDiscount = discounts.find(d => d._id === formData.discount_id);
+        console.log(selectedDiscount);
+        setDiscountPercentage(selectedDiscount.percentage)
+
+        if (selectedDiscount && selectedDiscount.is_active) {
+          total = total - (total * (discountPercentage / 100));
+        }
+      }
+
+      setFormData(prev => ({ ...prev, total }));
     } else {
-      setMiscs([]);
       setProgramRate(0);
       setMiscellaneousTotal(0);
-      setFormData((prev) => ({ ...prev, total: 0 }));
+      setMiscs([]);
       setProgramCapacity(null);
+      setFormData(prev => ({ ...prev, total: 0 }));
     }
+  }, [formData.program_id, formData.discount_id, programs, discounts, discountPercentage]);
 
-    
-  }, [formData.program_id, programs]);
-
-
-  // Fetch functions
   const fetchPrograms = async () => {
     try {
       const res = await fetch(`${API_URL}/programs`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
-      console.log(data)
-
-
       setPrograms(data.programs || []);
     } catch {
       notyf.error("Failed to fetch programs");
@@ -98,25 +101,19 @@ export default function Enroll() {
 
   const fetchAcademicYears = async () => {
     try {
-      // Fetch all academic years
       const res = await fetch(`${API_URL}/academic-year`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
       setAcademicYears(data || []);
 
-      // Fetch latest academic year
       const latestRes = await fetch(`${API_URL}/academic-year/latest`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const latestData = await latestRes.json();
       if (latestData) {
         setLatestAcademicYear(latestData);
-        // Default to latest year if none selected
-        setFormData((prev) => ({
-          ...prev,
-          academic_year_id: prev.academic_year_id || latestData._id
-        }));
+        setFormData(prev => ({ ...prev, academic_year_id: prev.academic_year_id || latestData._id }));
       }
     } catch {
       notyf.error("Failed to fetch academic years");
@@ -129,14 +126,23 @@ export default function Enroll() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await res.json();
-      if (data.success) {
-        const activeBranches = data.branches.filter((b) => b.is_active);
-        setBranches(activeBranches);
-      } else {
-        notyf.error("Failed to fetch branches");
-      }
+      if (data.success) setBranches(data.branches.filter(b => b.is_active));
     } catch {
       notyf.error("Error fetching branches");
+    }
+  };
+
+  // ✅ Fetch discounts
+  const fetchDiscounts = async () => {
+    try {
+      const res = await fetch(`${API_URL}/discounts`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      console.log(data)
+      setDiscounts(data.data || []);
+    } catch {
+      notyf.error("Failed to fetch discounts");
     }
   };
 
@@ -144,17 +150,16 @@ export default function Enroll() {
     const { name, value } = e.target;
     if (name === "program_type") {
       setProgramType(value);
-      setFormData((prev) => ({ ...prev, program_id: "" }));
+      setFormData(prev => ({ ...prev, program_id: "" }));
       return;
     }
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     let studentId = formData.student_id;
 
-    // Create new student if needed
     if (studentData && !studentData._id) {
       try {
         const res = await fetch(`${API_URL}/students`, {
@@ -183,7 +188,6 @@ export default function Enroll() {
       return;
     }
 
-    // Include latest academic year if none selected
     const enrollmentData = {
       branch: formData.branch,
       student_id: studentId,
@@ -192,6 +196,7 @@ export default function Enroll() {
       duration: formData.duration || undefined,
       academic_year_id: formData.academic_year_id || latestAcademicYear?._id,
       status: formData.status || "pending",
+      discount_id: formData.discount_id || undefined, // ✅ include discount
     };
 
     try {
@@ -215,6 +220,7 @@ export default function Enroll() {
           academic_year_id: latestAcademicYear?._id || "",
           status: "pending",
           total: 0,
+          discount_id: "",
         });
         setProgramRate(0);
         navigate("/enrollments");
@@ -227,40 +233,27 @@ export default function Enroll() {
   };
 
   const fetchEnrollCount = async (programId) => {
-    console.log("fetching count...")
     if (!programId) {
       setEnrollCount(null);
       return;
     }
-
     try {
       const res = await fetch(`${API_URL}/enrollments/count/${programId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-
       const data = await res.json();
-      console.log(data);
-
-      if (data.success) {
-        setEnrollCount(data.enrollment_count);
-      } else {
-        setEnrollCount(null);
-      }
-    } catch (error) {
-      console.error("Failed to fetch enrollment count", error);
+      setEnrollCount(data.success ? data.enrollment_count : null);
+    } catch {
       setEnrollCount(null);
     }
   };
-
 
   return (
     <div className="auth-wrapper py-3 d-flex justify-content-center">
       <div className="auth-content w-100" style={{ maxWidth: "900px" }}>
         <Card className="borderless shadow-lg">
           <Card.Body className="card-body m-3">
-            <h2 className="mb-4 f-w-400 text-center text-uppercase" style={{ fontWeight: "900" }}>ENROLLMENT FORM</h2>
+            <h2 className="mb-4 f-w-400 text-center text-uppercase">ENROLLMENT FORM</h2>
             <Form onSubmit={handleSubmit}>
               <Row>
                 <Col md={6}>
@@ -274,9 +267,7 @@ export default function Enroll() {
                     >
                       <option value="">-- Select Branch --</option>
                       {branches.map((b) => (
-                        <option key={b._id} value={b.branch_name}>
-                          {b.branch_name}
-                        </option>
+                        <option key={b._id} value={b.branch_name}>{b.branch_name}</option>
                       ))}
                     </Form.Select>
                   </Form.Group>
@@ -324,31 +315,16 @@ export default function Enroll() {
                       disabled={!programType}
                     >
                       <option value="">Select Program</option>
-                      {programs
-                        .filter((p) => !programType || p.category === programType)
-                        .map((p) => (
-                          <option key={p._id} value={p._id}>
-                            {p.name}
-                          </option>
-                        ))}
+                      {programs.filter(p => !programType || p.category === programType).map((p) => (
+                        <option key={p._id} value={p._id}>{p.name}</option>
+                      ))}
                     </Form.Select>
 
-                    {programCapacity !== null && (
-                      <p className="mt-1 mb-0 text-muted">
-                        <strong>Program Capacity:</strong> {programCapacity}
-                      </p>
+                    {programCapacity !== null && <p className="mt-1 mb-0 text-muted"><strong>Program Capacity:</strong> {programCapacity}</p>}
+                    {enrollCount !== null && <p className="mb-0 text-muted"><strong>Current Enrollees:</strong> {enrollCount}</p>}
+                    {programCapacity !== null && enrollCount !== null && (
+                      <p className="mt-1 mb-0 text-muted"><strong>Remaining Slot:</strong> {programCapacity - enrollCount}</p>
                     )}
-
-                    {enrollCount !== null && (
-                      <p className="mb-0 text-muted">
-                        <strong>Current Enrollees:</strong> {enrollCount}
-                      </p>
-                    )}
-
-                    <p className="mt-1 mb-0 text-muted">
-                      <strong>Remaining Slot:</strong> {programCapacity - enrollCount}
-                    </p>
-
                   </Form.Group>
                 </Col>
               </Row>
@@ -382,56 +358,55 @@ export default function Enroll() {
                 </Row>
               )}
 
+              {/* Discount Selection */}
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Discount</Form.Label>
+                    <Form.Select
+                      name="discount_id"
+                      value={formData.discount_id}
+                      onChange={handleChange}
+                    >
+                      <option value="">-- No Discount --</option>
+                      {discounts.map(d => (
+                        <option key={d._id} value={d._id}>
+                          {d.discount_name} ({d.percentage}%)
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+
               <div className="mb-3 p-2 border rounded bg-light">
-                <p className="mb-1">
-                  <strong>Program Rate:</strong> ₱{programRate.toLocaleString()}
-                </p>
+                <p className="mb-1"><strong>Program Rate:</strong> ₱{programRate.toLocaleString()}</p>
+                <p className="mb-1"><strong>Miscellaneous:</strong> ₱{miscellaneousTotal.toLocaleString()}</p>
+                <p className="mb-1"><strong>Discount:</strong> - ₱{programRate / discountPercentage } </p>
 
-                <p className="mb-1">
-                  <strong>Miscellaneous:</strong> ₱{miscellaneousTotal.toLocaleString()}
-                </p>
-
-                {/* ✅ Show each misc item */}
                 {miscs.length > 0 && (
                   <div className="mb-2">
-                    <Button
-                      variant="link"
-                      className="p-0 mb-2"
-                      onClick={() => setShowMiscs((prev) => !prev)}
-
-                    >
+                    <Button variant="link" className="p-0 mb-2" onClick={() => setShowMiscs(prev => !prev)}>
                       {showMiscs ? "Hide Miscellaneous Details ▲" : "Show Miscellaneous Details ▼"}
                     </Button>
-
                     {showMiscs && (
                       <ul className="mb-0 ps-3">
                         {miscs.map((item, index) => (
-                          <li key={index}>
-                            {item.name} — ₱{item.price.toLocaleString()}
-                          </li>
+                          <li key={index}>{item.name} — ₱{item.price.toLocaleString()}</li>
                         ))}
                       </ul>
                     )}
                   </div>
                 )}
-
                 <hr className="my-2" />
-                <p className="mb-0">
-                  <strong>Total:</strong> ₱{formData.total.toLocaleString()}
-                </p>
+                <p className="mb-0"><strong>Total:</strong> ₱{formData.total.toLocaleString()}</p>
               </div>
 
-
-              {enrollCount < programCapacity ? (
-                <Button variant="primary" type="submit">
-                  Submit Enrollment
-                </Button>
+              {programCapacity !== null && enrollCount !== null && enrollCount < programCapacity ? (
+                <Button variant="primary" type="submit">Submit Enrollment</Button>
               ) : (
-                <Button variant="secondary" type="button" disabled>
-                  Program Full
-                </Button>
+                <Button variant="secondary" type="button" disabled>Program Full</Button>
               )}
-
             </Form>
           </Card.Body>
         </Card>

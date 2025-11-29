@@ -76,6 +76,7 @@ const menuItems = {
       title: 'Transaction',
       type: 'group',
       icon: 'icon-pages',
+
       children: [
         {
           id: 'Transaction',
@@ -85,6 +86,33 @@ const menuItems = {
           iconname: 'how_to_reg',
           children: [
             {
+              id: 'discounts',
+              title: 'Discounts',
+              type: 'item',
+              url: '/discounts'
+            },
+            {
+              id: 'discounts',
+              title: 'Add Discount',
+              type: 'item',
+              url: '/discounts/add'
+            },
+            {
+              id: 'penalties',
+              title: 'Penalties',
+              type: 'item',
+              url: '/penalties'
+            },
+            {
+              id: 'add-penalties',
+              title: 'Add Penalty',
+              type: 'item',
+              url: '/penalties/add'
+            },
+            
+
+
+            {
               id: 'transction-records',
               title: 'Transactions',
               type: 'item',
@@ -92,7 +120,7 @@ const menuItems = {
             },
             {
               id: 'show-transaction',
-              title: 'Student Fees',
+              title: 'Student Fees / Tuition Fees',
               type: 'item',
               url: '/fees'
             }
