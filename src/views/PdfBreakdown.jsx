@@ -197,6 +197,7 @@ export default function PdfBreakdown() {
           </Card>
         )}
 
+       
         {/* Monthly Payment */}
         {program?.down_payment !== undefined && (
           <Card bg="light" className="fs-6 text-end">

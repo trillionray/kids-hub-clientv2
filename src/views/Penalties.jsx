@@ -73,7 +73,7 @@ export default function Penalties() {
                         <td>{penalty.penalty_description}</td>
                         <td>{penalty.program_type}</td>
                         <td>{penalty.due_date}</td>
-                        <td>{penalty.penaly_amount}</td>
+                        <td>{penalty.penalty_amount}</td>
                         <td>{penalty.active ? "Yes" : "No"}</td>
                       </tr>
                     ))

@@ -3,16 +3,19 @@ import { Card, Row, Col, Button, Form, InputGroup } from "react-bootstrap";
 import { Notyf } from "notyf";
 import FeatherIcon from "feather-icons-react";
 import UserContext from "../context/UserContext";
+import { useNavigate } from "react-router-dom"; // <-- import
+
 
 export default function AddPenalty() {
   const { user } = useContext(UserContext);
   const notyf = new Notyf();
+  const navigate = useNavigate(); // <-- initialize
 
   const [penalty_name, setPenaltyName] = useState("");
   const [penalty_description, setPenaltyDescription] = useState("");
   const [program_type, setProgramType] = useState("");
   const [due_date, setDueDate] = useState("");
-  const [penaly_amount, setPenaltyAmount] = useState("");
+  const [penalty_amount, setPenaltyAmount] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -30,19 +33,22 @@ export default function AddPenalty() {
         penalty_description,
         program_type,
         due_date,
-        penaly_amount
+        penalty_amount
       })
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.message == "Penalty added successfully") {
           notyf.success("Penalty added successfully!");
+          
 
           setPenaltyName("");
           setPenaltyDescription("");
           setProgramType("");
           setDueDate("");
           setPenaltyAmount("");
+
+          navigate("/penalties"); // <-- redirect
         } else {
           notyf.error(data.message || "Something went wrong.");
         }
@@ -87,16 +93,20 @@ export default function AddPenalty() {
                   </InputGroup>
 
                   <InputGroup className="mb-3">
-                    <InputGroup.Text>
-                      <FeatherIcon icon="list" />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="text"
-                      placeholder="Program Type"
-                      value={program_type}
-                      onChange={(e) => setProgramType(e.target.value)}
-                    />
-                  </InputGroup>
+                   <InputGroup.Text>
+                     <FeatherIcon icon="list" />
+                   </InputGroup.Text>
+
+                   <Form.Select
+                     value={program_type}
+                     onChange={(e) => setProgramType(e.target.value)}
+                     required
+                   >
+                     <option value="">Select Program Type</option>
+                     <option value="full">Full Program</option>
+                     <option value="short">Short Program</option>
+                   </Form.Select>
+                 </InputGroup>
 
                   <InputGroup className="mb-3">
                     <InputGroup.Text>
@@ -107,6 +117,8 @@ export default function AddPenalty() {
                       placeholder="Due Date (days)"
                       value={due_date}
                       onChange={(e) => setDueDate(e.target.value)}
+                      min={1}   // numeric values in JSX
+                      max={28}  // numeric values in JSX
                     />
                   </InputGroup>
 
@@ -117,7 +129,7 @@ export default function AddPenalty() {
                     <Form.Control
                       type="number"
                       placeholder="Penalty Amount"
-                      value={penaly_amount}
+                      value={penalty_amount}
                       onChange={(e) => setPenaltyAmount(e.target.value)}
                     />
                   </InputGroup>

@@ -6,20 +6,24 @@ import FeatherIcon from "feather-icons-react";
 
 export default function TuitionFees() {
   const [tuitionFees, setTuitionFees] = useState([]);
+  const [penalties, setPenalties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [globalSearch, setGlobalSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPenaltyModal, setShowPenaltyModal] = useState(false);
   const [selectedTuition, setSelectedTuition] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
+  const token = localStorage.getItem("token");
 
   const fetchTuitionFees = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/tuition-fees`);
+      const res = await fetch(`${API_URL}/tuition-fees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
-      console.log(data)
       if (Array.isArray(data)) {
         setTuitionFees(data);
       } else {
@@ -32,15 +36,31 @@ export default function TuitionFees() {
     }
   };
 
+  const fetchPenalties = async () => {
+    try {
+      const res = await fetch(`${API_URL}/penalties`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setPenalties(data.data || []);
+    } catch {
+      notyf.error("Failed to load penalties.");
+    }
+  };
+
   const generateTuition = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/tuition-fees/generate-tuition`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Request failed");
+
       notyf.success(`${data.created_count} data added.`);
       fetchTuitionFees();
     } catch (err) {
@@ -50,157 +70,126 @@ export default function TuitionFees() {
     }
   };
 
-  const filteredFees = tuitionFees.filter(
-    (t) =>
-      t.enrollment_id?._id?.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      t.total_tuition_fee.toString().includes(globalSearch) ||
-      t.recurring_fee.toString().includes(globalSearch) ||
-      t.total_amount_paid.toString().includes(globalSearch)
+  const updatePenalty = async (penaltyId) => {
+    try {
+      const res = await fetch(`${API_URL}/tuition-fees/attach-penalty`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tuition_id: selectedTuition._id,
+          penalty_id: penaltyId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      notyf.success("Penalty attached successfully.");
+      fetchTuitionFees();
+      setShowPenaltyModal(false);
+    } catch (err) {
+      notyf.error(err.message);
+    }
+  };
+
+  const filteredFees = tuitionFees.filter((t) =>
+    (t.enrollment_id?._id || "")
+      .toLowerCase()
+      .includes(globalSearch.toLowerCase()) ||
+    t.total_tuition_fee.toString().includes(globalSearch) ||
+    t.total_amount_paid.toString().includes(globalSearch)
   );
 
   const columns = [
+    { id: "enrollment", name: "Enrollment ID", selector: (row) => row.enrollment_id?._id || "", sortable: true, center: true },
+    { id: "student", name: "Student ID", selector: (row) => row.enrollment_id?.student_id?._id || "", sortable: true, center: true },
+    { id: "studentname", name: "Student Name", selector: (row) => row.enrollment_id?.student_id ? `${row.enrollment_id.student_id.first_name} ${row.enrollment_id.student_id.middle_name} ${row.enrollment_id.student_id.last_name}` : "", sortable: true, center: true },
+    { id: "total", name: "Total Tuition", selector: (row) => row.total_tuition_fee, sortable: true, center: true },
+    { id: "paid", name: "Total Paid", selector: (row) => row.total_amount_paid, sortable: true, center: true },
     {
-      id: "enrollment",
-      name: "Enrollment ID",
-      selector: (row) => row.enrollment_id?._id || row.enrollment_id,
-      sortable: true,
+      id: "penalty",
+      name: "Penalty",
+      cell: (row) => (
+        <div>
+          <span>{row.penalty_id.penalty_name || "None"}, P{row.penalty_id.penalty_amount || "None"} if no payment after {row.penalty_id.due_date || "None"} of the month </span> <br/>
+          <Button
+            size="sm"
+            variant="link"
+            onClick={() => {
+              setSelectedTuition(row);
+              fetchPenalties();
+              setShowPenaltyModal(true);
+            }}
+          >
+            <FeatherIcon icon="edit" size={14} />
+          </Button>
+        </div>
+      ),
       center: true,
     },
-    {
-      id: "student",
-      name: "Student ID",
-      selector: (row) => row.enrollment_id.student_id?._id || row.student_id,
-      sortable: true,
-      center: true,
-    },
-    {
-      id: "student",
-      name: "Student Name",
-      selector: (row) => (row.enrollment_id.student_id.first_name + " " + row.enrollment_id.student_id.middle_name + " " + row.enrollment_id.student_id.last_name) || row.student_id,
-      sortable: true,
-      center: true,
-    },
-    {
-      id: "total",
-      name: "Total Tuition",
-      selector: (row) => row.total_tuition_fee,
-      sortable: true,
-      center: true,
-    },
-    // {
-    //   id: "recurring",
-    //   name: "Recurring Fee",
-    //   selector: (row) => row.recurring_fee,
-    //   sortable: true,
-    //   center: true,
-    // },
-    {
-      id: "paid",
-      name: "Total Paid",
-      selector: (row) => row.total_amount_paid,
-      sortable: true,
-      center: true,
-    },
-    // {
-    //   id: "due",
-    //   name: "Due Date",
-    //   selector: (row) => row.due_date,
-    //   sortable: true,
-    //   center: true,
-    // },
     {
       id: "actions",
       name: "Actions",
       cell: (row) => (
-        <div className="text-center">
-          <Button
-            size="sm"
-            onClick={() => {
-              setSelectedTuition(row);
-              setShowModal(true);
-            }}
-            style={{ border: "none", padding: "0.25rem" }}
-          >
-            <FeatherIcon icon="info" />
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => { setSelectedTuition(row); setShowDetailsModal(true); }} style={{ border: "none", padding: "0.25rem" }}>
+          <FeatherIcon icon="info" />
+        </Button>
       ),
       ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
       center: true,
     },
   ];
 
   useEffect(() => {
-  	generateTuition();
+    generateTuition();
     fetchTuitionFees();
   }, []);
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
       <h3 className="text-white">FEES</h3>
+
       <div className="container border mt-2 p-4 rounded shadow" style={{ backgroundColor: "#fff" }}>
         <div className="d-flex justify-content-between mb-3">
-          {/*<Button variant="primary" onClick={generateTuition} disabled={loading}>
-            {loading ? <Spinner animation="border" size="sm" /> : "Generate Tuition"}
-          </Button>*/}
-
-          <input
-            type="text"
-            className="form-control"
-            style={{ maxWidth: "250px" }}
-            placeholder="Search..."
-            onChange={(e) => setGlobalSearch(e.target.value)}
-          />
+          <input type="text" className="form-control" style={{ maxWidth: "250px" }} placeholder="Search..." onChange={(e) => setGlobalSearch(e.target.value)} />
         </div>
 
         {loading ? (
           <Spinner animation="border" />
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredFees}
-            pagination
-            highlightOnHover
-            striped
-            dense
-            responsive
-            noDataComponent="No tuition fees found"
-            customStyles={{
-              table: {
-                style: { borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" },
-              },
-              headRow: { style: { backgroundColor: "#f8f9fa", fontWeight: "bold", textAlign: "center" } },
-              headCells: { style: { justifyContent: "center", textAlign: "center" } },
-              rows: { style: { textAlign: "center" } },
-              cells: { style: { justifyContent: "center", textAlign: "center" } },
-              pagination: { style: { justifyContent: "center" } },
-            }}
-          />
+          <DataTable columns={columns} data={filteredFees} pagination highlightOnHover striped dense responsive noDataComponent="No tuition fees found" />
         )}
 
-        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Tuition Details</Modal.Title>
-          </Modal.Header>
+        {/* DETAILS MODAL */}
+        <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered>
+          <Modal.Header closeButton><Modal.Title>Tuition Details</Modal.Title></Modal.Header>
           <Modal.Body>
             {selectedTuition ? (
               <div>
                 <p><strong>ID:</strong> {selectedTuition._id}</p>
                 <p><strong>Enrollment ID:</strong> {selectedTuition.enrollment_id?._id}</p>
                 <p><strong>Total Tuition:</strong> {selectedTuition.total_tuition_fee}</p>
-                <p><strong>Recurring Fee:</strong> {selectedTuition.recurring_fee}</p>
                 <p><strong>Total Paid:</strong> {selectedTuition.total_amount_paid}</p>
-                <p><strong>Due Date:</strong> {selectedTuition.due_date}</p>
+                <p><strong>Penalty:</strong> {selectedTuition.penalty_id?.penalty_name || "None"}</p>
               </div>
-            ) : (
-              <p>No tuition selected</p>
-            )}
+            ) : <p>No tuition selected</p>}
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
-          </Modal.Footer>
+          <Modal.Footer><Button variant="secondary" onClick={() => setShowDetailsModal(false)}>Close</Button></Modal.Footer>
+        </Modal>
+
+        {/* PENALTY MODAL */}
+        <Modal show={showPenaltyModal} onHide={() => setShowPenaltyModal(false)} centered>
+          <Modal.Header closeButton><Modal.Title>Select Penalty</Modal.Title></Modal.Header>
+          <Modal.Body>
+            {penalties.length === 0 ? <p>No penalties found.</p> : penalties.map((p) => (
+              <Button key={p._id} className="w-100 mb-2" onClick={() => updatePenalty(p._id)}>
+                {p.penalty_name} — ₱{p.penalty_amount}
+              </Button>
+            ))}
+          </Modal.Body>
         </Modal>
       </div>
     </div>
