@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { lazy } from 'react';
+import { lazy , Suspense } from 'react';
 
 // Layouts
 import AdminLayout from 'layouts/AdminLayout';
@@ -125,7 +125,14 @@ const router = createBrowserRouter(
 
             { path: 'showtransaction', element: <ShowTransaction /> },
             { path: 'transaction', element: <Transaction /> },
-            { path: 'addtransaction', element: <AddTransaction /> },
+            {
+              path: 'addtransaction',
+              element: (
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AddTransaction />
+                </Suspense>
+              ),
+            },
 
             { path: 'pdf-reg-form', element: <PdfRegForm /> },
             { path: 'pdf-breakdown', element: <PdfBreakdown /> },  
