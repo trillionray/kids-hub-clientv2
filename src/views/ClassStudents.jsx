@@ -9,6 +9,8 @@ import UserContext from "../context/UserContext";
 
 
 export default function ClassStudents() {
+
+
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
   const navigate = useNavigate();
@@ -38,6 +40,8 @@ export default function ClassStudents() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [sessionNumber, setSessionNumber] = useState("");
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [attendanceStatus, setAttendanceStatus] = useState("Present"); // default
+  const [attendanceNotes, setAttendanceNotes] = useState(""); // optional notes
 
   // View Attendance modal
   const [showViewModal, setShowViewModal] = useState(false);
@@ -138,18 +142,28 @@ export default function ClassStudents() {
 
   // 📌 Attendance: Add
   const handleAddAttendance = (student) => {
-    setSelectedStudent(student);
-    setSessionNumber("");
-    setAttendanceDate(new Date().toISOString().split("T")[0]);
-    setShowAddModal(true);
-  };
+  setSelectedStudent(student);
+  setSessionNumber("");
+  setAttendanceDate(new Date().toISOString().split("T")[0]);
+  setAttendanceStatus("Present");  // reset status
+  setAttendanceNotes("");          // reset notes
+  setShowAddModal(true);
+};
 
   const handleSubmitAttendance = () => {
+    if (!sessionNumber) return notyf.error("Please enter session number");
 
-    if (!sessionNumber) {
-      notyf.error("Please enter session number");
-      return;
-    }
+    const payload = {
+      class_id: classId,
+      student_id: selectedStudent.studentId || selectedStudent._id, // ensure correct ID
+      session_number: Number(sessionNumber),
+      date: attendanceDate,
+      status: attendanceStatus,
+      notes: attendanceNotes || "",
+      created_by: user.id
+    };
+
+    console.log("Submitting attendance payload:", payload); // ✅ debug
 
     fetch(`${API_URL}/attendance/add`, {
       method: "POST",
@@ -157,17 +171,11 @@ export default function ClassStudents() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({
-        class_id: classId,
-        student_id: selectedStudent._id,
-        session_number: sessionNumber,
-        date: attendanceDate,
-        created_by: user.id
-      }),
+      body: JSON.stringify(payload),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
+        console.log(data);
         if (data.attendance) {
           notyf.success("Attendance added successfully");
           setShowAddModal(false);
@@ -177,6 +185,7 @@ export default function ClassStudents() {
       })
       .catch(() => notyf.error("Server error"));
   };
+
 
   // 📌 Attendance: View
   const handleViewAttendance = (student) => {
@@ -259,10 +268,14 @@ export default function ClassStudents() {
 
 
   // 📝 Attendance table columns
+  // 📝 Attendance table columns
   const attendanceColumns = [
     { name: "Session", selector: (row) => row.session_number, sortable: true },
     { name: "Date", selector: (row) => new Date(row.date).toLocaleDateString(), sortable: true },
+    { name: "Status", selector: (row) => row.status || "—", sortable: true }, // ✅ added
+    { name: "Notes", selector: (row) => row.notes || "—", wrap: true },       // ✅ added
   ];
+
 
   const filteredStudents = allStudents.filter((s) => {
     const fullName = `${s.firstName || ""} ${s.middleName || ""} ${s.lastName || ""}`.toLowerCase();
@@ -311,6 +324,7 @@ export default function ClassStudents() {
         });
 
         const data = await res.json();
+        console.log(data)
 
         if (data.message && data.message.includes("already added")) {
            notyf.error("Student already exists in the class.");
@@ -350,7 +364,7 @@ export default function ClassStudents() {
             setShowModal(true);
           }}
         >
-          Add Student
+          Add Student/s
         </Button>
       </div>
 
@@ -454,6 +468,29 @@ export default function ClassStudents() {
               onChange={(e) => setAttendanceDate(e.target.value)}
             />
           </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Status</Form.Label>
+            <Form.Select
+              value={attendanceStatus}
+              onChange={(e) => setAttendanceStatus(e.target.value)}
+            >
+              <option value="Present">Present</option>
+              <option value="Excused">Excused</option>
+              <option value="Absent">Absent</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Notes</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={2}
+              value={attendanceNotes}
+              onChange={(e) => setAttendanceNotes(e.target.value)}
+              placeholder="Optional notes..."
+            />
+          </Form.Group>
+
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowAddModal(false)}>

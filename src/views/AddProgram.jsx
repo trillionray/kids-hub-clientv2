@@ -63,6 +63,7 @@ export default function AddProgram() {
       rate,
       down_payment: downPayment,
       isActive,
+      capacity
     };
 
     if (category === "short") {
@@ -204,18 +205,36 @@ export default function AddProgram() {
 
 
             {category === "short" && (
-              <Form.Group className="mb-3" controlId="initialEvaluation">
-                <Form.Label>Initial Evaluation Price (₱)</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  step="0"
-                  placeholder="Enter evaluation price"
-                  value={initialEvaluationPrice}
-                  onChange={(e) => setInitialEvaluationPrice(Number(e.target.value))}
-                  required
-                />
-              </Form.Group>
+              <>
+                {/* Capacity for short program */}
+                
+
+                {/* Initial Evaluation Price */}
+                <Form.Group className="mb-3" controlId="initialEvaluation">
+                  <Form.Label>Initial Evaluation Price (₱)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter evaluation price"
+                    value={initialEvaluationPrice}
+                    onChange={(e) => setInitialEvaluationPrice(Number(e.target.value))}
+                    required
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3" controlId="programCapacityShort">
+                  <Form.Label>Capacity (Number of Enrollees)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    placeholder="Enter maximum enrollees"
+                    value={capacity}
+                    onChange={(e) => setCapacity(Number(e.target.value))}
+                    required
+                  />
+                </Form.Group>
+              </>
             )}
 
             {/* Save Button */}

@@ -114,7 +114,7 @@ export default function TuitionFees() {
       name: "Penalty",
       cell: (row) => (
         <div>
-          <span>{row.penalty_id.penalty_name || "None"}, P{row.penalty_id.penalty_amount || "None"} if no payment after {row.penalty_id.due_date || "None"} of the month </span> <br/>
+          <span>{row.penalty_id.penalty_name || "None"}, P{row.penalty_id.penalty_amount || "None"} if no payment3 after {row.penalty_id.due_date || "None"} of the month </span> <br/>
           <Button
             size="sm"
             variant="link"

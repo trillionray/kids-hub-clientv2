@@ -28,6 +28,7 @@ export default function AddMiscellaneousPackage() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data)
         if (Array.isArray(data)) {
           setMiscs(data);
         } else {
@@ -144,7 +145,9 @@ export default function AddMiscellaneousPackage() {
                             <Form.Check
                               key={misc._id}
                               type="checkbox"
-                              label={`${misc.name} - ₱${misc.price}`}
+                              label={`${misc.name} (${new Date(misc.school_year_id.startDate).getFullYear()}-${new Date(misc.school_year_id.endDate).getFullYear()}) - ₱${misc.price}`}
+
+
                               checked={selectedMiscs.includes(misc._id)}
                               onChange={() => handleMiscSelection(misc._id)}
                             />

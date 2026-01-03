@@ -139,6 +139,7 @@ export default function ShowMiscellaneousPackages() {
     })
       .then((res) => res.json())
       .then((data) => {
+
         if (Array.isArray(data)) {
           setMiscs(data);
           setSelectedMiscs(pkg.miscs);
@@ -214,6 +215,20 @@ export default function ShowMiscellaneousPackages() {
       pkg.package_name?.toLowerCase().includes(searchText.toLowerCase()) ||
       pkg.package_description?.toLowerCase().includes(searchText.toLowerCase())
   );
+
+
+  const formatSchoolYear = (schoolYear) => {
+  if (!schoolYear) return "No SY";
+
+  // populated object
+  if (schoolYear.startDate && schoolYear.endDate) {
+    return `${new Date(schoolYear.startDate).getFullYear()} - ${new Date(
+      schoolYear.endDate
+    ).getFullYear()}`;
+  }
+
+  return "Unknown SY";
+};
 
   return (
     <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>

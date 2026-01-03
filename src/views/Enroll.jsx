@@ -66,6 +66,7 @@ export default function Enroll() {
 
       let total = rate + misc;
 
+      setDiscountPercentage(undefined);
       // Apply discount
       if (formData.discount_id) {
         const selectedDiscount = discounts.find(d => d._id === formData.discount_id);
@@ -345,9 +346,9 @@ export default function Enroll() {
                   </Col>
                   <Col md={6}>
                     <InputGroup className="mb-3">
-                      <InputGroup.Text>Days Per Week</InputGroup.Text>
+                      <InputGroup.Text>Duration</InputGroup.Text>
                       <Form.Control
-                        type="number"
+                        type="text"
                         name="duration"
                         placeholder="Optional"
                         value={formData.duration}
@@ -382,7 +383,7 @@ export default function Enroll() {
               <div className="mb-3 p-2 border rounded bg-light">
                 <p className="mb-1"><strong>Program Rate:</strong> ₱{programRate.toLocaleString()}</p>
                 <p className="mb-1"><strong>Miscellaneous:</strong> ₱{miscellaneousTotal.toLocaleString()}</p>
-                <p className="mb-1"><strong>Discount:</strong> - ₱{programRate / discountPercentage } </p>
+                <p className="mb-1"><strong>Discount:</strong> - ₱{discountPercentage ? (programRate / discountPercentage) : "None"} </p>
 
                 {miscs.length > 0 && (
                   <div className="mb-2">
