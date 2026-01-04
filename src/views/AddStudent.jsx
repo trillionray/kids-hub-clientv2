@@ -420,6 +420,29 @@ export default function AddStudent() {
           if(data.message == "Student updated successfully"){
             notyf.success(data.message);
             const studentPayload = data.student || snakeData; // fallback
+            
+            fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Add Student", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
             navigate("/enroll", { state: { studentData: studentPayload } });
           } 
           else if (data.message == "Student created successfully") {

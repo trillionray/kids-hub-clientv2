@@ -91,6 +91,29 @@ export default function AddMiscellaneousPackage() {
           setPackageDescription("");
           setSelectedMiscs([]);
           setPackagePrice(0);
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Add Miscellaneous Package", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
           navigate("/miscellaneous-package"); // ✅ redirect after success
         } else {
           notyf.error(data.message || "Failed to add package");

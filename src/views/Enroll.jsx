@@ -5,6 +5,7 @@ import UserContext from "../context/UserContext";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Enroll() {
+  
   const { user } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
@@ -224,6 +225,31 @@ export default function Enroll() {
           discount_id: "",
         });
         setProgramRate(0);
+
+
+        fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Enroll Student", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
+
         navigate("/enrollments");
       } else {
         notyf.error(data.message || "Enrollment failed");

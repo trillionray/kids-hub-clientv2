@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useContext } from "react";
 import DataTable from "react-data-table-component";
 import { Button, Modal, InputGroup, Spinner, Form } from "react-bootstrap";
 import { Notyf } from "notyf";
 import { useNavigate } from "react-router-dom";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
+import UserContext from "../context/UserContext";
 
 export default function Classes() {
+  const { user } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
   const notyf = new Notyf();
   const navigate = useNavigate();
@@ -183,7 +185,35 @@ export default function Classes() {
           setNewClassName("");   
           setSelectedTeacher(""); 
           setSelectedProgram("");
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Add Class", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data);
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
+
           fetchClasses();
+
+          
+
+
         } else notyf.error(data.message || "Failed to create class");
       })
       .catch(() => notyf.error("Server Error"));

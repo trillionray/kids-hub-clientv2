@@ -79,6 +79,30 @@ export default function AttendanceStudents() {
       .then((data) => {
         if (data.attendance) {
           notyf.success("Attendance added successfully");
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Add Attendance", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
+
           setShowAddModal(false);
         } else {
           notyf.error(data.message || "Failed to add attendance");

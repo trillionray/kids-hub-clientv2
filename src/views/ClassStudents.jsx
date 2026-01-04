@@ -94,8 +94,6 @@ export default function ClassStudents() {
       .catch(() => notyf.error("Server error"));
   };
 
-
-
   // Assign student to class
   const handleAssignStudent = (student) => {
     console.log("classId:", classId);
@@ -134,6 +132,29 @@ export default function ClassStudents() {
       .then((data) => {
         if (data.class) {
           notyf.success("Student removed successfully");
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Remove Student", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
           fetchStudents();
         } else notyf.error(data.message || "Failed to remove student");
       })
@@ -179,6 +200,28 @@ export default function ClassStudents() {
         if (data.attendance) {
           notyf.success("Attendance added successfully");
           setShowAddModal(false);
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Add Attendance", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
         } else {
           notyf.error(data.message || "Failed to add attendance");
         }

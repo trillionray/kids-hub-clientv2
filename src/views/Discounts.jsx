@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Table, Container } from 'react-bootstrap';
 import { Notyf } from 'notyf';
+import { useContext } from "react";
+import UserContext from "../context/UserContext";
 
 export default function DiscountList() {
   const notyf = new Notyf();
   const [discounts, setDiscounts] = useState([]);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/discounts`, {
