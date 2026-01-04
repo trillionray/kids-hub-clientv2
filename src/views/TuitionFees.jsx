@@ -203,21 +203,84 @@ export default function TuitionFees() {
         )}
 
         {/* DETAILS MODAL */}
-        <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} centered>
-          <Modal.Header closeButton><Modal.Title>Tuition Details</Modal.Title></Modal.Header>
+        {/* DETAILS MODAL */}
+        <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg" centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Tuition Details</Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             {selectedTuition ? (
               <div>
                 <p><strong>ID:</strong> {selectedTuition._id}</p>
                 <p><strong>Enrollment ID:</strong> {selectedTuition.enrollment_id?._id}</p>
-                <p><strong>Total Tuition:</strong> {selectedTuition.total_tuition_fee}</p>
-                <p><strong>Total Paid:</strong> {selectedTuition.total_amount_paid}</p>
+                <p><strong>Student:</strong> {selectedTuition.enrollment_id?.student_id ? `${selectedTuition.enrollment_id.student_id.first_name} ${selectedTuition.enrollment_id.student_id.last_name}` : "N/A"}</p>
+                <p><strong>Total Tuition:</strong> ₱{selectedTuition.total_tuition_fee}</p>
+                <p><strong>Total Paid:</strong> ₱{selectedTuition.total_amount_paid}</p>
                 <p><strong>Penalty:</strong> {selectedTuition.penalty_id?.penalty_name || "None"}</p>
+
+                <hr />
+                <h5>Transactions</h5>
+
+                <div style={{ overflowX: "auto" }}>
+                  {selectedTuition.transactions && selectedTuition.transactions.length > 0 ? (
+                    <table className="table table-bordered table-striped" style={{ minWidth: "1000px" }}>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Amount</th>
+                          <th>Mode</th>
+                          <th>Reference No</th>
+                          <th>Status</th>
+                          <th>Excess</th>
+                          <th>Due</th>
+                          <th>Comment</th>
+                          <th>Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedTuition.transactions
+                          .sort((a, b) => new Date(b.receipt_date) - new Date(a.receipt_date))
+                          .map((tx) => (
+                            <tr key={tx._id}>
+                              <td>{new Date(tx.receipt_date).toLocaleDateString()}</td>
+                              <td>{tx.transaction_type}</td>
+                              <td>₱{tx.amount}</td>
+                              <td>{tx.mode_payment}</td>
+                              <td>{tx.reference_no || "-"}</td>
+                              <td>{tx.payment_status || "-"}</td>
+                              <td>₱{tx.excess_amount}</td>
+                              <td>₱{tx.amount_due}</td>
+                              <td>{tx.comment || "-"}</td>
+                              <td>
+                                {tx.picture_file_path ? (
+                                  <Button
+                                    size="sm"
+                                    variant="primary"
+                                    onClick={() => window.open(`${API_URL}${tx.picture_file_path}`, "_blank")}
+                                  >
+                                    Show Receipt
+                                  </Button>
+                                ) : "-"}
+                              </td>
+                            </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p>No transactions found.</p>
+                  )}
+                </div>
               </div>
-            ) : <p>No tuition selected</p>}
+            ) : (
+              <p>No tuition selected</p>
+            )}
           </Modal.Body>
-          <Modal.Footer><Button variant="secondary" onClick={() => setShowDetailsModal(false)}>Close</Button></Modal.Footer>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>Close</Button>
+          </Modal.Footer>
         </Modal>
+
 
         {/* PENALTY MODAL */}
         <Modal show={showPenaltyModal} onHide={() => setShowPenaltyModal(false)} centered>
@@ -230,6 +293,8 @@ export default function TuitionFees() {
             ))}
           </Modal.Body>
         </Modal>
+
+        
       </div>
     </div>
   );

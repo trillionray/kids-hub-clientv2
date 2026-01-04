@@ -409,7 +409,16 @@ export default function Enroll() {
               <div className="mb-3 p-2 border rounded bg-light">
                 <p className="mb-1"><strong>Program Rate:</strong> ₱{programRate.toLocaleString()}</p>
                 <p className="mb-1"><strong>Miscellaneous:</strong> ₱{miscellaneousTotal.toLocaleString()}</p>
-                <p className="mb-1"><strong>Discount:</strong> - ₱{discountPercentage ? (programRate / discountPercentage) : "None"} </p>
+                <p className="mb-1">
+                  <strong>Discount:</strong> - {
+                    discountPercentage 
+                      ? (() => {
+                          const discount = programRate * (discountPercentage / 100);
+                          return isNaN(discount) ? "None" : `₱${discount.toFixed(2)}`;
+                        })()
+                      : "None"
+                  }
+                </p>
 
                 {miscs.length > 0 && (
                   <div className="mb-2">

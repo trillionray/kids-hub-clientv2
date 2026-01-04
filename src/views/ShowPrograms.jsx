@@ -135,7 +135,6 @@ export default function ShowPrograms() {
         down_payment: currentProgram.down_payment,
         capacity: currentProgram.capacity, // ✅ Added capacity
         miscellaneous_group_id: currentProgram.miscellaneous_group_id,
-        initial_evaluation_price: currentProgram.initial_evaluation_price, // ✅ add this
         isActive: currentProgram.isActive,
         updated_by: user.id,
       }),
@@ -434,7 +433,7 @@ export default function ShowPrograms() {
                 </Form.Select>
               </Form.Group>
 
-              <Form.Group className="mb-3">
+       {/*       <Form.Group className="mb-3">
                 <Form.Label>Initial Evaluation</Form.Label>
                 <Form.Control
                   type="text"
@@ -451,7 +450,7 @@ export default function ShowPrograms() {
                   }
                   disabled // can't edit if long program
                 />
-              </Form.Group>
+              </Form.Group>*/}
 
               <Form.Check
                 type="checkbox"

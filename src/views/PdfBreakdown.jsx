@@ -194,12 +194,15 @@ export default function PdfBreakdown() {
         </Card>
 
 
-        {program?.initial_evaluation_price !== undefined && program.category !== "long" && (
+      {/* 
+
+          {program?.initial_evaluation_price !== undefined && program.category !== "long" && (
             <Card bg="light" className="fs-5 text-end mb-3">
              Initial Evaluation: ₱{Number(program.initial_evaluation_price).toLocaleString()}
             </Card>
           )}
-
+          
+      */}
 
         {/* Down Payment */}
         {program?.down_payment !== undefined && (

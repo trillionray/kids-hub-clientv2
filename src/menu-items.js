@@ -138,12 +138,7 @@ const menuItems = {
               type: 'item',
               url: '/classes'
             },
-            {
-              id: 'show-student-attendance',
-              title: 'Student Attendance',
-              type: 'item',
-              url: '/studentattendance'
-            }
+
           ]
         }
       ]
