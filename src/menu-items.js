@@ -97,12 +97,7 @@ const menuItems = {
               type: 'item',
               url: '/penalties'
             },
-            {
-              id: 'add-penalties',
-              title: 'Add Penalty',
-              type: 'item',
-              url: '/penalties/add'
-            },
+           
             
 
 

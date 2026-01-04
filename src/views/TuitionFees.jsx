@@ -10,6 +10,7 @@ import UserContext from "../context/UserContext";
 
 export default function TuitionFees() {
   const { user } = useContext(UserContext);
+
   const [tuitionFees, setTuitionFees] = useState([]);
   const [penalties, setPenalties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,22 +142,31 @@ export default function TuitionFees() {
     {
       id: "penalty",
       name: "Penalty",
-      cell: (row) => (
-        <div>
-          <span>{row.penalty_id.penalty_name || "None"}, P{row.penalty_id.penalty_amount || "None"} if no payment3 after {row.penalty_id.due_date || "None"} of the month </span> <br/>
-          <Button
-            size="sm"
-            variant="link"
-            onClick={() => {
-              setSelectedTuition(row);
-              fetchPenalties();
-              setShowPenaltyModal(true);
-            }}
-          >
-            <FeatherIcon icon="edit" size={14} />
-          </Button>
-        </div>
-      ),
+      cell: (row) => {
+        const penalty = row.penalty_id;
+
+        return (
+          <div>
+            <span>
+              {penalty?.penalty_name || "None"},
+              {" "}P{penalty?.penalty_amount || "0"}
+              {" "}after {penalty?.due_date || "N/A"}
+            </span>
+            <br />
+            <Button
+              size="sm"
+              variant="link"
+              onClick={() => {
+                setSelectedTuition(row);
+                fetchPenalties();
+                setShowPenaltyModal(true);
+              }}
+            >
+              <FeatherIcon icon="edit" size={14} />
+            </Button>
+          </div>
+        );
+      },
       center: true,
     },
     {
