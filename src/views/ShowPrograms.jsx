@@ -111,6 +111,7 @@ export default function ShowPrograms() {
         down_payment: currentProgram.down_payment,
         capacity: currentProgram.capacity, // ✅ Added capacity
         miscellaneous_group_id: currentProgram.miscellaneous_group_id,
+        initial_evaluation_price: currentProgram.initial_evaluation_price, // ✅ add this
         isActive: currentProgram.isActive,
         updated_by: user.id,
       }),
@@ -119,6 +120,31 @@ export default function ShowPrograms() {
       .then((data) => {
         console.log(data)
         if (data.success) {
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Edit Program", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
+
+
           notyf.success(data.message);
           setShowModal(false);
           fetchPrograms();
@@ -382,6 +408,25 @@ export default function ShowPrograms() {
                     </option>
                   ))}
                 </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Initial Evaluation</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={
+                    currentProgram?.category === "long"
+                      ? "Not Applicable"
+                      : currentProgram?.initial_evaluation_price || ""
+                  }
+                  onChange={(e) =>
+                    setCurrentProgram((prev) => ({
+                      ...prev,
+                      initial_evaluation_price: e.target.value,
+                    }))
+                  }
+                  disabled // can't edit if long program
+                />
               </Form.Group>
 
               <Form.Check

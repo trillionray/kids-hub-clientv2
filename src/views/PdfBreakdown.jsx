@@ -26,9 +26,10 @@ export default function PdfBreakdown() {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const dataProgram = await resProgram.json();
+        console.log(dataProgram)
         setProgram(dataProgram);
 
-        if (miscId) {
+        if (miscId != "undefined") {
           const resMisc = await fetch(`${API_URL}/miscellaneous-package/${miscId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           });
@@ -131,6 +132,8 @@ export default function PdfBreakdown() {
                   <td>{program?.name || "-"}</td>
                   <td className="text-end">{program?.rate.toLocaleString()}</td>
                 </tr>
+
+
               </tbody>
             </Table>
           </Card.Body>
@@ -189,6 +192,14 @@ export default function PdfBreakdown() {
         <Card bg="light" className="fw-bold fs-5 text-end p-3 mb-3">
           Grand Total: ₱{grandTotal.toLocaleString()}
         </Card>
+
+
+        {program?.initial_evaluation_price !== undefined && program.category !== "long" && (
+            <Card bg="light" className="fs-5 text-end mb-3">
+             Initial Evaluation: ₱{Number(program.initial_evaluation_price).toLocaleString()}
+            </Card>
+          )}
+
 
         {/* Down Payment */}
         {program?.down_payment !== undefined && (

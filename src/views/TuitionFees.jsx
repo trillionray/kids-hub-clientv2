@@ -24,6 +24,7 @@ export default function TuitionFees() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      console.log(data)
       if (Array.isArray(data)) {
         setTuitionFees(data);
       } else {

@@ -23,6 +23,9 @@ export default function Register() {
     const [penaltyInfo, setPenaltyInfo] = useState(null);
     const [receiptImage, setReceiptImage] = useState(null);
     const [amountNotice, setAmountNotice] = useState("");
+    const [disableAmount, setDisableAmount] = useState(false);
+    const [nextPaymentDateText, setNextPaymentDateText] = useState("");
+
 
     const submitPayment = async (e) => {
         e.preventDefault();
@@ -155,80 +158,90 @@ export default function Register() {
 
     //Displaying the notification whenever the user exceed downpayment 
     useEffect(() => {
-       if (transactionType === "--Select Transaction Type--" || !transactionType) {
-            setAmount("");          // amount becomes blank and shows placeholder
+        if (!transactionType || transactionType === "--Select Transaction Type--") {
+            setAmount("");
             setAmountNotice("");
+            setDisableAmount(false);
+            setNextPaymentDateText("");
             return;
         }
 
+        const amt = Number(amount || 0);
+
+        // ===============================
+        // DOWNPAYMENT LOGIC (UNCHANGED)
+        // ===============================
         if (transactionType === "Downpayment" && remainingDown !== null) {
-            if (!amount) setAmount(remainingDown.toFixed(2));
+            const remaining = Number(remainingDown);
 
-            if (parseFloat(amount) > remainingDown) {
-                const excess = (parseFloat(amount) - remainingDown).toFixed(2);
-                setAmountNotice(`⚠ Excess ₱${excess} will be applied to the next payment.`);
-            } else {
-                const shortage = (remainingDown - parseFloat(amount)).toFixed(2);
-                setAmountNotice(`⚠ Your payment is short by ₱${shortage}.
-                    Required to fully settle this month: ₱${remainingDown.toFixed(2)}`);
-            }
-            return; 
-        }
-
-        if (transactionType === "Monthly" && penaltyInfo) {
-            const totalPayable = Number(
-                penaltyInfo.totalPayable ??
-                (Number(penaltyInfo.monthlyFeeToPay) + Number(penaltyInfo.totalPenalty))
-            );
-
-            // Auto-fill amount only when empty
-            if (!amount) setAmount(totalPayable.toFixed(2));
-
-            const amt = Number(amount);
-            
-            // ===============================
-            //  EXCESS PAYMENT (Overpayment)
-            // ===============================
-            if (amt > totalPayable) {
-                const excess = (amt - totalPayable).toFixed(2);
-
-                setAmountNotice(
-                    `⚠ You entered ₱${amount}.
-                    Required Amount: ₱${totalPayable.toFixed(2)}
-                    Excess Payment: ₱${excess} will be applied to the NEXT month IF remaining balance exists.`
-                );
+            if (!amount) {
+                setAmount(remaining.toFixed(2));
                 return;
             }
 
-            // ===============================
-            //  UNDERPAYMENT WARNING
-            // ===============================
-            if (amt < totalPayable) {
-                const shortage = (totalPayable - amt).toFixed(2);
-
+            if (amt > remaining) {
+                const excess = (amt - remaining).toFixed(2);
+                setAmountNotice(`⚠ Excess ₱${excess} will be applied to the next payment.`);
+            } else if (amt < remaining) {
+                const shortage = (remaining - amt).toFixed(2);
                 setAmountNotice(
                     `⚠ Your payment is short by ₱${shortage}.
-                    Required to fully settle this month: ₱${totalPayable.toFixed(2)}`
+                    Required to fully settle this month: ₱${remaining.toFixed(2)}`
                 );
-                return;
+            } else {
+                setAmountNotice("");
             }
-
-            // ===============================
-            //  EXACT PAYMENT → NO WARNING
-            // ===============================
-           setAmountNotice(
-                penaltyInfo.hasPenalty
-                    ? `Late by ${penaltyInfo.daysLate} day(s)
-                    Monthly Due: ${penaltyInfo.dueMonths} month(s)
-                    Monthly Fee: ₱${penaltyInfo.recurr_fee}
-                    Penalty: ₱${penaltyInfo.totalPenalty}
-                    Total Amount: ₱${totalPayable.toFixed(2)}`
-                            : `No penalty — you're on time 🎉
-                    Amount excess can be used: ₱${penaltyInfo.excess_amount?.toFixed(2) || 0}`
-            );
             return;
         }
-        // RESET IF NO MATCH
+
+        // ===============================
+        // MONTHLY PAYMENT 
+        // ===============================
+        if (transactionType === "Monthly" && penaltyInfo) {
+
+            const noticeLines = [];
+
+            if (penaltyInfo.finalPayable === 0) {
+                setDisableAmount(true);
+            }
+
+
+            if (penaltyInfo.isCurrentMonthPaid) {
+                noticeLines.push("✅ Monthly fee already paid");
+            } else {
+                noticeLines.push(`🧾 Monthly Fee: ₱${penaltyInfo.recurr_fee.toFixed(2)}`);
+                noticeLines.push(`🧮 Total Monthly Fee: ₱${penaltyInfo.monthlyFeeToPay.toFixed(2)}`);
+            }
+
+            if (penaltyInfo.dueMonths > 0) {
+                noticeLines.push(`📅 Pay for ${penaltyInfo.dueMonths} month(s)`);
+            }
+
+            if (penaltyInfo.daysLate > 0) {
+                noticeLines.push(`⏰ Late by ${penaltyInfo.daysLate} day(s)`);
+                noticeLines.push(`⚠ Penalty: ₱${(penaltyInfo.totalPenalty + penaltyInfo.due_amount_paid).toFixed(2)}`);
+            }
+
+            if (penaltyInfo.due_amount_paid > 0) {
+                noticeLines.push(`➖ Penalty already paid: ₱${penaltyInfo.due_amount_paid.toFixed(2)}`);
+            }
+
+            if (penaltyInfo.remainingExcess > 0) {
+                noticeLines.push(`➖ Excess applied: ₱${penaltyInfo.remainingExcess.toFixed(2)}`);
+            }
+
+            noticeLines.push(`💰 Amount to Pay: ₱${penaltyInfo.finalPayable.toFixed(2)}`);
+
+            setAmountNotice(noticeLines.join("\n"));
+
+            // auto-fill
+            if (amount === "") {
+                setAmount(penaltyInfo.finalPayable.toFixed(2));
+            }
+
+            return;
+        }
+
         setAmountNotice("");
 
     }, [amount, transactionType, remainingDown, penaltyInfo]);
@@ -305,7 +318,7 @@ export default function Register() {
                                             onChange={(e) => setTransactionType(e.target.value)}
                                             required
                                             >
-                                            <option selected>--Select Transaction Type--</option>
+                                            <option value="">--Select Transaction Type--</option>
                                             <option value="Monthly">Monthly</option>
                                             <option value="Downpayment">Downpayment</option>
                                             <option value="ProgramRate">Program Rate</option>
@@ -323,6 +336,7 @@ export default function Register() {
                                             type="number"
                                             placeholder="amount..."
                                             value={amount}
+                                            disabled={disableAmount}
                                             onChange={(e) => setAmount(e.target.value)}
                                             required
                                         />
@@ -360,7 +374,6 @@ export default function Register() {
                                     placeholder="Enter reference number"
                                     value={referenceNumber}
                                     onChange={(e) => setReferenceNumber(e.target.value)}
-                                    required
                                     />
                                 </Form.Group>
                                 </Col>

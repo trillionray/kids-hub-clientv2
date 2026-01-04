@@ -103,6 +103,30 @@ export default function Register() {
           setPasswordError(false);
           setConfirmPasswordError(false);
 
+          console.log(user)
+
+          fetch(`${API_URL}/logs`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                user: user.id, 
+                task: "Register Employee", 
+                documentLog: data
+              }) // datetime is automatic in backend
+          })
+          .then(res => res.json())
+          .then(data => {
+            console.log(data)
+            if (data.log) {
+              console.log('Log added successfully:', data.log);
+            } else {
+              console.error('Error adding log:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Server error:', err.message);
+          });
+
           navigate('/all-users');
 
         } else if (data.message?.toLowerCase().includes("password")) {
