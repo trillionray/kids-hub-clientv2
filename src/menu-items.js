@@ -92,12 +92,6 @@ const menuItems = {
               url: '/discounts'
             },
             {
-              id: 'discounts',
-              title: 'Add Discount',
-              type: 'item',
-              url: '/discounts/add'
-            },
-            {
               id: 'penalties',
               title: 'Penalties',
               type: 'item',

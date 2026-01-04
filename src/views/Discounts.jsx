@@ -1,64 +1,164 @@
-import { useEffect, useState } from 'react';
-import { Table, Container } from 'react-bootstrap';
-import { Notyf } from 'notyf';
-import { useContext } from "react";
+import { useEffect, useState, useContext } from "react";
+import DataTable from "react-data-table-component";
+import { Container, Form, Button, Spinner } from "react-bootstrap";
+import { Notyf } from "notyf";
 import UserContext from "../context/UserContext";
+import { Link } from "react-router-dom";
 
 export default function DiscountList() {
   const notyf = new Notyf();
-  const [discounts, setDiscounts] = useState([]);
   const { user } = useContext(UserContext);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/discounts`, {
+  const [discounts, setDiscounts] = useState([]);
+  const [filterText, setFilterText] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const fetchDiscounts = () => {
+    setLoading(true);
+    fetch(`${API_URL}/discounts`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (Array.isArray(data.data)) {
           setDiscounts(data.data);
         } else {
-          notyf.error('Failed to load discount list');
+          notyf.error("Failed to load discount list");
         }
       })
-      .catch(() => {
-        notyf.error('Server error or unauthorized');
-      });
+      .catch(() => notyf.error("Server error or unauthorized"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDiscounts();
   }, []);
 
+  const columns = [
+    {
+      name: "#",
+      selector: (row, index) => index + 1,
+      width: "70px",
+      center: true,
+    },
+    {
+      name: "Discount Name",
+      selector: (row) => row.discount_name,
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Description",
+      selector: (row) => row.description || "N/A",
+      center: true,
+      wrap: true,
+    },
+    {
+      name: "Percentage",
+      selector: (row) => `${row.percentage}%`,
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Active",
+      selector: (row) => (row.is_active ? "Yes" : "No"),
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Created At",
+      selector: (row) =>
+        new Date(row.createdAt).toLocaleDateString(),
+      sortable: true,
+      center: true,
+    },
+  ];
+
+  const filteredData = discounts.filter(
+    (d) =>
+      d.discount_name.toLowerCase().includes(filterText.toLowerCase()) ||
+      (d.description &&
+        d.description.toLowerCase().includes(filterText.toLowerCase()))
+  );
+
   return (
-    <Container className="mt-5">
-      <h2 className="text-center mb-4">Discount List</h2>
-      {discounts.length === 0 ? (
-        <p className="text-center">No discounts found.</p>
-      ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Discount Name</th>
-              <th>Description</th>
-              <th>Percentage</th>
-              <th>Active</th>
-              <th>Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {discounts.map((discount, index) => (
-              <tr key={discount._id}>
-                <td>{index + 1}</td>
-                <td>{discount.discount_name}</td>
-                <td>{discount.description}</td>
-                <td>{discount.percentage}%</td>
-                <td>{discount.is_active ? "Yes" : "No"}</td>
-                <td>{new Date(discount.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-    </Container>
+    <div style={{ backgroundColor: "#89C7E7", minHeight: "100vh", padding: "20px" }}>
+      <h3 className="text-white fw-bold">DISCOUNT LIST</h3>
+
+      <Container className="border p-4 rounded shadow bg-white">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+
+          <Link to="/discounts/add">
+              <Button variant="primary" className="p-2">
+                Add Discount
+              </Button>
+            </Link>
+
+
+          <Form.Control
+            type="text"
+            placeholder="Search..."
+            style={{ maxWidth: "250px" }}
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+          />
+        </div>
+
+        {loading ? (
+          <div className="text-center">
+            <Spinner animation="border" />
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredData}
+            pagination
+            highlightOnHover
+            striped
+            dense
+            responsive
+            noDataComponent="No discounts found."
+            customStyles={{
+              table: {
+                style: {
+                  borderRadius: "10px",
+                  border: "1px solid #dee2e6",
+                },
+              },
+              headRow: {
+                style: {
+                  backgroundColor: "#f8f9fa",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                },
+              },
+              headCells: {
+                style: {
+                  justifyContent: "center",
+                  textAlign: "center",
+                },
+              },
+              rows: {
+                style: {
+                  textAlign: "center",
+                },
+              },
+              cells: {
+                style: {
+                  justifyContent: "center",
+                  textAlign: "center",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                },
+              },
+            }}
+          />
+        )}
+      </Container>
+    </div>
   );
 }
