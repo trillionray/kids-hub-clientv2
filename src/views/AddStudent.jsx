@@ -514,11 +514,34 @@ export default function AddStudent() {
                        </Form.Group>
                      )}
 
-                     <Row className="align-items-end">
-                       <Col md={6}>
+                     <Row className="align-items-end justify-content-center text-center mt-4">
+                       <Col md={6} >
+                         {/* Show existing or newly selected image */}
+                         {previewImage || formData.picture_file_path ? (
+                           <img
+                             src={
+                               previewImage ||
+                               (typeof formData.picture_file_path === "string"
+                                 ? `${API_URL}${formData.picture_file_path}`
+                                 : "") // if it’s a File object, use previewImage
+                             }
+                             alt="Student Preview"
+                             style={{
+                               objectFit: "cover",
+                               borderRadius: "8px",
+                               marginBottom: "10px",
+                               maxHeight: "200px",
+                             }}
+                             className="img-fluid border border-2"
+                           />
+                         ) : (
+                           <p></p>
+                         )}
+
                          <Form.Group className="mb-3">
                            <Form.Label>Student Picture (Optional)</Form.Label>
                            <Form.Control
+
                              type="file"
                              accept="image/*"
                              onChange={(e) => {
@@ -527,25 +550,16 @@ export default function AddStudent() {
                                if (file) setPreviewImage(URL.createObjectURL(file));
                              }}
                            />
+                           {previewImage && (
+                             <Form.Text className="text-danger fw-bold">
+                               Leave empty to keep the current photo.
+                             </Form.Text>
+                           )}
                          </Form.Group>
                        </Col>
-
-                       <Col md={6} className="d-flex justify-content-center">
-                         {previewImage && (
-                           <img
-                             src={previewImage}
-                             alt="Student Preview"
-                             style={{
-                               width: "120px",
-                               height: "120px",
-                               objectFit: "cover",
-                               borderRadius: "8px",
-                               marginBottom: "10px"
-                             }}
-                           />
-                         )}
-                       </Col>
                      </Row>
+
+
 
 
 

@@ -13,6 +13,7 @@ export default function EditStudent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // 🟡 TOGGLE STATE
+  const [photoFile, setPhotoFile] = useState(null); // 🟢 For new photo uploads
 
   useEffect(() => {
     fetch(`${API_URL}/students/get-student-by-id/${id}`, {
@@ -52,81 +53,59 @@ export default function EditStudent() {
   }, [id]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
 
-    // ✅ Handle nested fields using dot notation e.g. "mother.first_name"
+    if (name === "photo" && files?.[0]) {
+      setPhotoFile(files[0]); // 🟢 Set new photo
+      return;
+    }
+
     if (name.includes(".")) {
       const [parent, child, subchild] = name.split(".");
       setStudent((prev) => ({
         ...prev,
         [parent]: subchild
-          ? {
-              ...prev[parent],
-              [child]: {
-                ...prev[parent]?.[child],
-                [subchild]: value,
-              },
-            }
-          : {
-              ...prev[parent],
-              [child]: value,
-            },
+          ? { ...prev[parent], [child]: { ...prev[parent]?.[child], [subchild]: value } }
+          : { ...prev[parent], [child]: value },
       }));
     } else {
-      setStudent((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setStudent((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+      setSaving(true);
 
-    fetch(`${API_URL}/students/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify(student),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+      try {
+        let body;
+        let headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+
+       if (photoFile) {
+         const formData = new FormData();
+         formData.append("picture_file_path", photoFile); // ✅ must match multer
+         formData.append("student", JSON.stringify(student));
+         body = formData;
+       } else {
+         body = JSON.stringify(student);
+         headers["Content-Type"] = "application/json";
+       }
+
+        const res = await fetch(`${API_URL}/students/${id}`, { method: "PUT", headers, body });
+        const data = await res.json();
+
         if (data?.success) {
           notyf.success("Student updated successfully");
-
-          fetch(`${API_URL}/logs`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                user: user.id, 
-                task: "Edit Student Info", 
-                documentLog: data
-              }) // datetime is automatic in backend
-          })
-          .then(res => res.json())
-          .then(data => {
-            console.log(data)
-            if (data.log) {
-              console.log('Log added successfully:', data.log);
-            } else {
-              console.error('Error adding log:', data.message);
-            }
-          })
-          .catch(err => {
-            console.error('Server error:', err.message);
-          });
-
           navigate("/students");
         } else {
           notyf.error(data?.message || "Update failed");
         }
-      })
-      .catch(() => notyf.error("Server error"))
-      .finally(() => setSaving(false));
-  };
+      } catch (err) {
+        notyf.error("Server error");
+      } finally {
+        setSaving(false);
+      }
+    };
 
   if (loading) {
     return (
@@ -142,92 +121,138 @@ export default function EditStudent() {
     <div className="container mt-5">
       <Card className="p-4 shadow mb-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3>Student Information</h3>
-          <div className="d-flex align-items-center gap-2 mb-3">
-            {isEditing ? (
-              <Button variant="secondary" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-            ) : (
-              <Button variant="primary" onClick={() => setIsEditing(true)}>
-                Edit
-              </Button>
-            )}
-          </div>
+          <h3 className="text-center w-100">Student Information</h3>
+          
+        </div>
+
+        <div className="text-right">
+
+
+          {isEditing ? (
+            <Button variant="secondary" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={() => setIsEditing(true)}>
+              Edit
+            </Button>
+          )}
         </div>
         <Form onSubmit={handleSubmit}>
+
+            
+
           {/* ✏️ Basic Info */}
-          <div className="row">
-            <div className="col-md-3 mb-3">
-              <Form.Label>First Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="first_name"
-                value={student.first_name || ""}
-                onChange={handleChange}
-                required
-                disabled={!isEditing}
-              />
-            </div>
-            <div className="col-md-3 mb-3">
-              <Form.Label>Middle Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="middle_name"
-                value={student.middle_name || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-              />
-            </div>
-            <div className="col-md-3 mb-3">
-              <Form.Label>Last Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="last_name"
-                value={student.last_name || ""}
-                onChange={handleChange}
-                required
-                disabled={!isEditing}
-              />
+          <div className="row align-items-center  ">
+            
+
+             {/* 🖼 Photo */}
+            <div className="col-md-3 text-center">
+              {photoFile ? (
+                <img
+                  src={URL.createObjectURL(photoFile)}
+                  alt="Selected"
+                  style={{ maxWidth: "200px", borderRadius: "8px" }}
+                />
+              ) : student.picture_file_path ? (
+                <img
+                  src={`${API_URL}${student.picture_file_path}`}
+                  alt="Student"
+                  style={{ maxWidth: "180px", borderRadius: "8px", border: "2px solid #CAD5E2" , padding: "15px"}}
+                  className = "img-fluid"
+                />
+              ) : (
+                <p>No photo available</p>
+              )}
+
+              {isEditing && (
+                <Form.Control
+                  type="file"
+                  name="photo"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="mt-2"
+                />
+              )}
             </div>
 
-            <div className="col-md-3 mb-3">
-              <Form.Label>Suffix (Optional)</Form.Label>
-              <Form.Control
-                type="text"
-                name="suffix"
-                value={student.suffix || ""}
-                onChange={handleChange}
-                placeholder="e.g. Jr., Sr., II"
-                disabled={!isEditing}
-              />
+            <div className="col-md-9  ">
+
+              <div class="row">
+                
+                <div className="col-md-4 mb-3">
+                  <Form.Label>First Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="first_name"
+                    value={student.first_name || ""}
+                    onChange={handleChange}
+                    required
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <Form.Label>Middle Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="middle_name"
+                    value={student.middle_name || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <Form.Label>Last Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="last_name"
+                    value={student.last_name || ""}
+                    onChange={handleChange}
+                    required
+                    disabled={!isEditing}
+                  />
+                </div>
+
+                <div className="col-md-4 mb-3">
+                  <Form.Label>Suffix (Optional)</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="suffix"
+                    value={student.suffix || ""}
+                    onChange={handleChange}
+                    placeholder="e.g. Jr., Sr., II"
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <Form.Label>Gender</Form.Label>
+                  <Form.Select
+                    name="gender"
+                    value={student.gender || ""}
+                    onChange={handleChange}
+                    required
+                    disabled={!isEditing}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </Form.Select>
+                </div>
+                <div className="col-md-4 mb-3">
+                  <Form.Label>Birthdate</Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="birthdate"
+                    value={student.birthdate?.substring(0, 10) || ""}
+                    onChange={handleChange}
+                    required
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+              
             </div>
 
-            <div className="col-md-3 mb-3">
-              <Form.Label>Gender</Form.Label>
-              <Form.Select
-                name="gender"
-                value={student.gender || ""}
-                onChange={handleChange}
-                required
-                disabled={!isEditing}
-              >
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </Form.Select>
-            </div>
-            <div className="col-md-3 mb-3">
-              <Form.Label>Birthdate</Form.Label>
-              <Form.Control
-                type="date"
-                name="birthdate"
-                value={student.birthdate?.substring(0, 10) || ""}
-                onChange={handleChange}
-                required
-                disabled={!isEditing}
-              />
-            </div>
           </div>
 
           {/* 🏡 Address */}

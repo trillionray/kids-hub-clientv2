@@ -232,9 +232,24 @@ export default function ShowStudents() {
               <Modal.Header closeButton>
                 <Modal.Title>Student Details</Modal.Title>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="text-center">
                 {selectedStudent ? (
                   <>
+
+                  {/* Photo */}
+                          {selectedStudent.picture_file_path ? (
+                            <div className="text-center mb-3">
+                              <img
+                                src={`${API_URL}${selectedStudent.picture_file_path}`}
+                                alt="Student"
+                                style={{ maxWidth: "100px", borderRadius: "8px" }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center mb-3">
+                              <p>No photo available</p>
+                            </div>
+                          )}
                     <h5>
                       {selectedStudent.first_name} {selectedStudent.middle_name}{" "}
                       {selectedStudent.last_name} {selectedStudent.suffix}
