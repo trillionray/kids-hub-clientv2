@@ -5,20 +5,6 @@ import { Notyf } from "notyf";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-// Helper: camelCase -> snake_case
-const toSnakeCase = (obj) => {
-  if (Array.isArray(obj)) return obj.map(toSnakeCase);
-  if (obj && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
-      const snakeKey = key
-        .replace(/([a-z0-9])([A-Z])/g, "$1_$2") // handles blockOrLot → block_or_lot
-        .toLowerCase();
-      acc[snakeKey] = toSnakeCase(obj[key]);
-      return acc;
-    }, {});
-  }
-  return obj;
-};
 
 export default function AddStudent() {
 
@@ -56,6 +42,7 @@ export default function AddStudent() {
          municipality_or_city: ""
        },
        contacts: {
+         country_code: "+63",
          mobile_number: "",
          messenger_account: ""
        }
@@ -73,6 +60,7 @@ export default function AddStudent() {
          municipality_or_city: ""
        },
        contacts: {
+          country_code: "+63",
          mobile_number: "",
          messenger_account: ""
        }
@@ -90,6 +78,7 @@ export default function AddStudent() {
          municipality_or_city: ""
        },
        contacts: {
+        country_code: "+63",
          mobile_number: "",
          messenger_account: ""
        }
@@ -107,9 +96,22 @@ export default function AddStudent() {
   const [oldStudents, setOldStudents] = useState([]);
   const [isOldStudentSelected, setIsOldStudentSelected] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (previewImage?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [previewImage]);
+
+  useEffect(() => {
+    setPreviewImage(null);
+  }, [formData.student_type]);
+
+
   // ---------- OLD STUDENT SEARCH ----------
   useEffect(() => {
-    if (formData.studentType === "old" && searchQuery.trim().length > 0) {
+    if (formData.student_type === "old" && searchQuery.trim().length > 0) {
       fetch(`${import.meta.env.VITE_API_URL}/students/search-student`, {
         method: "POST",
         headers: {
@@ -132,10 +134,10 @@ export default function AddStudent() {
       setOldStudents([]);
     }
     
-  }, [searchQuery, formData.studentType]);
+  }, [searchQuery, formData.student_type]);
   console.log(searchQuery)
 
-  // ---------- NEW useEffect: Reset isOldStudentSelected when switching studentType ----------
+  // ---------- NEW useEffect: Reset isOldStudentSelected when switching student_type ----------
   useEffect(() => {
     setIsOldStudentSelected(false);
     setSearchQuery("");
@@ -143,9 +145,9 @@ export default function AddStudent() {
 
     setFormData((prev) => ({
       ...initialFormData,
-      studentType: prev.studentType // ✅ use prev so it doesn't "fight" with select input
+      student_type: prev.student_type // ✅ use prev so it doesn't "fight" with select input
     }));
-  }, [formData.studentType]);
+  }, [formData.student_type]);
 
 
   // ---------- HANDLERS ----------
@@ -194,12 +196,12 @@ export default function AddStudent() {
       return;
     }
 
-    if (name === "studentType") {
+    if (name === "student_type") {
       if (value === "new") {
         setIsOldStudentSelected(false);
         setSearchQuery("");
       }
-      setFormData((prev) => ({ ...prev, studentType: value }));
+      setFormData((prev) => ({ ...prev, student_type: value }));
       return;
     }
 
@@ -222,41 +224,76 @@ export default function AddStudent() {
 
     const mapped = {
       _id: student._id,
-      firstName: student.first_name || "",
-      middleName: student.middle_name || "",
-      lastName: student.last_name || "",
+      first_name: student.first_name || "",
+      middle_name: student.middle_name || "",
+      last_name: student.last_name || "",
       suffix: student.suffix || "",
       gender: student.gender || "Male",
       birthdate: student.birthdate || "",
       address: {
-        blockOrLot: student.address?.block_or_lot || "",
+        block_or_lot: student.address?.block_or_lot || "",
         street: student.address?.street || "",
         barangay: student.address?.barangay || "",
-        municipalityOrCity: student.address?.municipality_or_city || ""
+        municipality_or_city: student.address?.municipality_or_city || ""
       },
       mother: {
-        firstName: student.mother?.first_name || "",
-        middleName: student.mother?.middle_name || "",
-        lastName: student.mother?.last_name || "",
+        first_name: student.mother?.first_name || "",
+        middle_name: student.mother?.middle_name || "",
+        last_name: student.mother?.last_name || "",
         suffix: student.mother?.suffix || "",
         occupation: student.mother?.occupation || "",
         address: {
-          blockOrLot: student.mother?.address?.block_or_lot || "",
+          block_or_lot: student.mother?.address?.block_or_lot || "",
           street: student.mother?.address?.street || "",
           barangay: student.mother?.address?.barangay || "",
           municipality_or_city: student.mother?.address?.municipality_or_city || ""
         },
         contacts: {
+          country_code: student.mother?.contacts?.country_code || "+63",
           mobile_number: student.mother?.contacts?.mobile_number || "",
           messenger_account: student.mother?.contacts?.messenger_account || ""
         }
       },
-      father: { /* same as above */ },
-      emergency: { /* same as above */ },
+      father: {
+        first_name: student.father?.first_name || "",
+        middle_name: student.father?.middle_name || "",
+        last_name: student.father?.last_name || "",
+        suffix: student.father?.suffix || "",
+        occupation: student.father?.occupation || "",
+        address: {
+          block_or_lot: student.father?.address?.block_or_lot || "",
+          street: student.father?.address?.street || "",
+          barangay: student.father?.address?.barangay || "",
+          municipality_or_city: student.father?.address?.municipality_or_city || ""
+        },
+        contacts: {
+          country_code: student.father?.contacts?.country_code || "+63",
+          mobile_number: student.father?.contacts?.mobile_number || "",
+          messenger_account: student.father?.contacts?.messenger_account || ""
+        }
+      },
+      emergency: {
+        first_name: student.emergency?.first_name || "",
+        middle_name: student.emergency?.middle_name || "",
+        last_name: student.emergency?.last_name || "",
+        suffix: student.emergency?.suffix || "",
+        occupation: student.emergency?.occupation || "",
+        address: {
+          block_or_lot: student.emergency?.address?.block_or_lot || "",
+         street: student.emergency?.address?.street || "",
+         barangay: student.emergency?.address?.barangay || "",
+          municipality_or_city: student.emergency?.address?.municipality_or_city || ""
+        },
+        contacts: {
+          country_code: student.emergency?.contacts?.country_code || "+63",
+          mobile_number: student.emergency?.contacts?.mobile_number || "",
+          messenger_account: student.emergency?.contacts?.messenger_account || ""
+        }
+      },
       picture_file_path: null, // keep null for file input
     };
 
-    setFormData((prev) => ({ ...prev, ...mapped, studentType: "old" }));
+    setFormData((prev) => ({ ...prev, ...mapped, student_type: "old" }));
 
     // ✅ Show old student picture
     if (student.picture_file_path) {
@@ -293,8 +330,8 @@ export default function AddStudent() {
         }, {});
     };
 
-    const current = normalize({ ...formData, studentType: "old" });
-    const original = normalize({ ...originalStudentData, studentType: "old" });
+    const current = normalize({ ...formData, student_type: "old" });
+    const original = normalize({ ...originalStudentData, student_type: "old" });
 
     return JSON.stringify(current) !== JSON.stringify(original);
   };
@@ -304,7 +341,7 @@ export default function AddStudent() {
   const handleContinue = () => {
     setSelectionDisabled(true);
 
-    if (formData.studentType === "old") {
+    if (formData.student_type === "old") {
       if (isDataChanged()) {
         if (!validateStep1()) return;
         Swal.fire({
@@ -332,16 +369,16 @@ export default function AddStudent() {
 
 
   const validateStep1 = () => {
-    if (!formData.firstName || !formData.lastName || !formData.birthdate) {
+    if (!formData.first_name || !formData.last_name || !formData.birthdate) {
       notyf.error("First name, last name and birthdate are required.");
       return false;
     }
 
     if (
-      !formData.address.blockOrLot ||
+      !formData.address.block_or_lot ||
       !formData.address.street ||
       !formData.address.barangay ||
-      !formData.address.municipalityOrCity
+      !formData.address.municipality_or_city
     ) {
       notyf.error("All address fields are required.");
       return false;
@@ -402,19 +439,17 @@ export default function AddStudent() {
 
 
   
-  const disabled = formData.studentType === "old";
+  const disabled = formData.student_type === "old";
   
   const today = new Date().toISOString().split("T")[0];
 
   const hasRegisteredContact = (person) => {
     return (
-      person.firstName.trim() &&
-      person.lastName.trim() &&
-      person.suffix.trim() &&
-      person.occupation.trim()
+      person?.first_name?.trim() &&
+      person?.last_name?.trim() &&
+      person?.occupation?.trim()
     );
   };
-
 
   // ---------- RENDER ----------
   return (
@@ -437,8 +472,8 @@ export default function AddStudent() {
                          <Form.Group className="mb-3">
                            <Form.Label>Student Type</Form.Label>
                            <Form.Select
-                             name="studentType"
-                             value={formData.studentType}
+                             name="student_type"
+                             value={formData.student_type}
                              onChange={handleChange}
                              required
                            >
@@ -450,7 +485,7 @@ export default function AddStudent() {
                     </Row>
 
                      {/* Old Student Search */}
-                     {formData.studentType === "old" && !isOldStudentSelected && (
+                     {formData.student_type === "old" && !isOldStudentSelected && (
                        <Form.Group className="mb-3">
                          <Form.Label>Search Old Student</Form.Label>
                          <Form.Control
@@ -470,9 +505,8 @@ export default function AddStudent() {
                                  style={{ padding: "4px", cursor: "pointer" }}
                                  onClick={() => handleSelectOldStudent(s)}
                                >
-                                 {(s.first_name || s.firstName) || ""}{" "}
-                                 {(s.middle_name || s.middleName) || ""}{" "}
-                                 {(s.last_name || s.lastName) || ""}
+                                 {s.first_name} {s.middle_name} {s.last_name}
+
                                </div>
                              ))}
                            </div>
@@ -522,8 +556,8 @@ export default function AddStudent() {
                           <Form.Label>First Name <span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             type="text"
-                            name="firstName"
-                            value={formData.firstName}
+                            name="first_name"
+                            value={formData.first_name}
                             onChange={handleChange}
                             required
                             disabled={disabled}
@@ -536,8 +570,8 @@ export default function AddStudent() {
                           <Form.Label>Middle Name (Optional)</Form.Label>
                           <Form.Control
                             type="text"
-                            name="middleName"
-                            value={formData.middleName}
+                            name="middle_name"
+                            value={formData.middle_name}
                             onChange={handleChange}
                             disabled={disabled}
                             placeholder="Enter middle name (Optional)"
@@ -552,8 +586,8 @@ export default function AddStudent() {
                           <Form.Label>Last Name <span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             type="text"
-                            name="lastName"
-                            value={formData.lastName}
+                            name="last_name"
+                            value={formData.last_name}
                             onChange={handleChange}
                             required
                             disabled={disabled}
@@ -614,8 +648,8 @@ export default function AddStudent() {
                           <Form.Label>Block/Lot <span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             type="text"
-                            name="address.blockOrLot"
-                            value={formData.address.blockOrLot}
+                            name="address.block_or_lot"
+                            value={formData.address.block_or_lot}
                             onChange={handleChange}
                             placeholder="Enter Block & Lot"
                           />
@@ -650,8 +684,8 @@ export default function AddStudent() {
                           <Form.Label>Municipality/City <span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             type="text"
-                            name="address.municipalityOrCity"
-                            value={formData.address.municipalityOrCity}
+                            name="address.municipality_or_city"
+                            value={formData.address.municipality_or_city}
                             onChange={handleChange}
                             placeholder="Enter municipality or city"
                           />
@@ -661,11 +695,11 @@ export default function AddStudent() {
 
                     <div className="d-flex justify-content-end mt-3">
                       <Button
-                        variant={formData.studentType === "old" && originalStudentData?.hasPendingEnrollment ? "danger" : "primary"}
+                        variant={formData.student_type === "old" && originalStudentData?.hasPendingEnrollment ? "danger" : "primary"}
                         onClick={handleContinue}
-                        disabled={formData.studentType === "old" && originalStudentData?.hasPendingEnrollment}
+                        disabled={formData.student_type === "old" && originalStudentData?.hasPendingEnrollment}
                       >
-                        {formData.studentType === "old" && originalStudentData?.hasPendingEnrollment
+                        {formData.student_type === "old" && originalStudentData?.hasPendingEnrollment
                           ? "Go to Cashier"
                           : "Continue"}{" "}
                         <FeatherIcon icon="chevron-right" />
@@ -685,11 +719,11 @@ export default function AddStudent() {
                           <Form.Label>First Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="mother.firstName"
-                            value={formData.mother.firstName}
+                            name="mother.first_name"
+                            value={formData.mother.first_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
+                                formData.student_type === "old" &&
                                 hasRegisteredContact(formData.mother)
                               }
                             placeholder="Enter first name"
@@ -701,11 +735,11 @@ export default function AddStudent() {
                           <Form.Label>Middle Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="mother.middleName"
-                            value={formData.mother.middleName}
+                            name="mother.middle_name"
+                            value={formData.mother.middle_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
+                                formData.student_type === "old" &&
                                 hasRegisteredContact(formData.mother)
                               }
                             placeholder="Enter middle name"
@@ -717,11 +751,11 @@ export default function AddStudent() {
                           <Form.Label>Last Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="mother.lastName"
-                            value={formData.mother.lastName}
+                            name="mother.last_name"
+                            value={formData.mother.last_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
+                                formData.student_type === "old" &&
                                 hasRegisteredContact(formData.mother)
                               }
                             placeholder="Enter last name"
@@ -739,7 +773,7 @@ export default function AddStudent() {
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
                             disabled={
-                                formData.studentType === "old" &&
+                                formData.student_type === "old" &&
                                 hasRegisteredContact(formData.mother)
                               }
                           />
@@ -755,7 +789,7 @@ export default function AddStudent() {
                             value={formData.mother.occupation}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
+                                formData.student_type === "old" &&
                                 hasRegisteredContact(formData.mother)
                               }
                             placeholder="Enter occupation"
@@ -813,8 +847,8 @@ export default function AddStudent() {
                           <Form.Label>Block/Lot</Form.Label>
                           <Form.Control
                             type="text"
-                            name="mother.address.blockOrLot"
-                            value={formData.mother.address.blockOrLot}
+                            name="mother.address.block_or_lot"
+                            value={formData.mother.address.block_or_lot}
                             onChange={handleChange}
                             placeholder="Enter Block/Lot"
                           />
@@ -867,12 +901,12 @@ export default function AddStudent() {
                           <Form.Label>First Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="father.firstName"
-                            value={formData.father.firstName}
+                            name="father.first_name"
+                            value={formData.father.first_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
-                                hasRegisteredContact(formData.mother)
+                                formData.student_type === "old" &&
+                                hasRegisteredContact(formData.father)
                               }
                             placeholder="Enter first name"
                           />
@@ -883,12 +917,12 @@ export default function AddStudent() {
                           <Form.Label>Middle Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="father.middleName"
-                            value={formData.father.middleName}
+                            name="father.middle_name"
+                            value={formData.father.middle_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
-                                hasRegisteredContact(formData.mother)
+                                formData.student_type === "old" &&
+                                hasRegisteredContact(formData.father)
                               }
                             placeholder="Enter middle name"
                           />
@@ -899,12 +933,12 @@ export default function AddStudent() {
                           <Form.Label>Last Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="father.lastName"
-                            value={formData.father.lastName}
+                            name="father.last_name"
+                            value={formData.father.last_name}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
-                                hasRegisteredContact(formData.mother)
+                                formData.student_type === "old" &&
+                                hasRegisteredContact(formData.father)
                               }
                             placeholder="Enter last name"
                           />
@@ -920,8 +954,8 @@ export default function AddStudent() {
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
                             disabled={
-                                formData.studentType === "old" &&
-                                hasRegisteredContact(formData.mother)
+                                formData.student_type === "old" &&
+                                hasRegisteredContact(formData.father)
                               }
                           />
                         </Form.Group>
@@ -935,8 +969,8 @@ export default function AddStudent() {
                             value={formData.father.occupation}
                             onChange={handleChange}
                             disabled={
-                                formData.studentType === "old" &&
-                                hasRegisteredContact(formData.mother)
+                                formData.student_type === "old" &&
+                                hasRegisteredContact(formData.father)
                               }
                             placeholder="Enter occupation"
                           />
@@ -994,8 +1028,8 @@ export default function AddStudent() {
                           <Form.Label>Block/Lot</Form.Label>
                           <Form.Control
                             type="text"
-                            name="father.address.blockOrLot"
-                            value={formData.father.address.blockOrLot}
+                            name="father.address.block_or_lot"
+                            value={formData.father.address.block_or_lot}
                             onChange={handleChange}
                             placeholder="Enter block & lot"
                           />
@@ -1049,8 +1083,8 @@ export default function AddStudent() {
                           <Form.Label>First Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="emergency.firstName"
-                            value={formData.emergency.firstName}
+                            name="emergency.first_name"
+                            value={formData.emergency.first_name}
                             onChange={handleChange}
                             placeholder="Enter first name"
                           />
@@ -1061,8 +1095,8 @@ export default function AddStudent() {
                           <Form.Label>Middle Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="emergency.middleName"
-                            value={formData.emergency.middleName}
+                            name="emergency.middle_name"
+                            value={formData.emergency.middle_name}
                             onChange={handleChange}
                             placeholder="Enter middle name"
                           />
@@ -1073,8 +1107,8 @@ export default function AddStudent() {
                           <Form.Label>Last Name</Form.Label>
                           <Form.Control
                             type="text"
-                            name="emergency.lastName"
-                            value={formData.emergency.lastName}
+                            name="emergency.last_name"
+                            value={formData.emergency.last_name}
                             onChange={handleChange}
                             placeholder="Enter last name"
                           />
@@ -1085,8 +1119,8 @@ export default function AddStudent() {
                           <Form.Label>Suffix (Optional)</Form.Label>
                           <Form.Control
                             type="text"
-                            name="father.suffix"
-                            value={formData.father.suffix}
+                            name="emergency.suffix"
+                            value={formData.emergency.suffix}
                             onChange={handleChange}
                             placeholder="e.g. Jr., Sr., II"
 
@@ -1157,8 +1191,8 @@ export default function AddStudent() {
                           <Form.Label>Block/Lot</Form.Label>
                           <Form.Control
                             type="text"
-                            name="emergency.address.blockOrLot"
-                            value={formData.emergency.address.blockOrLot}
+                            name="emergency.address.block_or_lot"
+                            value={formData.emergency.address.block_or_lot}
                             onChange={handleChange}
                             placeholder="Enter block & lot"
                           />

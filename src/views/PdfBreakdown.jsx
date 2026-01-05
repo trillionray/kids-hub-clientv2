@@ -63,7 +63,7 @@ export default function PdfBreakdown() {
       : program?.rate || 0;
 
   // Apply discount if present
-  const discountedAmount = discount ? (baseTotal * (discount.percentage / 100)) : 0;
+  const discountedAmount = discount ? (program.rate * (discount.percentage / 100)) : 0;
   const grandTotal = baseTotal - discountedAmount;
 
   const downloadPdf = () => {
